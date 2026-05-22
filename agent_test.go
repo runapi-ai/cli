@@ -27,8 +27,8 @@ func TestAgentListTargets(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if payload.Skill != "cli" {
-		t.Fatalf("expected skill cli, got %q", payload.Skill)
+	if payload.Skill != "runapi-cli" {
+		t.Fatalf("expected skill runapi-cli, got %q", payload.Skill)
 	}
 	for _, k := range []string{"claude", "codex", "gemini", "openclaw", "hermes"} {
 		if _, ok := payload.Targets[k]; !ok {
@@ -80,8 +80,8 @@ func TestInstallSkillWritesFiles(t *testing.T) {
 	tag := "v9.9.9"
 
 	archive := buildSkillTarball(t, map[string]string{
-		"cli-skill-9.9.9/skills/cli/SKILL.md":            "# skill content\n",
-		"cli-skill-9.9.9/skills/cli/references/notes.md": "notes\n",
+		"cli-skill-9.9.9/skills/runapi-cli/SKILL.md":            "# skill content\n",
+		"cli-skill-9.9.9/skills/runapi-cli/references/notes.md": "notes\n",
 		"cli-skill-9.9.9/README.md":                      "ignored\n",
 	})
 
@@ -110,7 +110,7 @@ func TestInstallSkillWritesFiles(t *testing.T) {
 		t.Fatalf("install-skill exit %d", rc)
 	}
 
-	skillRoot := filepath.Join(tmp, "cli")
+	skillRoot := filepath.Join(tmp, "runapi-cli")
 	if _, err := os.Stat(filepath.Join(skillRoot, "SKILL.md")); err != nil {
 		t.Fatalf("SKILL.md not written: %v", err)
 	}
@@ -136,7 +136,7 @@ func TestInstallSkillWritesFiles(t *testing.T) {
 
 func TestInstallSkillRejectsExistingWithoutForce(t *testing.T) {
 	tmp := t.TempDir()
-	existing := filepath.Join(tmp, "cli")
+	existing := filepath.Join(tmp, "runapi-cli")
 	if err := os.MkdirAll(existing, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -153,7 +153,7 @@ func TestInstallSkillRejectsExistingWithoutForce(t *testing.T) {
 
 func TestInstallSkillForceOverwrites(t *testing.T) {
 	tmp := t.TempDir()
-	stale := filepath.Join(tmp, "cli", "stale.md")
+	stale := filepath.Join(tmp, "runapi-cli", "stale.md")
 	if err := os.MkdirAll(filepath.Dir(stale), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -164,7 +164,7 @@ func TestInstallSkillForceOverwrites(t *testing.T) {
 	repo := "runapi-ai/cli-skill"
 	tag := "v9.9.9"
 	archive := buildSkillTarball(t, map[string]string{
-		"cli-skill-9.9.9/skills/cli/SKILL.md": "fresh\n",
+		"cli-skill-9.9.9/skills/runapi-cli/SKILL.md": "fresh\n",
 	})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write(archive)
@@ -188,7 +188,7 @@ func TestInstallSkillForceOverwrites(t *testing.T) {
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
 		t.Fatalf("stale file should be removed: err=%v", err)
 	}
-	if data, err := os.ReadFile(filepath.Join(tmp, "cli", "SKILL.md")); err != nil || string(data) != "fresh\n" {
+	if data, err := os.ReadFile(filepath.Join(tmp, "runapi-cli", "SKILL.md")); err != nil || string(data) != "fresh\n" {
 		t.Fatalf("expected fresh SKILL.md, got data=%q err=%v", string(data), err)
 	}
 }
@@ -218,7 +218,7 @@ func TestInstallSkillRejectsPathTraversalInArchive(t *testing.T) {
 	repo := "runapi-ai/cli-skill"
 	tag := "v9.9.9"
 	archive := buildSkillTarball(t, map[string]string{
-		"cli-skill-9.9.9/skills/cli/../../etc/evil": "bad\n",
+		"cli-skill-9.9.9/skills/runapi-cli/../../etc/evil": "bad\n",
 	})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write(archive)
@@ -256,7 +256,7 @@ func TestInstallSkillRejectsHTTPArchiveBase(t *testing.T) {
 }
 
 func TestInstallSkillRejectsOversizedArchive(t *testing.T) {
-	// Build a tarball where skills/cli/big.bin is bigger than the
+	// Build a tarball where skills/runapi-cli/big.bin is bigger than the
 	// extract budget so the size cap trips. Keep the buffer modest by
 	// overriding the package-level constant via a test-only helper.
 	prevCap := skillMaxExtractBytes
@@ -268,7 +268,7 @@ func TestInstallSkillRejectsOversizedArchive(t *testing.T) {
 		big[i] = 'x'
 	}
 	archive := buildSkillTarball(t, map[string]string{
-		"cli-skill-9.9.9/skills/cli/big.bin": string(big),
+		"cli-skill-9.9.9/skills/runapi-cli/big.bin": string(big),
 	})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write(archive)
@@ -292,7 +292,7 @@ func TestInstallSkillRejectsOversizedArchive(t *testing.T) {
 
 func TestUninstallSkillRemovesDir(t *testing.T) {
 	tmp := t.TempDir()
-	skill := filepath.Join(tmp, "cli")
+	skill := filepath.Join(tmp, "runapi-cli")
 	if err := os.MkdirAll(skill, 0o755); err != nil {
 		t.Fatal(err)
 	}

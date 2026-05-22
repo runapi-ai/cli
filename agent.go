@@ -20,8 +20,8 @@ import (
 
 const (
 	defaultSkillSourceRepo = "runapi-ai/cli-skill"
-	skillName              = "cli"
-	skillSubdir            = "skills/cli/"
+	skillName              = "runapi-cli"
+	skillSubdir            = "skills/runapi-cli/"
 	skillDownloadTimeout   = 60 * time.Second
 )
 
@@ -36,7 +36,7 @@ func setSkillMaxExtractBytesForTest(n int64) { skillMaxExtractBytes = n }
 
 // skillTargets maps a built-in target name to a path under the user's HOME
 // where the skill directory should be created. The skill directory itself
-// is always named "cli" inside that path (e.g. ~/.claude/skills/cli).
+// is always named "runapi-cli" inside that path (e.g. ~/.claude/skills/runapi-cli).
 var skillTargets = map[string]string{
 	"claude":   ".claude/skills",
 	"codex":    ".agents/skills",
@@ -73,7 +73,7 @@ func (c *cli) agentInstallSkillCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install-skill",
 		Short: "Install the RunAPI CLI skill into a supported agent runtime",
-		Long: "install-skill downloads the canonical skills/cli/ directory from the runapi-ai/cli-skill\n" +
+		Long: "install-skill downloads the canonical skills/runapi-cli/ directory from the runapi-ai/cli-skill\n" +
 			"release archive and writes it to the runtime's skill directory.\n\n" +
 			"Targets: claude, codex, gemini, openclaw, hermes. Use --target-dir for a custom path.",
 		Args: cobra.NoArgs,
@@ -363,7 +363,7 @@ func httpDownload(ctx context.Context, client *http.Client, rawURL string) (io.R
 	return resp.Body, nil
 }
 
-// extractSkillFromTarball pulls the `skills/cli/` subtree of a GitHub archive
+// extractSkillFromTarball pulls the `skills/runapi-cli/` subtree of a GitHub archive
 // into destDir (so destDir/SKILL.md, destDir/references/..., etc.) and returns
 // the number of regular files written.
 func extractSkillFromTarball(r io.Reader, destDir string) (int, error) {

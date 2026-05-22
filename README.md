@@ -116,11 +116,11 @@ curl -fsSL https://runapi.ai/cli/latest.json | jq '.assets["linux-amd64"]'
 `runapi` ships a portable skill for the major AI agent runtimes. Install it once and the runtime can run RunAPI commands with full inline documentation:
 
 ```bash
-runapi agent install-skill --target claude    # → ~/.claude/skills/cli
-runapi agent install-skill --target codex     # → ~/.agents/skills/cli
-runapi agent install-skill --target gemini    # → ~/.gemini/skills/cli
-runapi agent install-skill --target openclaw  # → ~/.openclaw/skills/cli
-runapi agent install-skill --target hermes    # → ~/.hermes/skills/cli
+runapi agent install-skill --target claude    # → ~/.claude/skills/runapi-cli
+runapi agent install-skill --target codex     # → ~/.agents/skills/runapi-cli
+runapi agent install-skill --target gemini    # → ~/.gemini/skills/runapi-cli
+runapi agent install-skill --target openclaw  # → ~/.openclaw/skills/runapi-cli
+runapi agent install-skill --target hermes    # → ~/.hermes/skills/runapi-cli
 runapi agent list-targets                     # JSON list of supported targets
 ```
 
