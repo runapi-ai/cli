@@ -2,7 +2,6 @@
 
 [![Release](https://img.shields.io/github/v/release/runapi-ai/cli?sort=semver)](https://github.com/runapi-ai/cli/releases)
 [![License](https://img.shields.io/github/license/runapi-ai/cli)](https://github.com/runapi-ai/cli/blob/main/LICENSE)
-[![Go module](https://pkg.go.dev/badge/github.com/runapi-ai/cli.svg)](https://pkg.go.dev/github.com/runapi-ai/cli)
 
 `runapi` is the command-line client for [RunAPI](https://runapi.ai). One binary calls 100+ AI models — Suno, Veo, Nano Banana, GPT Image, Imagen, Kling, Flux, Wan, Claude, and the rest — with a JSON-first interface that maps cleanly to scripts, CI pipelines, and agent runtimes.
 
