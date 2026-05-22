@@ -9,7 +9,7 @@ import (
 //  1. ldflags -X github.com/runapi-ai/cli/internal/runapi.Version=<tag>
 //     (goreleaser release binaries — debug.ReadBuildInfo cannot see the tag).
 //  2. debug.ReadBuildInfo().Main.Version
-//     (go install github.com/runapi-ai/cli@<tag-or-commit>).
+//     (go install github.com/runapi-ai/cli/cmd/runapi@<tag-or-commit>).
 //  3. "dev"
 //     (local go run / go build with no tag).
 var Version = "dev"
