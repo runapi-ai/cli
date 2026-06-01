@@ -1,0 +1,778 @@
+package main
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+)
+
+func helpHasField(output, field string) bool {
+	for _, line := range strings.Split(output, "\n") {
+		parts := strings.Fields(line)
+		if len(parts) > 0 && parts[0] == field {
+			return true
+		}
+	}
+
+	return false
+}
+
+func helpFieldCount(output, field string) int {
+	count := 0
+	for _, line := range strings.Split(output, "\n") {
+		parts := strings.Fields(line)
+		if len(parts) > 0 && parts[0] == field {
+			count++
+		}
+	}
+
+	return count
+}
+
+func TestGeminiOmniServiceCommandIsRegistered(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"gemini-omni", "create-audio", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "audio_id") {
+		t.Fatalf("expected Gemini Omni create-audio help to include audio_id, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+	cmd = c.command()
+	cmd.SetArgs([]string{"gemini-omni", "create-character", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "descriptions") || !helpHasField(output, "reference_image_url") || helpHasField(output, "image_urls") {
+		t.Fatalf("expected Gemini Omni create-character help to include character fields, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+	cmd = c.command()
+	cmd.SetArgs([]string{"gemini-omni", "text-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "character_ids") || !helpHasField(output, "reference_image_urls") || helpHasField(output, "image_urls") {
+		t.Fatalf("expected Gemini Omni text-to-video help to include video fields, got:\n%s", output)
+	}
+}
+
+func TestHappyHorseServiceCommandIsRegistered(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"happyhorse", "text-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "resolution") || !strings.Contains(output, "aspect_ratio") || !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "reference_image_urls") {
+		t.Fatalf("expected HappyHorse text-to-video help to include video fields, got:\n%s", output)
+	}
+
+	removedAction := strings.Join([]string{"reference", "to", "video"}, "-")
+	if strings.Contains(output, removedAction) {
+		t.Fatalf("expected HappyHorse text-to-video help not to include removed command, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"happyhorse", "image-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "first_frame_image_url") || !strings.Contains(output, "resolution") || !strings.Contains(output, "duration_seconds") {
+		t.Fatalf("expected HappyHorse image-to-video help to include image fields, got:\n%s", output)
+	}
+	if helpHasField(output, "image_urls") {
+		t.Fatalf("expected HappyHorse image-to-video help not to expose image_urls, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"happyhorse", "edit-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_video_url") || !strings.Contains(output, "audio_setting") || !helpHasField(output, "reference_image_urls") {
+		t.Fatalf("expected HappyHorse edit-video help to include edit fields, got:\n%s", output)
+	}
+	if helpHasField(output, "video_url") || helpHasField(output, "reference_image") {
+		t.Fatalf("expected HappyHorse edit-video help not to expose provider media fields, got:\n%s", output)
+	}
+}
+
+func TestWanServiceCommandUsesCanonicalMediaFields(t *testing.T) {
+	cases := []struct {
+		name      string
+		args      []string
+		expected  []string
+		forbidden []string
+	}{
+		{
+			name:      "image-to-video",
+			args:      []string{"wan", "image-to-video", "--help"},
+			expected:  []string{"first_frame_image_url", "last_frame_image_url", "source_video_url", "background_audio_url"},
+			forbidden: []string{"image_url", "image_urls", "first_frame_url", "last_frame_url", "first_clip_url", "audio_url"},
+		},
+		{
+			name:      "speech-to-video",
+			args:      []string{"wan", "speech-to-video", "--help"},
+			expected:  []string{"source_image_url", "source_audio_url"},
+			forbidden: []string{"image_url", "audio_url"},
+		},
+		{
+			name:      "animate",
+			args:      []string{"wan", "animate", "--help"},
+			expected:  []string{"source_image_url", "reference_video_url"},
+			forbidden: []string{"image_url", "video_url"},
+		},
+		{
+			name:      "text-to-image",
+			args:      []string{"wan", "text-to-image", "--help"},
+			expected:  []string{"source_image_urls"},
+			forbidden: []string{"input_urls"},
+		},
+		{
+			name:      "edit-video",
+			args:      []string{"wan", "edit-video", "--help"},
+			expected:  []string{"source_video_url", "source_video_urls", "reference_image_url"},
+			forbidden: []string{"reference_image"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := newCLI()
+			c.stdout = &bytes.Buffer{}
+			c.stderr = &bytes.Buffer{}
+
+			cmd := c.command()
+			cmd.SetArgs(tc.args)
+			if err := cmd.Execute(); err != nil {
+				t.Fatal(err)
+			}
+
+			output := c.stdout.(*bytes.Buffer).String()
+			for _, field := range tc.expected {
+				if !helpHasField(output, field) {
+					t.Fatalf("expected Wan %s help to include %s, got:\n%s", tc.name, field, output)
+				}
+			}
+			for _, field := range tc.forbidden {
+				if helpHasField(output, field) {
+					t.Fatalf("expected Wan %s help to omit stale field %s, got:\n%s", tc.name, field, output)
+				}
+			}
+		})
+	}
+}
+
+func TestHailuoImageToVideoHelpUsesCanonicalImageFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"hailuo", "image-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") {
+		t.Fatalf("expected Hailuo image-to-video help to include canonical image fields, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") || helpHasField(output, "end_image_url") {
+		t.Fatalf("expected Hailuo image-to-video help not to expose roleless image fields, got:\n%s", output)
+	}
+}
+
+func TestInfinitetalkAudioToVideoHelpUsesCanonicalSourceMediaFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"infinitetalk", "audio-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_image_url") || !helpHasField(output, "source_audio_url") {
+		t.Fatalf("expected InfiniteTalk audio-to-video help to include canonical source media fields, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") || helpHasField(output, "audio_url") {
+		t.Fatalf("expected InfiniteTalk audio-to-video help not to expose roleless media fields, got:\n%s", output)
+	}
+}
+
+func TestKlingTextToVideoHelpUsesCanonicalFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"kling", "text-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro.") {
+		t.Fatalf("expected Kling text-to-video help to include generated model values, got:\n%s", output)
+	}
+	if !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") {
+		t.Fatalf("expected Kling text-to-video help to include frame media fields, got:\n%s", output)
+	}
+	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro: 5, 10.") {
+		t.Fatalf("expected Kling text-to-video help to include model-specific duration_seconds values, got:\n%s", output)
+	}
+	if strings.Contains(output, "duration_seconds          string     optional; duration in seconds. Accepted values: 5, 10.") {
+		t.Fatalf("expected Kling text-to-video help not to advertise action-level duration_seconds values, got:\n%s", output)
+	}
+	if helpHasField(output, "mode") || helpHasField(output, "image_urls") {
+		t.Fatalf("expected Kling text-to-video help not to expose provider or roleless fields, got:\n%s", output)
+	}
+}
+
+func TestKlingImageToVideoHelpUsesCanonicalImageFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"kling", "image-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") {
+		t.Fatalf("expected Kling image-to-video help to include canonical image fields, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") || helpHasField(output, "tail_image_url") {
+		t.Fatalf("expected Kling image-to-video help not to expose roleless image fields, got:\n%s", output)
+	}
+}
+
+func TestKlingAvatarHelpUsesCanonicalSourceFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"kling", "avatar", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_image_url") || !helpHasField(output, "source_audio_url") {
+		t.Fatalf("expected Kling avatar help to include canonical source fields, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") || helpHasField(output, "audio_url") {
+		t.Fatalf("expected Kling avatar help not to expose roleless media fields, got:\n%s", output)
+	}
+}
+
+func TestKlingMotionControlHelpUsesCanonicalMediaFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"kling", "motion-control", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_image_url") || !helpHasField(output, "reference_video_url") {
+		t.Fatalf("expected Kling motion-control help to include canonical media fields, got:\n%s", output)
+	}
+	if helpHasField(output, "input_urls") || helpHasField(output, "video_urls") {
+		t.Fatalf("expected Kling motion-control help not to expose provider media fields, got:\n%s", output)
+	}
+}
+
+func TestVeo31TextToVideoHelpIncludesDurationSeconds(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"veo-3-1", "text-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values: 4, 6, 8.") {
+		t.Fatalf("expected Veo 3.1 text-to-video help to include generated duration_seconds values, got:\n%s", output)
+	}
+}
+
+func TestVeo31UpscaleVideoHelpIncludesTargetResolution(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"veo-3-1", "upscale-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "output_resolution") || !strings.Contains(output, "Accepted values: 1080p, 4k.") {
+		t.Fatalf("expected Veo 3.1 upscale-video help to include generated output_resolution values, got:\n%s", output)
+	}
+}
+
+func TestRunwayAlephHelpUsesCanonicalSourceVideoURL(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"runway-aleph", "edit-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_video_url") {
+		t.Fatalf("expected Runway Aleph edit-video help to include source_video_url, got:\n%s", output)
+	}
+	if helpHasField(output, "video_url") {
+		t.Fatalf("expected Runway Aleph edit-video help not to include stale video_url, got:\n%s", output)
+	}
+}
+
+func TestRunwayTextToVideoHelpUsesCanonicalFirstFrameImageURL(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"runway", "text-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "first_frame_image_url") {
+		t.Fatalf("expected Runway text-to-video help to include first_frame_image_url, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") {
+		t.Fatalf("expected Runway text-to-video help not to include stale image_url, got:\n%s", output)
+	}
+}
+
+func TestLumaHelpUsesCanonicalSourceVideoURL(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"luma", "modify-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_video_url") {
+		t.Fatalf("expected Luma modify-video help to include source_video_url, got:\n%s", output)
+	}
+	if helpHasField(output, "video_url") {
+		t.Fatalf("expected Luma modify-video help not to include stale video_url, got:\n%s", output)
+	}
+}
+
+func TestTopazHelpUsesCanonicalSourceURLs(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"topaz", "upscale-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_image_url") {
+		t.Fatalf("expected Topaz upscale-image help to include source_image_url, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") {
+		t.Fatalf("expected Topaz upscale-image help to omit image_url, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"topaz", "upscale-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_video_url") {
+		t.Fatalf("expected Topaz upscale-video help to include source_video_url, got:\n%s", output)
+	}
+	if helpHasField(output, "video_url") {
+		t.Fatalf("expected Topaz upscale-video help to omit video_url, got:\n%s", output)
+	}
+}
+
+func TestFluxKontextHelpUsesCanonicalSourceImageURL(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"flux-kontext", "text-to-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_image_url") {
+		t.Fatalf("expected Flux Kontext text-to-image help to include source_image_url, got:\n%s", output)
+	}
+	if helpHasField(output, "input_image") {
+		t.Fatalf("expected Flux Kontext text-to-image help to omit input_image, got:\n%s", output)
+	}
+}
+
+func TestIdeogramV3HelpUsesCanonicalSourceImageURL(t *testing.T) {
+	for _, action := range []string{"edit-image", "remix-image", "reframe-image"} {
+		c := newCLI()
+		c.stdout = &bytes.Buffer{}
+		c.stderr = &bytes.Buffer{}
+
+		cmd := c.command()
+		cmd.SetArgs([]string{"ideogram-v3", action, "--help"})
+		if err := cmd.Execute(); err != nil {
+			t.Fatal(err)
+		}
+
+		output := c.stdout.(*bytes.Buffer).String()
+		if !helpHasField(output, "source_image_url") {
+			t.Fatalf("expected Ideogram V3 %s help to include source_image_url, got:\n%s", action, output)
+		}
+		if helpHasField(output, "image_url") {
+			t.Fatalf("expected Ideogram V3 %s help not to expose image_url, got:\n%s", action, output)
+		}
+	}
+}
+
+func TestIdeogramV3CharacterRemixHelpUsesStyleReferenceImages(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"ideogram-v3", "remix-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "style_reference_image_urls") {
+		t.Fatalf("expected Ideogram V3 remix-image help to include style_reference_image_urls, got:\n%s", output)
+	}
+	if helpHasField(output, "image_urls") {
+		t.Fatalf("expected Ideogram V3 remix-image help not to expose image_urls, got:\n%s", output)
+	}
+}
+
+func TestNanoBananaHelpUsesCanonicalFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"nano-banana", "text-to-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	for _, expected := range []string{"aspect_ratio", "output_resolution", "reference_image_urls", "Accepted values by model"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected Nano Banana text-to-image help to include %q, got:\n%s", expected, output)
+		}
+	}
+	for _, stale := range []string{"image_size", "image_input"} {
+		if helpHasField(output, stale) {
+			t.Fatalf("expected Nano Banana text-to-image help not to include stale field %q, got:\n%s", stale, output)
+		}
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"nano-banana", "edit-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	for _, expected := range []string{"aspect_ratio", "source_image_urls"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("expected Nano Banana edit-image help to include %q, got:\n%s", expected, output)
+		}
+	}
+	for _, stale := range []string{"image_size", "image_urls"} {
+		if helpHasField(output, stale) {
+			t.Fatalf("expected Nano Banana edit-image help not to include stale field %q, got:\n%s", stale, output)
+		}
+	}
+}
+
+func TestQwen2HelpUsesCanonicalAspectRatio(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"qwen-2", "text-to-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "aspect_ratio") {
+		t.Fatalf("expected Qwen 2 text-to-image help to include aspect_ratio, got:\n%s", output)
+	}
+	if helpHasField(output, "image_size") {
+		t.Fatalf("expected Qwen 2 text-to-image help not to include stale image_size, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"qwen-2", "edit-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "aspect_ratio") {
+		t.Fatalf("expected Qwen 2 edit-image help to include aspect_ratio, got:\n%s", output)
+	}
+	if !helpHasField(output, "source_image_url") {
+		t.Fatalf("expected Qwen 2 edit-image help to include source_image_url, got:\n%s", output)
+	}
+	if helpHasField(output, "image_size") {
+		t.Fatalf("expected Qwen 2 edit-image help not to include stale image_size, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") {
+		t.Fatalf("expected Qwen 2 edit-image help not to expose old image field name, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"qwen-2", "remix-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "source_image_url") {
+		t.Fatalf("expected Qwen 2 remix-image help to include source_image_url, got:\n%s", output)
+	}
+	if helpHasField(output, "image_url") || strings.Contains(output, "image-to-image") {
+		t.Fatalf("expected Qwen 2 remix-image help not to expose old image field/action names, got:\n%s", output)
+	}
+}
+
+func TestGeneratedContractValuesAreComposedIntoHelp(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"veo-3-1", "text-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "Accepted values: 4, 6, 8.") {
+		t.Fatalf("expected Veo 3.1 help to append generated duration_seconds values, got:\n%s", output)
+	}
+	if !helpHasField(output, "input_mode") {
+		t.Fatalf("expected Veo 3.1 help to include input_mode, got:\n%s", output)
+	}
+	for _, expected := range []string{"first_frame_image_url", "last_frame_image_url", "reference_image_urls"} {
+		if !helpHasField(output, expected) {
+			t.Fatalf("expected Veo 3.1 help to include %s, got:\n%s", expected, output)
+		}
+	}
+	for _, stale := range []string{"generation_type", "image_urls"} {
+		if helpHasField(output, stale) {
+			t.Fatalf("expected Veo 3.1 help not to include stale field %s, got:\n%s", stale, output)
+		}
+	}
+	if !strings.Contains(output, "Accepted values: text, first_and_last_frames, reference.") {
+		t.Fatalf("expected Veo 3.1 help to append generated input_mode values, got:\n%s", output)
+	}
+	if !strings.Contains(output, "Accepted values: veo-3.1, veo-3.1-fast.") {
+		t.Fatalf("expected Veo 3.1 help to append generated model values, got:\n%s", output)
+	}
+}
+
+func TestDynamicImageActionsAreRegistered(t *testing.T) {
+	cases := []struct {
+		service string
+		action  string
+		fields  []string
+	}{
+		{service: "flux-2", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: flux-2-flex-remix-image, flux-2-pro-remix-image."}},
+		{service: "imagen-4", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: imagen-4-pro-remix-image."}},
+		{service: "seedream", action: "edit-image", fields: []string{"source_image_urls", "Accepted values: seedream-4.5-edit, seedream-5-lite-edit, seedream-v4-edit."}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.service+"/"+tc.action, func(t *testing.T) {
+			c := newCLI()
+			c.stdout = &bytes.Buffer{}
+			c.stderr = &bytes.Buffer{}
+
+			cmd := c.command()
+			cmd.SetArgs([]string{tc.service, tc.action, "--help"})
+			if err := cmd.Execute(); err != nil {
+				t.Fatal(err)
+			}
+
+			output := c.stdout.(*bytes.Buffer).String()
+			for _, field := range tc.fields {
+				if !strings.Contains(output, field) {
+					t.Fatalf("expected %s %s help to include %q, got:\n%s", tc.service, tc.action, field, output)
+				}
+			}
+		})
+	}
+}
+
+func TestSunoVoiceValidationPhraseCommandsAreRegistered(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"suno", "voice-to-validation-phrase", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "voice_url") || !strings.Contains(output, "vocal_start_seconds") || !strings.Contains(output, "vocal_end_seconds") {
+		t.Fatalf("expected Suno voice-to-validation-phrase help to include voice fields, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"suno", "regenerate-validation-phrase", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "task_id") || !strings.Contains(output, "callback_url") {
+		t.Fatalf("expected Suno regenerate-validation-phrase help to include regeneration fields, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"suno", "generate-voice", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "verify_url") || !strings.Contains(output, "voice_name") || !strings.Contains(output, "singer_skill_level") {
+		t.Fatalf("expected Suno generate-voice help to include custom voice fields, got:\n%s", output)
+	}
+
+	c = newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd = c.command()
+	cmd.SetArgs([]string{"suno", "check-voice", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output = c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "task_id") {
+		t.Fatalf("expected Suno check-voice help to include task_id, got:\n%s", output)
+	}
+}
+
+func TestSunoCreateMashupHelpDoesNotDuplicateModelField(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"suno", "create-mashup", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if count := helpFieldCount(output, "model"); count != 1 {
+		t.Fatalf("expected Suno create-mashup help to list model once, got %d:\n%s", count, output)
+	}
+}

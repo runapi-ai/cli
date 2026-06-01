@@ -82,7 +82,7 @@ runapi wait "$TASK_ID" --service suno --action generate
 
 ```bash
 runapi nano-banana generate --input-file request.json \
-  | jq -r '.result_urls[]' \
+  | jq -r '.images[].url' \
   | xargs -I{} curl -OL {}
 ```
 

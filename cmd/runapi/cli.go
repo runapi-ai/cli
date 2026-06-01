@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -18,11 +19,13 @@ import (
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
+	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
 	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
+	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
@@ -105,6 +108,8 @@ func (c *cli) command() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
+	root.SetOut(c.stdout)
+	root.SetErr(c.stderr)
 	root.PersistentFlags().StringVar(&c.apiKeyFlag, "api-key", "", "API key. Overrides RUNAPI_API_KEY.")
 	root.PersistentFlags().StringVar(&c.baseURLFlag, "base-url", "", "API base URL. Overrides RUNAPI_BASE_URL, then config, then defaults to https://runapi.ai.")
 	root.PersistentFlags().DurationVar(&c.timeout, "timeout", core.DefaultTimeout, "Overall command timeout. Also used as the default per-request timeout and max wait.")
@@ -128,6 +133,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("kling"))
 	root.AddCommand(c.serviceCommand("flux-kontext"))
 	root.AddCommand(c.serviceCommand("flux-2"))
+	root.AddCommand(c.serviceCommand("gemini-omni"))
 	root.AddCommand(c.serviceCommand("qwen-2"))
 	root.AddCommand(c.serviceCommand("recraft"))
 	root.AddCommand(c.serviceCommand("z-image"))
@@ -137,6 +143,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("wan"))
 	root.AddCommand(c.serviceCommand("luma"))
 	root.AddCommand(c.serviceCommand("hailuo"))
+	root.AddCommand(c.serviceCommand("happyhorse"))
 	root.AddCommand(c.serviceCommand("gpt-image"))
 	root.AddCommand(c.serviceCommand("gpt-image-2"))
 	root.AddCommand(c.serviceCommand("gpt-4o-image"))
@@ -192,8 +199,9 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 		}
 		var input, inputFile string
 		long := describeAction(spec)
-		if spec.inputFields != "" {
-			long += "\n\n" + spec.inputFields
+		inputFields := composeInputFields(spec)
+		if inputFields != "" {
+			long += "\n\n" + inputFields
 		}
 		actionCmd := &cobra.Command{Use: spec.action, Short: describeAction(spec), Long: long, Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, args []string) error {
 			params, err := c.decodeInput(spec, input, inputFile)
@@ -524,10 +532,160 @@ func inputFieldsFor[T any]() string {
 	}
 	var b strings.Builder
 	b.WriteString("Input fields (JSON):\n")
+	seen := map[string]bool{}
 	for _, f := range fields {
+		if seen[f.name] {
+			continue
+		}
+		seen[f.name] = true
 		fmt.Fprintf(&b, "  %-24s %-10s %s\n", f.name, f.typ, f.help)
 	}
 	return b.String()
+}
+
+func composeInputFields(spec actionSpec) string {
+	return appendGeneratedContractHelp(spec.inputFields, spec.service, spec.action)
+}
+
+type generatedContractField struct {
+	Enum []any
+}
+
+type generatedContractAction struct {
+	Models        []string
+	FieldsByModel map[string]map[string]generatedContractField
+}
+
+func appendGeneratedContractHelp(inputFields, service, action string) string {
+	if inputFields == "" {
+		return ""
+	}
+	contract, ok := generatedContract[service+"/"+action]
+	if !ok {
+		return inputFields
+	}
+
+	lines := strings.Split(inputFields, "\n")
+	for i, line := range lines {
+		field := strings.Fields(strings.TrimSpace(line))
+		if len(field) == 0 || field[0] == "Input" {
+			continue
+		}
+		sentence := generatedContractHelpSentenceFor(contract, field[0])
+		if sentence == "" || strings.Contains(line, "Accepted values") {
+			continue
+		}
+		lines[i] = appendHelpSentence(line, sentence)
+	}
+	return strings.Join(lines, "\n")
+}
+
+func generatedContractHelpSentenceFor(contract generatedContractAction, field string) string {
+	if field == "model" {
+		if len(contract.Models) == 0 {
+			return ""
+		}
+		return fmt.Sprintf("Accepted values: %s.", strings.Join(contract.Models, ", "))
+	}
+
+	valuesByModel := generatedContractValuesByModelFor(contract, field)
+	if len(valuesByModel) == 0 {
+		return ""
+	}
+
+	commonValues := commonGeneratedContractValues(generatedContractFieldModelKeys(contract), valuesByModel)
+	if len(commonValues) > 0 {
+		return fmt.Sprintf("Accepted values: %s.", strings.Join(commonValues, ", "))
+	}
+
+	return fmt.Sprintf("Accepted values by model: %s.", formatGeneratedContractValuesByModel(contract.Models, valuesByModel))
+}
+
+func generatedContractValuesByModelFor(contract generatedContractAction, field string) map[string][]string {
+	valuesByModel := map[string][]string{}
+	for _, model := range generatedContractFieldModelKeys(contract) {
+		fields := contract.FieldsByModel[model]
+		if fieldContract, ok := fields[field]; ok && len(fieldContract.Enum) > 0 {
+			valuesByModel[model] = generatedContractEnumStrings(fieldContract.Enum)
+		}
+	}
+	return valuesByModel
+}
+
+func generatedContractEnumStrings(values []any) []string {
+	strings := make([]string, 0, len(values))
+	for _, value := range values {
+		strings = append(strings, fmt.Sprint(value))
+	}
+	return strings
+}
+
+func generatedContractFieldModelKeys(contract generatedContractAction) []string {
+	if len(contract.Models) > 0 {
+		return contract.Models
+	}
+
+	keys := make([]string, 0, len(contract.FieldsByModel))
+	for model := range contract.FieldsByModel {
+		keys = append(keys, model)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func commonGeneratedContractValues(models []string, valuesByModel map[string][]string) []string {
+	if len(models) == 0 || len(valuesByModel) != len(models) {
+		return nil
+	}
+
+	var common []string
+	for _, model := range models {
+		values := valuesByModel[model]
+		if len(values) == 0 {
+			return nil
+		}
+		if common == nil {
+			common = values
+			continue
+		}
+		if strings.Join(common, "\x00") != strings.Join(values, "\x00") {
+			return nil
+		}
+	}
+	return common
+}
+
+func formatGeneratedContractValuesByModel(models []string, valuesByModel map[string][]string) string {
+	groups := []string{}
+	seen := map[string]int{}
+
+	for _, model := range models {
+		values := valuesByModel[model]
+		if len(values) == 0 {
+			continue
+		}
+
+		key := strings.Join(values, "\x00")
+		groupIndex, ok := seen[key]
+		if !ok {
+			seen[key] = len(groups)
+			groups = append(groups, fmt.Sprintf("%s: %s", model, strings.Join(values, ", ")))
+			continue
+		}
+
+		prefix, valuesText, _ := strings.Cut(groups[groupIndex], ": ")
+		groups[groupIndex] = fmt.Sprintf("%s, %s: %s", prefix, model, valuesText)
+	}
+
+	return strings.Join(groups, "; ")
+}
+
+func appendHelpSentence(line, sentence string) string {
+	trimmed := strings.TrimRight(line, " ")
+	if strings.HasSuffix(strings.TrimSpace(trimmed), ".") {
+		return trimmed + " " + sentence
+	}
+	return trimmed + ". " + sentence
 }
 
 type jsonField struct {
@@ -598,24 +756,28 @@ var allSpecs = []actionSpec{
 	newSunoTextToMusicSpec(), newSunoExtendMusicSpec(), newSunoGenerateArtworkSpec(), newSunoCoverAudioSpec(),
 	newSunoAddInstrumentalSpec(), newSunoAddVocalsSpec(), newSunoSeparateAudioStemsSpec(), newSunoGenerateMidiSpec(), newSunoConvertAudioSpec(),
 	newSunoVisualizeMusicSpec(), newSunoGenerateLyricsSpec(), newSunoGetTimestampedLyricsSpec(), newSunoReplaceSectionSpec(), newSunoCreateMashupSpec(),
-	newSunoTextToSoundSpec(), newSunoGeneratePersonaSpec(), newSunoBoostStyleSpec(), newVeo31TextToVideoSpec(), newVeo31ExtendVideoSpec(), newVeo31UpscaleVideoSpec(),
-	newNanoBananaTextToImageSpec(), newNanoBananaEditImageSpec(), newImagen4TextToImageSpec(),
+	newSunoTextToSoundSpec(), newSunoVoiceToValidationPhraseSpec(), newSunoRegenerateValidationPhraseSpec(), newSunoGenerateVoiceSpec(), newSunoCheckVoiceSpec(),
+	newSunoGeneratePersonaSpec(), newSunoBoostStyleSpec(),
+	newVeo31TextToVideoSpec(), newVeo31ExtendVideoSpec(), newVeo31UpscaleVideoSpec(),
+	newNanoBananaTextToImageSpec(), newNanoBananaEditImageSpec(), newImagen4TextToImageSpec(), newImagen4RemixImageSpec(),
 	newSeedanceTextToVideoSpec(),
-	newSeedreamTextToImageSpec(),
-	newRunwayTextToVideoSpec(), newRunwayExtendVideoSpec(), newRunwayAlephVideoToVideoSpec(),
+	newSeedreamTextToImageSpec(), newSeedreamEditImageSpec(),
+	newRunwayTextToVideoSpec(), newRunwayExtendVideoSpec(), newRunwayAlephEditVideoSpec(),
 	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(),
-	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(),
-	newQwen2TextToImageSpec(), newQwen2ImageToImageSpec(), newQwen2EditSpec(),
+	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(),
+	newGeminiOmniCreateAudioSpec(), newGeminiOmniCreateCharacterSpec(), newGeminiOmniTextToVideoSpec(),
+	newQwen2TextToImageSpec(), newQwen2RemixImageSpec(), newQwen2EditSpec(),
 	newRecraftUpscaleSpec(), newRecraftBackgroundRemovalSpec(), newZImageTextToImageSpec(),
-	newIdeogramV3TextToImageSpec(), newIdeogramV3EditImageSpec(), newIdeogramV3RemixImageSpec(),
+	newIdeogramV3TextToImageSpec(), newIdeogramV3EditImageSpec(), newIdeogramV3RemixImageSpec(), newIdeogramV3ReframeImageSpec(),
 	newElevenlabsSpeechSpec(), newElevenlabsDialogueSpec(), newElevenlabsSoundEffectSpec(), newElevenlabsTranscriptionSpec(), newElevenlabsAudioIsolationSpec(),
 	newInfiniteTalkAudioToVideoSpec(),
-	newWanTextToVideoSpec(), newWanImageToVideoSpec(), newWanVideoToVideoSpec(), newWanSpeechToVideoSpec(),
-	newWanAnimateSpec(), newWanTextToImageSpec(), newWanReferenceToVideoSpec(), newWanEditVideoSpec(),
+	newWanTextToVideoSpec(), newWanImageToVideoSpec(), newWanSpeechToVideoSpec(),
+	newWanAnimateSpec(), newWanTextToImageSpec(), newWanEditVideoSpec(),
 	newLumaModifySpec(),
 	newHailuoTextToVideoSpec(), newHailuoImageToVideoSpec(),
+	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
 	newGptImageTextToImageSpec(), newGptImageEditImageSpec(), newGptImage2TextToImageSpec(), newGptImage2EditImageSpec(), newGpt4oImageTextToImageSpec(),
-	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineImageToImageSpec(),
+	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineEditImageSpec(),
 	newGrokImagineExtendSpec(), newGrokImagineUpscaleSpec(),
 	newTopazUpscaleImageSpec(), newTopazUpscaleVideoSpec(),
 }
@@ -766,6 +928,42 @@ func newSunoTextToSoundSpec() actionSpec {
 	}}
 }
 
+func newSunoVoiceToValidationPhraseSpec() actionSpec {
+	return actionSpec{service: "suno", action: "voice-to-validation-phrase", isAsync: true, inputFields: inputFieldsFor[suno.VoiceToValidationPhraseParams](), decode: decodeInto[suno.VoiceToValidationPhraseParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.VoiceToValidationPhrase.Create(ctx, params.(suno.VoiceToValidationPhraseParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.VoiceToValidationPhrase.Run(ctx, params.(suno.VoiceToValidationPhraseParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.VoiceToValidationPhrase.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoRegenerateValidationPhraseSpec() actionSpec {
+	return actionSpec{service: "suno", action: "regenerate-validation-phrase", isAsync: true, inputFields: inputFieldsFor[suno.RegenerateValidationPhraseParams](), decode: decodeInto[suno.RegenerateValidationPhraseParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.RegenerateValidationPhrase.Create(ctx, params.(suno.RegenerateValidationPhraseParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.RegenerateValidationPhrase.Run(ctx, params.(suno.RegenerateValidationPhraseParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.RegenerateValidationPhrase.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoGenerateVoiceSpec() actionSpec {
+	return actionSpec{service: "suno", action: "generate-voice", isAsync: true, inputFields: inputFieldsFor[suno.GenerateVoiceParams](), decode: decodeInto[suno.GenerateVoiceParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.GenerateVoice.Create(ctx, params.(suno.GenerateVoiceParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.GenerateVoice.Run(ctx, params.(suno.GenerateVoiceParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.GenerateVoice.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoCheckVoiceSpec() actionSpec {
+	return actionSpec{service: "suno", action: "check-voice", isAsync: false, inputFields: inputFieldsFor[suno.CheckVoiceParams](), decode: decodeInto[suno.CheckVoiceParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.CheckVoice.Run(ctx, params.(suno.CheckVoiceParams), opts...)
+	}}
+}
+
 func newSunoGeneratePersonaSpec() actionSpec {
 	return actionSpec{service: "suno", action: "generate-persona", isAsync: false, inputFields: inputFieldsFor[suno.GeneratePersonaParams](), decode: decodeInto[suno.GeneratePersonaParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.Suno.GeneratePersona.Run(ctx, params.(suno.GeneratePersonaParams), opts...)
@@ -825,13 +1023,13 @@ func newRunwayExtendVideoSpec() actionSpec {
 	}}
 }
 
-func newRunwayAlephVideoToVideoSpec() actionSpec {
-	return actionSpec{service: "runway-aleph", action: "video-to-video", isAsync: true, inputFields: inputFieldsFor[runwayaleph.VideoToVideoParams](), decode: decodeInto[runwayaleph.VideoToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
-		return client.RunwayAleph.VideoToVideo.Create(ctx, params.(runwayaleph.VideoToVideoParams), opts...)
+func newRunwayAlephEditVideoSpec() actionSpec {
+	return actionSpec{service: "runway-aleph", action: "edit-video", isAsync: true, inputFields: inputFieldsFor[runwayaleph.EditVideoParams](), decode: decodeInto[runwayaleph.EditVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.RunwayAleph.EditVideo.Create(ctx, params.(runwayaleph.EditVideoParams), opts...)
 	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
-		return client.RunwayAleph.VideoToVideo.Run(ctx, params.(runwayaleph.VideoToVideoParams), opts...)
+		return client.RunwayAleph.EditVideo.Run(ctx, params.(runwayaleph.EditVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
-		return client.RunwayAleph.VideoToVideo.Get(ctx, id, opts...)
+		return client.RunwayAleph.EditVideo.Get(ctx, id, opts...)
 	}}
 }
 func newNanoBananaTextToImageSpec() actionSpec {
@@ -861,6 +1059,15 @@ func newImagen4TextToImageSpec() actionSpec {
 		return client.Imagen4.TextToImage.Get(ctx, id, opts...)
 	}}
 }
+func newImagen4RemixImageSpec() actionSpec {
+	return actionSpec{service: "imagen-4", action: "remix-image", isAsync: true, inputFields: inputFieldsFor[imagen4.RemixImageParams](), decode: decodeInto[imagen4.RemixImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Imagen4.RemixImage.Create(ctx, params.(imagen4.RemixImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Imagen4.RemixImage.Run(ctx, params.(imagen4.RemixImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Imagen4.RemixImage.Get(ctx, id, opts...)
+	}}
+}
 func newSeedanceTextToVideoSpec() actionSpec {
 	return actionSpec{service: "seedance", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[seedance.TextToVideoParams](), decode: decodeInto[seedance.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.Seedance.TextToVideo.Create(ctx, params.(seedance.TextToVideoParams), opts...)
@@ -877,6 +1084,15 @@ func newSeedreamTextToImageSpec() actionSpec {
 		return client.Seedream.TextToImage.Run(ctx, params.(seedream.TextToImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Seedream.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+func newSeedreamEditImageSpec() actionSpec {
+	return actionSpec{service: "seedream", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[seedream.EditImageParams](), decode: decodeInto[seedream.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Seedream.EditImage.Create(ctx, params.(seedream.EditImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Seedream.EditImage.Run(ctx, params.(seedream.EditImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Seedream.EditImage.Get(ctx, id, opts...)
 	}}
 }
 func newKlingTextToVideoSpec() actionSpec {
@@ -933,6 +1149,38 @@ func newFlux2TextToImageSpec() actionSpec {
 		return client.Flux2.TextToImage.Get(ctx, id, opts...)
 	}}
 }
+func newFlux2RemixImageSpec() actionSpec {
+	return actionSpec{service: "flux-2", action: "remix-image", isAsync: true, inputFields: inputFieldsFor[flux2.RemixImageParams](), decode: decodeInto[flux2.RemixImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Flux2.RemixImage.Create(ctx, params.(flux2.RemixImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Flux2.RemixImage.Run(ctx, params.(flux2.RemixImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Flux2.RemixImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newGeminiOmniCreateAudioSpec() actionSpec {
+	return actionSpec{service: "gemini-omni", action: "create-audio", isAsync: false, inputFields: inputFieldsFor[geminiomni.CreateAudioParams](), decode: decodeInto[geminiomni.CreateAudioParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.GeminiOmni.CreateAudio.Run(ctx, params.(geminiomni.CreateAudioParams), opts...)
+	}}
+}
+
+func newGeminiOmniCreateCharacterSpec() actionSpec {
+	return actionSpec{service: "gemini-omni", action: "create-character", isAsync: false, inputFields: inputFieldsFor[geminiomni.CreateCharacterParams](), decode: decodeInto[geminiomni.CreateCharacterParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.GeminiOmni.CreateCharacter.Run(ctx, params.(geminiomni.CreateCharacterParams), opts...)
+	}}
+}
+
+func newGeminiOmniTextToVideoSpec() actionSpec {
+	return actionSpec{service: "gemini-omni", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[geminiomni.TextToVideoParams](), decode: decodeInto[geminiomni.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.GeminiOmni.TextToVideo.Create(ctx, params.(geminiomni.TextToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.GeminiOmni.TextToVideo.Run(ctx, params.(geminiomni.TextToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.GeminiOmni.TextToVideo.Get(ctx, id, opts...)
+	}}
+}
+
 func newQwen2TextToImageSpec() actionSpec {
 	return actionSpec{service: "qwen-2", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[qwen2.TextToImageParams](), decode: decodeInto[qwen2.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.Qwen2.TextToImage.Create(ctx, params.(qwen2.TextToImageParams), opts...)
@@ -942,13 +1190,13 @@ func newQwen2TextToImageSpec() actionSpec {
 		return client.Qwen2.TextToImage.Get(ctx, id, opts...)
 	}}
 }
-func newQwen2ImageToImageSpec() actionSpec {
-	return actionSpec{service: "qwen-2", action: "image-to-image", isAsync: true, inputFields: inputFieldsFor[qwen2.ImageToImageParams](), decode: decodeInto[qwen2.ImageToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
-		return client.Qwen2.ImageToImage.Create(ctx, params.(qwen2.ImageToImageParams), opts...)
+func newQwen2RemixImageSpec() actionSpec {
+	return actionSpec{service: "qwen-2", action: "remix-image", isAsync: true, inputFields: inputFieldsFor[qwen2.RemixImageParams](), decode: decodeInto[qwen2.RemixImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Qwen2.RemixImage.Create(ctx, params.(qwen2.RemixImageParams), opts...)
 	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
-		return client.Qwen2.ImageToImage.Run(ctx, params.(qwen2.ImageToImageParams), opts...)
+		return client.Qwen2.RemixImage.Run(ctx, params.(qwen2.RemixImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
-		return client.Qwen2.ImageToImage.Get(ctx, id, opts...)
+		return client.Qwen2.RemixImage.Get(ctx, id, opts...)
 	}}
 }
 func newQwen2EditSpec() actionSpec {
@@ -1012,6 +1260,15 @@ func newIdeogramV3RemixImageSpec() actionSpec {
 		return client.IdeogramV3.RemixImage.Run(ctx, params.(ideogramv3.RemixImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.IdeogramV3.RemixImage.Get(ctx, id, opts...)
+	}}
+}
+func newIdeogramV3ReframeImageSpec() actionSpec {
+	return actionSpec{service: "ideogram-v3", action: "reframe-image", isAsync: true, inputFields: inputFieldsFor[ideogramv3.ReframeImageParams](), decode: decodeInto[ideogramv3.ReframeImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.IdeogramV3.ReframeImage.Create(ctx, params.(ideogramv3.ReframeImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.IdeogramV3.ReframeImage.Run(ctx, params.(ideogramv3.ReframeImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.IdeogramV3.ReframeImage.Get(ctx, id, opts...)
 	}}
 }
 
@@ -1095,16 +1352,6 @@ func newWanImageToVideoSpec() actionSpec {
 	}}
 }
 
-func newWanVideoToVideoSpec() actionSpec {
-	return actionSpec{service: "wan", action: "video-to-video", isAsync: true, inputFields: inputFieldsFor[wan.VideoToVideoParams](), decode: decodeInto[wan.VideoToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
-		return client.Wan.VideoToVideo.Create(ctx, params.(wan.VideoToVideoParams), opts...)
-	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
-		return client.Wan.VideoToVideo.Run(ctx, params.(wan.VideoToVideoParams), opts...)
-	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
-		return client.Wan.VideoToVideo.Get(ctx, id, opts...)
-	}}
-}
-
 func newWanSpeechToVideoSpec() actionSpec {
 	return actionSpec{service: "wan", action: "speech-to-video", isAsync: true, inputFields: inputFieldsFor[wan.SpeechToVideoParams](), decode: decodeInto[wan.SpeechToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.Wan.SpeechToVideo.Create(ctx, params.(wan.SpeechToVideoParams), opts...)
@@ -1132,16 +1379,6 @@ func newWanTextToImageSpec() actionSpec {
 		return client.Wan.TextToImage.Run(ctx, params.(wan.TextToImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Wan.TextToImage.Get(ctx, id, opts...)
-	}}
-}
-
-func newWanReferenceToVideoSpec() actionSpec {
-	return actionSpec{service: "wan", action: "reference-to-video", isAsync: true, inputFields: inputFieldsFor[wan.ReferenceToVideoParams](), decode: decodeInto[wan.ReferenceToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
-		return client.Wan.ReferenceToVideo.Create(ctx, params.(wan.ReferenceToVideoParams), opts...)
-	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
-		return client.Wan.ReferenceToVideo.Run(ctx, params.(wan.ReferenceToVideoParams), opts...)
-	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
-		return client.Wan.ReferenceToVideo.Get(ctx, id, opts...)
 	}}
 }
 
@@ -1235,6 +1472,36 @@ func newHailuoImageToVideoSpec() actionSpec {
 	}}
 }
 
+func newHappyHorseTextToVideoSpec() actionSpec {
+	return actionSpec{service: "happyhorse", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[happyhorse.TextToVideoParams](), decode: decodeInto[happyhorse.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.HappyHorse.TextToVideo.Create(ctx, params.(happyhorse.TextToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.HappyHorse.TextToVideo.Run(ctx, params.(happyhorse.TextToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.HappyHorse.TextToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newHappyHorseImageToVideoSpec() actionSpec {
+	return actionSpec{service: "happyhorse", action: "image-to-video", isAsync: true, inputFields: inputFieldsFor[happyhorse.ImageToVideoParams](), decode: decodeInto[happyhorse.ImageToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.HappyHorse.ImageToVideo.Create(ctx, params.(happyhorse.ImageToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.HappyHorse.ImageToVideo.Run(ctx, params.(happyhorse.ImageToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.HappyHorse.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newHappyHorseEditVideoSpec() actionSpec {
+	return actionSpec{service: "happyhorse", action: "edit-video", isAsync: true, inputFields: inputFieldsFor[happyhorse.EditVideoParams](), decode: decodeInto[happyhorse.EditVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.HappyHorse.EditVideo.Create(ctx, params.(happyhorse.EditVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.HappyHorse.EditVideo.Run(ctx, params.(happyhorse.EditVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.HappyHorse.EditVideo.Get(ctx, id, opts...)
+	}}
+}
+
 func newGrokImagineTextToVideoSpec() actionSpec {
 	return actionSpec{service: "grok-imagine", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[grokimagine.TextToVideoParams](), decode: decodeInto[grokimagine.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.GrokImagine.TextToVideo.Create(ctx, params.(grokimagine.TextToVideoParams), opts...)
@@ -1265,13 +1532,13 @@ func newGrokImagineTextToImageSpec() actionSpec {
 	}}
 }
 
-func newGrokImagineImageToImageSpec() actionSpec {
-	return actionSpec{service: "grok-imagine", action: "image-to-image", isAsync: true, inputFields: inputFieldsFor[grokimagine.ImageToImageParams](), decode: decodeInto[grokimagine.ImageToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
-		return client.GrokImagine.ImageToImage.Create(ctx, params.(grokimagine.ImageToImageParams), opts...)
+func newGrokImagineEditImageSpec() actionSpec {
+	return actionSpec{service: "grok-imagine", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[grokimagine.EditImageParams](), decode: decodeInto[grokimagine.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.GrokImagine.EditImage.Create(ctx, params.(grokimagine.EditImageParams), opts...)
 	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
-		return client.GrokImagine.ImageToImage.Run(ctx, params.(grokimagine.ImageToImageParams), opts...)
+		return client.GrokImagine.EditImage.Run(ctx, params.(grokimagine.EditImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
-		return client.GrokImagine.ImageToImage.Get(ctx, id, opts...)
+		return client.GrokImagine.EditImage.Get(ctx, id, opts...)
 	}}
 }
 

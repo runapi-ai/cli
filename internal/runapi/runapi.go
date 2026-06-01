@@ -15,11 +15,13 @@ import (
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
+	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
 	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
+	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
@@ -58,7 +60,7 @@ type Client struct {
 	Seedream *seedream.Client
 	// Runway provides video generation operations.
 	Runway *runway.Client
-	// RunwayAleph provides video-to-video operations.
+	// RunwayAleph provides video editing operations.
 	RunwayAleph *runwayaleph.Client
 	// Kling provides video generation operations.
 	Kling *kling.Client
@@ -66,6 +68,8 @@ type Client struct {
 	FluxKontext *fluxkontext.Client
 	// Flux2 provides Flux 2 image generation operations.
 	Flux2 *flux2.Client
+	// GeminiOmni provides Gemini Omni audio, character, and video operations.
+	GeminiOmni *geminiomni.Client
 	// Qwen2 provides Qwen2 image edit operations.
 	Qwen2 *qwen2.Client
 	// Recraft provides image post-processing operations.
@@ -84,6 +88,8 @@ type Client struct {
 	Luma *luma.Client
 	// Hailuo provides Hailuo video generation operations.
 	Hailuo *hailuo.Client
+	// HappyHorse provides text, image, character-guided text, and edit-video operations.
+	HappyHorse *happyhorse.Client
 	// GptImage provides GPT Image 1.5 image generation and editing operations.
 	GptImage *gptimage.Client
 	// GptImage2 provides GPT Image 2 image generation and editing operations.
@@ -112,7 +118,7 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 	return &Client{
 		Account:      account.NewClientWithHTTP(httpClient),
 		Suno:         suno.NewClientWithHTTP(httpClient),
-		Veo31:      veo31.NewClientWithHTTP(httpClient),
+		Veo31:        veo31.NewClientWithHTTP(httpClient),
 		NanoBanana:   nanobanana.NewClientWithHTTP(httpClient),
 		Imagen4:      imagen4.NewClientWithHTTP(httpClient),
 		Seedance:     seedance.NewClientWithHTTP(httpClient),
@@ -122,6 +128,7 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 		Kling:        kling.NewClientWithHTTP(httpClient),
 		FluxKontext:  fluxkontext.NewClientWithHTTP(httpClient),
 		Flux2:        flux2.NewClientWithHTTP(httpClient),
+		GeminiOmni:   geminiomni.NewClientWithHTTP(httpClient),
 		Qwen2:        qwen2.NewClientWithHTTP(httpClient),
 		Recraft:      recraft.NewClientWithHTTP(httpClient),
 		ZImage:       zimage.NewClientWithHTTP(httpClient),
@@ -131,6 +138,7 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 		Wan:          wan.NewClientWithHTTP(httpClient),
 		Luma:         luma.NewClientWithHTTP(httpClient),
 		Hailuo:       hailuo.NewClientWithHTTP(httpClient),
+		HappyHorse:   happyhorse.NewClientWithHTTP(httpClient),
 		GptImage:     gptimage.NewClientWithHTTP(httpClient),
 		GptImage2:    gptimage2.NewClientWithHTTP(httpClient),
 		Gpt4oImage:   gpt4oimage.NewClientWithHTTP(httpClient),
