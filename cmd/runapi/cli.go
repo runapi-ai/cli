@@ -17,6 +17,7 @@ import (
 	runapi "github.com/runapi-ai/cli/internal/runapi"
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
+	"github.com/runapi-ai/core-sdk/go/files"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
@@ -122,6 +123,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.authCommand())
 	root.AddCommand(c.versionCommand())
 	root.AddCommand(c.accountCommand())
+	root.AddCommand(c.filesCommand())
 	root.AddCommand(c.serviceCommand("suno"))
 	root.AddCommand(c.serviceCommand("veo-3-1"))
 	root.AddCommand(c.serviceCommand("nano-banana"))
@@ -154,6 +156,69 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.listenCommand())
 	root.AddCommand(c.agentCommand())
 	return root
+}
+
+func (c *cli) filesCommand() *cobra.Command {
+	var sourceURL, base64Data, fileName string
+	var urlOnly bool
+	filesCmd := &cobra.Command{Use: "files", Short: "Temporary file upload operations", Args: cobra.NoArgs}
+	create := &cobra.Command{
+		Use:   "create [path]",
+		Short: "Upload a temporary file",
+		Long:  "Upload a temporary file from a local path, a URL, or base64 data. The returned URL expires after one hour.",
+		Args: func(cmd *cobra.Command, args []string) error {
+			sourceCount := 0
+			if len(args) > 0 {
+				sourceCount++
+			}
+			if strings.TrimSpace(sourceURL) != "" {
+				sourceCount++
+			}
+			if strings.TrimSpace(base64Data) != "" {
+				sourceCount++
+			}
+			if sourceCount != 1 {
+				return core.NewError(core.ErrValidation, "exactly one source is required: path, --url, or --base64", 422, "", nil, nil)
+			}
+			if len(args) > 1 {
+				return core.NewError(core.ErrValidation, "only one file path is supported", 422, "", nil, nil)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			params := files.CreateParams{FileName: fileName}
+			switch {
+			case len(args) == 1:
+				params.File = args[0]
+			case strings.TrimSpace(sourceURL) != "":
+				params.Source = files.Source{Type: "url", URL: sourceURL}
+			default:
+				params.Source = files.Source{Type: "base64", Data: base64Data}
+			}
+
+			response, err := client.Files.Create(ctx, params, callOpts...)
+			if err != nil {
+				return err
+			}
+			if urlOnly {
+				_, err = fmt.Fprintln(c.stdout, response.URL)
+				return err
+			}
+			return c.writeJSON(response)
+		},
+	}
+	create.Flags().StringVar(&sourceURL, "url", "", "Remote file URL source.")
+	create.Flags().StringVar(&base64Data, "base64", "", "Base64 encoded file data source.")
+	create.Flags().StringVar(&fileName, "file-name", "", "Optional file name.")
+	create.Flags().BoolVar(&urlOnly, "url-only", false, "Print only the uploaded file URL.")
+	filesCmd.AddCommand(create)
+	return filesCmd
 }
 
 func (c *cli) versionCommand() *cobra.Command {

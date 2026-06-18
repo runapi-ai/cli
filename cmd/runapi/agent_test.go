@@ -82,7 +82,7 @@ func TestInstallSkillWritesFiles(t *testing.T) {
 	archive := buildSkillTarball(t, map[string]string{
 		"cli-skill-9.9.9/skills/runapi-cli/SKILL.md":            "# skill content\n",
 		"cli-skill-9.9.9/skills/runapi-cli/references/notes.md": "notes\n",
-		"cli-skill-9.9.9/README.md":                      "ignored\n",
+		"cli-skill-9.9.9/README.md":                             "ignored\n",
 	})
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

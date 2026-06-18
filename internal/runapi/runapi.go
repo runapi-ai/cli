@@ -10,7 +10,7 @@
 package runapi
 
 import (
-	"github.com/runapi-ai/cli/internal/account"
+	"github.com/runapi-ai/core-sdk/go/base"
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
@@ -43,66 +43,77 @@ import (
 )
 
 // Client is the aggregate RunAPI client combining all services.
+// All sub-clients share a single HTTP transport, so [option.ClientOption] values
+// (API key, base URL, timeouts) only need to be set once via [NewClient].
 type Client struct {
-	// Account provides account info and balance operations.
-	Account *account.Client
-	// Suno provides music generation operations.
+	// Base provides the Universal Resources (Files, Account) on every client.
+	base.Base
+	// Suno creates and manipulates music: text-to-music, extend, cover, remix,
+	// stem separation, lyrics, MIDI, sound effects, persona voices, and more.
 	Suno *suno.Client
-	// Veo31 provides Veo 3.1 video operations.
+	// Veo31 generates, extends, and upscales video with Veo 3.1 models.
 	Veo31 *veo31.Client
-	// NanoBanana provides image generation operations.
+	// NanoBanana generates and edits images with Nano Banana models.
 	NanoBanana *nanobanana.Client
-	// Imagen4 provides Imagen 4 image generation operations.
+	// Imagen4 generates images and remixes existing ones with Imagen 4 models.
 	Imagen4 *imagen4.Client
-	// Seedance provides video generation operations.
+	// Seedance generates video from text or image prompts with Seedance models.
 	Seedance *seedance.Client
-	// Seedream provides image generation operations.
+	// Seedream generates images and applies prompt-guided edits with Seedream models.
 	Seedream *seedream.Client
-	// Runway provides video generation operations.
+	// Runway generates and extends video with Runway Gen-4 models.
 	Runway *runway.Client
-	// RunwayAleph provides video editing operations.
+	// RunwayAleph edits existing video with Runway Aleph models.
 	RunwayAleph *runwayaleph.Client
-	// Kling provides video generation operations.
+	// Kling generates video from text or images and supports AI avatars and
+	// motion control with Kling models.
 	Kling *kling.Client
-	// FluxKontext provides Flux Kontext image generation operations.
+	// FluxKontext generates images with Flux Kontext models.
 	FluxKontext *fluxkontext.Client
-	// Flux2 provides Flux 2 image generation operations.
+	// Flux2 generates images and remixes existing ones with Flux 2 models.
 	Flux2 *flux2.Client
-	// GeminiOmni provides Gemini Omni audio, character, and video operations.
+	// GeminiOmni creates audio, character voices, and video with Gemini models.
 	GeminiOmni *geminiomni.Client
-	// Qwen2 provides Qwen2 image edit operations.
+	// Qwen2 generates, remixes, and edits images with Qwen 2 models.
 	Qwen2 *qwen2.Client
-	// Recraft provides image post-processing operations.
+	// Recraft upscales images and removes backgrounds using Recraft models.
 	Recraft *recraft.Client
-	// ZImage provides Z-Image text-to-image operations.
+	// ZImage generates images from text with Z-Image models.
 	ZImage *zimage.Client
-	// IdeogramV3 provides Ideogram V3 image generation operations.
+	// IdeogramV3 generates, edits, remixes, and reframes images with Ideogram V3 models.
 	IdeogramV3 *ideogramv3.Client
-	// Elevenlabs provides speech and audio operations.
+	// Elevenlabs synthesizes speech, dialogue, and sound effects, and performs
+	// speech-to-text transcription and audio isolation with ElevenLabs models.
 	Elevenlabs *elevenlabs.Client
-	// InfiniteTalk provides lip-sync video operations.
+	// InfiniteTalk generates lip-synced video from an audio track and a face image.
 	InfiniteTalk *infinitetalk.Client
-	// Wan provides Wan video and image generation operations.
+	// Wan generates video, images, and animations from text, images, or speech
+	// with Wan models.
 	Wan *wan.Client
-	// Luma provides video modification operations.
+	// Luma modifies existing video using Luma models.
 	Luma *luma.Client
-	// Hailuo provides Hailuo video generation operations.
+	// Hailuo generates video from text or images with Hailuo models.
 	Hailuo *hailuo.Client
-	// HappyHorse provides text, image, character-guided text, and edit-video operations.
+	// HappyHorse generates video from text, images, or character prompts, and
+	// edits existing video with HappyHorse models.
 	HappyHorse *happyhorse.Client
-	// GptImage provides GPT Image 1.5 image generation and editing operations.
+	// GptImage generates and edits images with GPT Image 1.5 models.
 	GptImage *gptimage.Client
-	// GptImage2 provides GPT Image 2 image generation and editing operations.
+	// GptImage2 generates and edits images with GPT Image 2 models.
 	GptImage2 *gptimage2.Client
-	// Gpt4oImage provides Gpt4o Image generation operations.
+	// Gpt4oImage generates images with GPT-4o Image models.
 	Gpt4oImage *gpt4oimage.Client
-	// GrokImagine provides Grok-Imagine multimodal generation operations.
+	// GrokImagine generates video and images, edits images, extends and
+	// upscales outputs with Grok-Imagine models.
 	GrokImagine *grokimagine.Client
-	// Topaz provides image and video upscale operations.
+	// Topaz upscales images and video to higher resolutions using Topaz models.
 	Topaz *topaz.Client
 }
 
 // NewClient creates an aggregate client with a shared HTTP transport.
+// All service sub-clients inherit the resolved options (API key, base URL,
+// timeouts, retry policy). If no API key option is provided, the RUNAPI_API_KEY
+// environment variable is used.
 func NewClient(opts ...option.ClientOption) (*Client, error) {
 	resolved, err := option.ResolveClientOptions(opts...)
 	if err != nil {
@@ -116,7 +127,7 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		Account:      account.NewClientWithHTTP(httpClient),
+		Base:         base.New(httpClient),
 		Suno:         suno.NewClientWithHTTP(httpClient),
 		Veo31:        veo31.NewClientWithHTTP(httpClient),
 		NanoBanana:   nanobanana.NewClientWithHTTP(httpClient),
