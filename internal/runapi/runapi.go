@@ -10,15 +10,18 @@
 package runapi
 
 import (
+	"context"
+
 	"github.com/runapi-ai/core-sdk/go/base"
 	"github.com/runapi-ai/core-sdk/go/core"
+	"github.com/runapi-ai/core-sdk/go/option"
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
-	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
+	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
@@ -28,11 +31,10 @@ import (
 	"github.com/runapi-ai/kling-sdk/go/kling"
 	"github.com/runapi-ai/luma-sdk/go/luma"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
-	"github.com/runapi-ai/core-sdk/go/option"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
-	"github.com/runapi-ai/runway-sdk/go/runway"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
+	"github.com/runapi-ai/runway-sdk/go/runway"
 	"github.com/runapi-ai/seedance-sdk/go/seedance"
 	"github.com/runapi-ai/seedream-sdk/go/seedream"
 	"github.com/runapi-ai/suno-sdk/go/suno"
@@ -46,6 +48,8 @@ import (
 // All sub-clients share a single HTTP transport, so [option.ClientOption] values
 // (API key, base URL, timeouts) only need to be set once via [NewClient].
 type Client struct {
+	http core.HTTPClient
+
 	// Base provides the Universal Resources (Files, Account) on every client.
 	base.Base
 	// Suno creates and manipulates music: text-to-music, extend, cover, remix,
@@ -126,7 +130,13 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	return NewClientWithHTTP(httpClient), nil
+}
+
+// NewClientWithHTTP creates an aggregate client with a pre-configured HTTP transport.
+func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 	return &Client{
+		http:         httpClient,
 		Base:         base.New(httpClient),
 		Suno:         suno.NewClientWithHTTP(httpClient),
 		Veo31:        veo31.NewClientWithHTTP(httpClient),
@@ -155,5 +165,10 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 		Gpt4oImage:   gpt4oimage.NewClientWithHTTP(httpClient),
 		GrokImagine:  grokimagine.NewClientWithHTTP(httpClient),
 		Topaz:        topaz.NewClientWithHTTP(httpClient),
-	}, nil
+	}
+}
+
+func (c *Client) CreateTaskRaw(ctx context.Context, path string, body any, opts ...option.RequestOption) (*core.TaskCreateResponse, error) {
+	requestOptions, _ := option.ResolveRequestOptions(opts...)
+	return core.PostJSON[core.TaskCreateResponse](ctx, c.http, path, body, requestOptions)
 }

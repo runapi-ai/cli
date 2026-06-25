@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,14 +17,15 @@ import (
 
 	runapi "github.com/runapi-ai/cli/internal/runapi"
 	"github.com/runapi-ai/core-sdk/go/core"
-	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/core-sdk/go/files"
+	"github.com/runapi-ai/core-sdk/go/option"
+	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
-	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
+	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
@@ -33,11 +35,10 @@ import (
 	"github.com/runapi-ai/kling-sdk/go/kling"
 	"github.com/runapi-ai/luma-sdk/go/luma"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
-	"github.com/runapi-ai/core-sdk/go/option"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
-	"github.com/runapi-ai/runway-sdk/go/runway"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
+	"github.com/runapi-ai/runway-sdk/go/runway"
 	"github.com/runapi-ai/seedance-sdk/go/seedance"
 	"github.com/runapi-ai/seedream-sdk/go/seedream"
 	"github.com/runapi-ai/suno-sdk/go/suno"
@@ -269,15 +270,54 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 			long += "\n\n" + inputFields
 		}
 		actionCmd := &cobra.Command{Use: spec.action, Short: describeAction(spec), Long: long, Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, args []string) error {
-			params, err := c.decodeInput(spec, input, inputFile)
+			payload, err := c.readInput(input, inputFile)
 			if err != nil {
 				return err
 			}
-			client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+			if _, err := spec.decode(payload); err != nil {
+				return err
+			}
+			var client *runapi.Client
+			var callOpts []option.RequestOption
+			var ctx context.Context
+			var cancel context.CancelFunc
+			defer func() {
+				if cancel != nil {
+					cancel()
+				}
+			}()
+			ensureClient := func() error {
+				if client != nil {
+					return nil
+				}
+				var err error
+				client, callOpts, ctx, cancel, err = c.clientForCommand(cmd)
+				return err
+			}
+			uploadFile := func(value string) (string, error) {
+				if err := ensureClient(); err != nil {
+					return "", err
+				}
+				response, err := client.Files.Create(ctx, files.CreateParams{File: value}, callOpts...)
+				if err != nil {
+					return "", err
+				}
+				return response.URL, nil
+			}
+
+			mediaFields := mediaInputFieldsForSpec(spec)
+			payload, err = c.autoUploadMediaInputs(mediaFields, payload, uploadFile)
 			if err != nil {
 				return err
 			}
-			defer cancel()
+
+			params, err := spec.decode(payload)
+			if err != nil {
+				return err
+			}
+			if err := ensureClient(); err != nil {
+				return err
+			}
 
 			if !spec.isAsync {
 				response, err := spec.run(ctx, client, params, callOpts)
@@ -288,14 +328,14 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 			}
 
 			if c.async {
-				response, err := spec.create(ctx, client, params, callOpts)
+				response, err := c.createTask(ctx, spec, client, params, payload, mediaFields, callOpts)
 				if err != nil {
 					return err
 				}
 				return c.writeJSON(response)
 			}
 
-			created, err := spec.create(ctx, client, params, callOpts)
+			created, err := c.createTask(ctx, spec, client, params, payload, mediaFields, callOpts)
 			if err != nil {
 				return err
 			}
@@ -311,6 +351,38 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 		serviceCmd.AddCommand(actionCmd)
 	}
 	return serviceCmd
+}
+
+func (c *cli) createTask(ctx context.Context, spec actionSpec, client *runapi.Client, params any, payload []byte, mediaFields []string, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+	if !mediaFieldsContainJSONNull(mediaFields, payload) {
+		return spec.create(ctx, client, params, opts)
+	}
+
+	path, err := validateCreateParamsAndPath(ctx, spec, params, opts)
+	if err != nil {
+		return nil, err
+	}
+	body := core.CompactParams(params)
+	overlayRawMediaFieldsWithNull(body, mediaFields, payload)
+	return client.CreateTaskRaw(ctx, path, body, opts...)
+}
+
+type createValidationHTTPClient struct {
+	path string
+}
+
+func (c *createValidationHTTPClient) Request(_ context.Context, _ string, path string, _ *core.HTTPRequestOptions) (json.RawMessage, error) {
+	c.path = path
+	return json.RawMessage(`{"id":"validation","status":"processing"}`), nil
+}
+
+func validateCreateParamsAndPath(ctx context.Context, spec actionSpec, params any, opts []option.RequestOption) (string, error) {
+	stub := &createValidationHTTPClient{}
+	_, err := spec.create(ctx, runapi.NewClientWithHTTP(stub), params, opts)
+	if err != nil {
+		return "", err
+	}
+	return stub.path, nil
 }
 
 func (c *cli) getCommand() *cobra.Command {
@@ -399,6 +471,180 @@ func (c *cli) decodeInput(spec actionSpec, input, inputFile string) (any, error)
 		return nil, err
 	}
 	return spec.decode(payload)
+}
+
+func mediaInputFieldsForSpec(spec actionSpec) []string {
+	value, err := spec.decode([]byte(`{}`))
+	if err != nil || value == nil {
+		return nil
+	}
+	fields := collectJSONFields(reflect.TypeOf(value))
+	mediaFields := make([]string, 0)
+	for _, field := range fields {
+		if isMediaURLInputField(field) {
+			mediaFields = append(mediaFields, field.name)
+		}
+	}
+	return mediaFields
+}
+
+// autoUploadMediaInputs uploads any local file paths found in the spec's media
+// URL fields and rewrites the payload to carry the returned hosted URLs. It
+// decodes the payload once; upload lazily creates the client only when a local
+// path is actually found, and the original payload bytes are returned untouched
+// when nothing needs uploading.
+func (c *cli) autoUploadMediaInputs(mediaFields []string, payload []byte, upload func(value string) (string, error)) ([]byte, error) {
+	object, ok := decodeRawJSONObject(payload)
+	if !ok {
+		return payload, nil
+	}
+	changed := false
+	for _, field := range mediaFields {
+		raw, ok := object[field]
+		if !ok {
+			continue
+		}
+		next, fieldChanged, err := c.autoUploadMediaValue(field, raw, upload)
+		if err != nil {
+			return nil, err
+		}
+		if fieldChanged {
+			object[field] = next
+			changed = true
+		}
+	}
+	if !changed {
+		return payload, nil
+	}
+	next, err := json.Marshal(object)
+	if err != nil {
+		return nil, core.NewError(core.ErrValidation, "failed to encode uploaded input", 422, "", nil, err)
+	}
+	return next, nil
+}
+
+func mediaFieldsContainJSONNull(mediaFields []string, payload []byte) bool {
+	object, ok := decodeRawJSONObject(payload)
+	if !ok {
+		return false
+	}
+	for _, field := range mediaFields {
+		raw, ok := object[field]
+		if ok && rawContainsJSONNull(raw) {
+			return true
+		}
+	}
+	return false
+}
+
+func overlayRawMediaFieldsWithNull(body map[string]any, mediaFields []string, payload []byte) {
+	object, ok := decodeRawJSONObject(payload)
+	if !ok {
+		return
+	}
+	for _, field := range mediaFields {
+		raw, ok := object[field]
+		if ok && rawContainsJSONNull(raw) {
+			body[field] = raw
+		}
+	}
+}
+
+func rawContainsJSONNull(raw json.RawMessage) bool {
+	trimmed := bytes.TrimSpace(raw)
+	if bytes.Equal(trimmed, []byte("null")) {
+		return true
+	}
+
+	var values []json.RawMessage
+	if err := json.Unmarshal(raw, &values); err != nil {
+		return false
+	}
+	for _, value := range values {
+		if bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *cli) autoUploadMediaValue(field string, raw json.RawMessage, upload func(value string) (string, error)) (json.RawMessage, bool, error) {
+	var single *string
+	if err := json.Unmarshal(raw, &single); err == nil && single != nil {
+		next, changed, err := c.autoUploadMediaString(field, *single, upload)
+		if err != nil || !changed {
+			return raw, false, err
+		}
+		encoded, err := json.Marshal(next)
+		return encoded, true, err
+	}
+
+	var values []*string
+	if err := json.Unmarshal(raw, &values); err == nil {
+		changed := false
+		for i, value := range values {
+			if value == nil {
+				continue
+			}
+			fieldRef := fmt.Sprintf("%s[%d]", field, i)
+			next, valueChanged, err := c.autoUploadMediaString(fieldRef, *value, upload)
+			if err != nil {
+				return raw, false, err
+			}
+			if valueChanged {
+				values[i] = &next
+				changed = true
+			}
+		}
+		if !changed {
+			return raw, false, nil
+		}
+		encoded, err := json.Marshal(values)
+		return encoded, true, err
+	}
+
+	return raw, false, nil
+}
+
+func (c *cli) autoUploadMediaString(fieldRef, value string, upload func(value string) (string, error)) (string, bool, error) {
+	if !isReadableRegularLocalPath(value) {
+		return value, false, nil
+	}
+	url, err := upload(value)
+	if err != nil {
+		return value, false, err
+	}
+	c.logf("uploaded %s from %s", fieldRef, value)
+	return url, true, nil
+}
+
+func decodeRawJSONObject(payload []byte) (map[string]json.RawMessage, bool) {
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &object); err != nil || object == nil {
+		return nil, false
+	}
+	return object, true
+}
+
+func isReadableRegularLocalPath(value string) bool {
+	if value == "" || isHTTPURL(value) {
+		return false
+	}
+	info, err := os.Stat(value)
+	if err != nil || !info.Mode().IsRegular() {
+		return false
+	}
+	file, err := os.Open(value)
+	if err != nil {
+		return false
+	}
+	_ = file.Close()
+	return true
+}
+
+func isHTTPURL(value string) bool {
+	lower := strings.ToLower(value)
+	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
 }
 
 func (c *cli) readInput(input, inputFile string) ([]byte, error) {
@@ -786,6 +1032,44 @@ func collectJSONFields(t reflect.Type) []jsonField {
 		fields = append(fields, jsonField{name: name, typ: typ, help: help})
 	}
 	return fields
+}
+
+func isMediaURLInputField(field jsonField) bool {
+	if !isStringURLField(field) || isNonMediaURLField(field.name, field.help) {
+		return false
+	}
+	name := strings.ToLower(field.name)
+	help := strings.ToLower(field.help)
+	for _, token := range []string{"image", "audio", "video", "media", "file", "mask", "upload", "voice", "recording"} {
+		if strings.Contains(name, token) || strings.Contains(help, token) {
+			return true
+		}
+	}
+	return strings.HasPrefix(name, "source_") || strings.HasPrefix(name, "reference_")
+}
+
+func isStringURLField(field jsonField) bool {
+	if !(strings.HasSuffix(field.name, "_url") || strings.HasSuffix(field.name, "_urls") || strings.HasSuffix(field.name, "_url_list")) {
+		return false
+	}
+	switch field.typ {
+	case "string", "[]string", "[2]string":
+		return true
+	default:
+		return false
+	}
+}
+
+func isNonMediaURLField(name, help string) bool {
+	lowerName := strings.ToLower(name)
+	lowerHelp := strings.ToLower(help)
+	nonMediaTokens := []string{"callback", "webhook", "completion callback", "notification", "origin", "result", "stream", "cdn"}
+	for _, token := range nonMediaTokens {
+		if strings.Contains(lowerName, token) || strings.Contains(lowerHelp, token) {
+			return true
+		}
+	}
+	return false
 }
 
 func jsonTypeName(t reflect.Type) string {

@@ -78,6 +78,15 @@ TASK_ID=$(runapi suno generate --async --input-file song.json | jq -r .id)
 runapi wait "$TASK_ID" --service suno --action generate
 ```
 
+For top-level model media URL fields, readable local file paths are accepted directly. The CLI uploads them before submitting the request and keeps `http://` or `https://` values unchanged:
+
+```bash
+runapi gpt-image edit-image --input \
+  '{"model":"gpt-image-1.5","prompt":"remove the background","source_image_urls":["./image.png"],"aspect_ratio":"1:1","quality":"medium"}'
+```
+
+Use `runapi files create` when you need a temporary URL to reuse, or when the source is a remote URL or Base64 data.
+
 `runapi` writes JSON to stdout and progress lines to stderr, so it composes naturally with `jq` and any pipeline:
 
 ```bash
