@@ -76,24 +76,27 @@ func TestServiceCommandUploadsLocalMediaInputsBeforeCreate(t *testing.T) {
 	}
 
 	var sawUpload, sawCreate bool
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == "POST" && r.URL.Path == "/api/v1/files":
+		case r.Method == "POST" && r.URL.Path == "/api/v1/files/prepare":
+			var body map[string]any
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				t.Fatal(err)
+			}
+			if body["filename"] != "input.png" {
+				t.Fatalf("unexpected upload filename: %v", body["filename"])
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"signed_id":  "signed-blob-id",
+				"upload_url": server.URL + "/put-target",
+				"headers":    map[string]string{"Content-Type": "application/octet-stream"},
+			})
+		case r.Method == "PUT" && r.URL.Path == "/put-target":
 			sawUpload = true
-			if got := r.Header.Get("Content-Type"); !strings.Contains(got, "multipart/form-data") {
-				t.Fatalf("expected multipart upload, got %q", got)
-			}
-			if err := r.ParseMultipartForm(1024); err != nil {
-				t.Fatal(err)
-			}
-			file, header, err := r.FormFile("file")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer file.Close()
-			if header.Filename != "input.png" {
-				t.Fatalf("unexpected upload filename: %s", header.Filename)
-			}
+			w.WriteHeader(http.StatusOK)
+		case r.Method == "POST" && r.URL.Path == "/api/v1/files/confirm":
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"file_name":  "input.png",
@@ -152,9 +155,19 @@ func TestServiceCommandPreservesNullMediaInputsWhenUploadingLocalPaths(t *testin
 	}
 
 	var createBody map[string]any
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == "POST" && r.URL.Path == "/api/v1/files":
+		case r.Method == "POST" && r.URL.Path == "/api/v1/files/prepare":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"signed_id":  "signed-blob-id",
+				"upload_url": server.URL + "/put-target",
+				"headers":    map[string]string{"Content-Type": "application/octet-stream"},
+			})
+		case r.Method == "PUT" && r.URL.Path == "/put-target":
+			w.WriteHeader(http.StatusOK)
+		case r.Method == "POST" && r.URL.Path == "/api/v1/files/confirm":
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"file_name":  "input.png",
@@ -266,7 +279,7 @@ func TestServiceCommandStopsWhenMediaUploadFails(t *testing.T) {
 	var sawCreate bool
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/api/v1/files":
+		case "/api/v1/files/prepare":
 			http.Error(w, `{"error":{"message":"upload failed"}}`, http.StatusUnprocessableEntity)
 		case "/api/v1/gpt_image/edit_image":
 			sawCreate = true

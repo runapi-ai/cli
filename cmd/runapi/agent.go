@@ -4,16 +4,18 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
-	runapi "github.com/runapi-ai/cli/internal/runapi"
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/spf13/cobra"
 )
@@ -33,6 +35,11 @@ const (
 var skillMaxExtractBytes int64 = 50 * 1024 * 1024
 
 func setSkillMaxExtractBytesForTest(n int64) { skillMaxExtractBytes = n }
+
+type skillArchive struct {
+	tag  string
+	body io.ReadCloser
+}
 
 // skillTargets maps a built-in target name to a path under the user's HOME
 // where the skill directory should be created. The skill directory itself
@@ -83,7 +90,7 @@ func (c *cli) agentInstallSkillCommand() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&o.target, "target", "", "Built-in target: "+strings.Join(supportedTargetNames(), ", "))
 	cmd.Flags().StringVar(&o.targetDir, "target-dir", "", "Custom install directory (overrides --target). The skill is placed in <dir>/cli.")
-	cmd.Flags().StringVar(&o.version, "version", "", "Skill tag to install (e.g. v0.1.0). Default: matches CLI version.")
+	cmd.Flags().StringVar(&o.version, "version", "", "Skill tag to install (e.g. v0.1.0). Default: latest stable skill tag.")
 	cmd.Flags().StringVar(&o.source, "source", defaultSkillSourceRepo, "Source GitHub repo")
 	cmd.Flags().BoolVar(&o.force, "force", false, "Overwrite an existing skill directory")
 	return cmd
@@ -142,11 +149,6 @@ func (c *cli) runInstallSkill(ctx context.Context, o installSkillOpts) error {
 		return err
 	}
 
-	tag, err := resolveSkillTag(o.version)
-	if err != nil {
-		return err
-	}
-
 	source := strings.TrimSpace(o.source)
 	if source == "" {
 		source = defaultSkillSourceRepo
@@ -162,29 +164,29 @@ func (c *cli) runInstallSkill(ctx context.Context, o installSkillOpts) error {
 				fmt.Sprintf("skill already installed at %s (pass --force to overwrite)", destDir),
 				409, "", nil, nil)
 		}
-	} else if err := os.RemoveAll(destDir); err != nil {
+	}
+
+	tag, err := c.resolveSkillTag(ctx, source, o.version)
+	if err != nil {
 		return err
+	}
+
+	archive, err := c.resolveSkillArchive(ctx, source, tag)
+	if err != nil {
+		return err
+	}
+	defer archive.body.Close()
+
+	if o.force {
+		if err := os.RemoveAll(destDir); err != nil {
+			return err
+		}
 	}
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return err
 	}
 
-	archiveURL := fmt.Sprintf("https://github.com/%s/archive/refs/tags/%s.tar.gz", source, tag)
-	if c.archiveBaseURL != "" {
-		archiveURL = fmt.Sprintf("%s/%s/archive/refs/tags/%s.tar.gz", strings.TrimRight(c.archiveBaseURL, "/"), source, tag)
-	}
-	if err := assertSecureArchiveURL(archiveURL); err != nil {
-		return err
-	}
-
-	c.logf("downloading %s", archiveURL)
-	body, err := httpDownload(ctx, c.httpClient, archiveURL)
-	if err != nil {
-		return err
-	}
-	defer body.Close()
-
-	files, err := extractSkillFromTarball(body, destDir)
+	files, err := extractSkillFromTarball(archive.body, destDir)
 	if err != nil {
 		return err
 	}
@@ -195,10 +197,242 @@ func (c *cli) runInstallSkill(ctx context.Context, o installSkillOpts) error {
 		"skill":      skillName,
 		"target":     o.target,
 		"target_dir": destDir,
-		"version":    tag,
+		"version":    archive.tag,
 		"source":     source,
 		"files":      files,
 	})
+}
+
+func (c *cli) resolveSkillTag(ctx context.Context, source, version string) (string, error) {
+	v := strings.TrimSpace(version)
+	if v != "" {
+		return normalizeSkillTag(v)
+	}
+	return c.latestSkillTag(ctx, source)
+}
+
+func (c *cli) resolveSkillArchive(ctx context.Context, source, tag string) (*skillArchive, error) {
+	body, err := c.downloadSkillArchive(ctx, source, tag)
+	if err != nil {
+		return nil, err
+	}
+	return &skillArchive{tag: tag, body: body}, nil
+}
+
+func (c *cli) downloadSkillArchive(ctx context.Context, source, tag string) (io.ReadCloser, error) {
+	archiveURL := c.skillArchiveURL(source, tag)
+	if err := assertSecureArchiveURL(archiveURL); err != nil {
+		return nil, err
+	}
+
+	c.logf("downloading %s", archiveURL)
+	return httpDownload(ctx, c.httpClient, archiveURL, "application/octet-stream")
+}
+
+func (c *cli) skillArchiveURL(source, tag string) string {
+	if c.archiveBaseURL != "" {
+		return fmt.Sprintf("%s/%s/archive/refs/tags/%s.tar.gz", strings.TrimRight(c.archiveBaseURL, "/"), source, tag)
+	}
+	return fmt.Sprintf("https://github.com/%s/archive/refs/tags/%s.tar.gz", source, tag)
+}
+
+func (c *cli) latestSkillTag(ctx context.Context, source string) (string, error) {
+	tags, err := c.availableSkillTags(ctx, source)
+	if err != nil {
+		return "", err
+	}
+	return tags[0], nil
+}
+
+func (c *cli) availableSkillTags(ctx context.Context, source string) ([]string, error) {
+	tagsURL := c.skillTagsURL(source)
+	if err := assertSecureArchiveURL(tagsURL); err != nil {
+		return nil, err
+	}
+	body, err := httpDownload(ctx, c.httpClient, tagsURL, "application/vnd.github+json")
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	tags, err := decodeSkillTags(body)
+	if err != nil {
+		return nil, err
+	}
+	if len(tags) == 0 {
+		return nil, core.NewError(core.ErrNotFound, fmt.Sprintf("no release tags found for %s", source), 404, "", nil, nil)
+	}
+	sort.Slice(tags, func(i, j int) bool {
+		return compareSkillTags(tags[i], tags[j]) > 0
+	})
+	return tags, nil
+}
+
+func (c *cli) skillTagsURL(source string) string {
+	if c.archiveBaseURL != "" {
+		return fmt.Sprintf("%s/repos/%s/tags", strings.TrimRight(c.archiveBaseURL, "/"), source)
+	}
+	return fmt.Sprintf("https://api.github.com/repos/%s/tags?per_page=100", source)
+}
+
+func decodeSkillTags(r io.Reader) ([]string, error) {
+	var payload []struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r).Decode(&payload); err != nil {
+		return nil, err
+	}
+
+	seen := map[string]bool{}
+	tags := make([]string, 0, len(payload))
+	for _, item := range payload {
+		tag := strings.TrimSpace(item.Name)
+		version, ok := parseSkillTagVersion(tag)
+		if !ok || version.prerelease != "" {
+			continue
+		}
+		if seen[tag] {
+			continue
+		}
+		seen[tag] = true
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+type skillTagVersion struct {
+	major      int
+	minor      int
+	patch      int
+	prerelease string
+}
+
+func parseSkillTagVersion(tag string) (skillTagVersion, bool) {
+	if !strings.HasPrefix(tag, "v") {
+		return skillTagVersion{}, false
+	}
+	coreVersion, prerelease, hasPrerelease := strings.Cut(strings.TrimPrefix(tag, "v"), "-")
+	parts := strings.Split(coreVersion, ".")
+	if len(parts) != 3 {
+		return skillTagVersion{}, false
+	}
+
+	major, ok := parseSemverNumber(parts[0])
+	if !ok {
+		return skillTagVersion{}, false
+	}
+	minor, ok := parseSemverNumber(parts[1])
+	if !ok {
+		return skillTagVersion{}, false
+	}
+	patch, ok := parseSemverNumber(parts[2])
+	if !ok {
+		return skillTagVersion{}, false
+	}
+	if hasPrerelease && !isSafePrerelease(prerelease) {
+		return skillTagVersion{}, false
+	}
+	return skillTagVersion{major: major, minor: minor, patch: patch, prerelease: prerelease}, true
+}
+
+func parseSemverNumber(s string) (int, bool) {
+	if s == "" {
+		return 0, false
+	}
+	if len(s) > 1 && s[0] == '0' {
+		return 0, false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return 0, false
+		}
+	}
+	n, err := strconv.Atoi(s)
+	return n, err == nil
+}
+
+func isSafePrerelease(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, part := range strings.Split(s, ".") {
+		if part == "" {
+			return false
+		}
+		for _, r := range part {
+			ok := (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-'
+			if !ok {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func compareSkillTags(a, b string) int {
+	av, aOK := parseSkillTagVersion(a)
+	bv, bOK := parseSkillTagVersion(b)
+	switch {
+	case aOK && !bOK:
+		return 1
+	case !aOK && bOK:
+		return -1
+	case !aOK && !bOK:
+		return strings.Compare(a, b)
+	}
+
+	for _, pair := range [][2]int{{av.major, bv.major}, {av.minor, bv.minor}, {av.patch, bv.patch}} {
+		if pair[0] > pair[1] {
+			return 1
+		}
+		if pair[0] < pair[1] {
+			return -1
+		}
+	}
+	return comparePrerelease(av.prerelease, bv.prerelease)
+}
+
+func comparePrerelease(a, b string) int {
+	if a == b {
+		return 0
+	}
+	if a == "" {
+		return 1
+	}
+	if b == "" {
+		return -1
+	}
+
+	aParts := strings.Split(a, ".")
+	bParts := strings.Split(b, ".")
+	for i := 0; i < len(aParts) && i < len(bParts); i++ {
+		aNum, aIsNum := parseSemverNumber(aParts[i])
+		bNum, bIsNum := parseSemverNumber(bParts[i])
+		switch {
+		case aIsNum && bIsNum:
+			if aNum > bNum {
+				return 1
+			}
+			if aNum < bNum {
+				return -1
+			}
+		case aIsNum:
+			return -1
+		case bIsNum:
+			return 1
+		default:
+			if cmp := strings.Compare(aParts[i], bParts[i]); cmp != 0 {
+				return cmp
+			}
+		}
+	}
+	if len(aParts) > len(bParts) {
+		return 1
+	}
+	if len(aParts) < len(bParts) {
+		return -1
+	}
+	return 0
 }
 
 func resolveSkillTargetDir(target, targetDir string) (string, error) {
@@ -223,42 +457,15 @@ func resolveSkillTargetDir(target, targetDir string) (string, error) {
 	return filepath.Join(home, rel), nil
 }
 
-func resolveSkillTag(version string) (string, error) {
+func normalizeSkillTag(version string) (string, error) {
 	v := strings.TrimSpace(version)
-	if v != "" {
-		if !strings.HasPrefix(v, "v") {
-			v = "v" + v
-		}
-		if !isSafeTag(v) {
-			return "", core.NewError(core.ErrValidation, fmt.Sprintf("invalid version %q", version), 422, "", nil, nil)
-		}
-		return v, nil
+	if !strings.HasPrefix(v, "v") {
+		v = "v" + v
 	}
-	if !isReleaseVersion(runapi.Version) {
-		return "", core.NewError(core.ErrValidation,
-			fmt.Sprintf("CLI is a dev build (%q); pass --version <tag> to pin the skill", runapi.Version),
-			422, "", nil, nil)
+	if !isSafeTag(v) {
+		return "", core.NewError(core.ErrValidation, fmt.Sprintf("invalid version %q", version), 422, "", nil, nil)
 	}
-	return "v" + runapi.Version, nil
-}
-
-// isReleaseVersion reports whether v looks like a release SemVer that the
-// skill repos publish as a tag. Rejects:
-//   - the "dev" sentinel from version.go
-//   - empty string
-//   - Go module pseudo versions like "0.0.0-20260520123456-abc1234567ab"
-//     (suffix after "-" starts with a digit, i.e. a timestamp)
-func isReleaseVersion(v string) bool {
-	if v == "" || v == "dev" {
-		return false
-	}
-	if i := strings.Index(v, "-"); i >= 0 {
-		suffix := v[i+1:]
-		if suffix != "" && suffix[0] >= '0' && suffix[0] <= '9' {
-			return false
-		}
-	}
-	return true
+	return v, nil
 }
 
 func expandUserPath(p string) (string, error) {
@@ -339,7 +546,7 @@ func assertSecureArchiveURL(rawURL string) error {
 		422, "", nil, nil)
 }
 
-func httpDownload(ctx context.Context, client *http.Client, rawURL string) (io.ReadCloser, error) {
+func httpDownload(ctx context.Context, client *http.Client, rawURL, accept string) (io.ReadCloser, error) {
 	if client == nil {
 		client = &http.Client{Timeout: skillDownloadTimeout}
 	}
@@ -347,7 +554,9 @@ func httpDownload(ctx context.Context, client *http.Client, rawURL string) (io.R
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Accept", "application/octet-stream")
+	if strings.TrimSpace(accept) != "" {
+		req.Header.Set("Accept", accept)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, core.NewError(core.ErrNetwork, fmt.Sprintf("download failed: %v", err), 0, "", nil, err)

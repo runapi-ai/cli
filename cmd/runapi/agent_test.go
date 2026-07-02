@@ -9,10 +9,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 	"time"
-
-	runapi "github.com/runapi-ai/cli/internal/runapi"
 )
 
 func TestAgentListTargets(t *testing.T) {
@@ -37,28 +37,18 @@ func TestAgentListTargets(t *testing.T) {
 	}
 }
 
-func TestResolveSkillTag(t *testing.T) {
+func TestNormalizeSkillTag(t *testing.T) {
 	cases := []struct {
 		in      string
-		runapiV string
 		want    string
 		wantErr bool
 	}{
 		{in: "v0.1.0", want: "v0.1.0"},
 		{in: "0.1.0", want: "v0.1.0"},
-		{in: "", runapiV: "0.2.0", want: "v0.2.0"},
-		{in: "", runapiV: "1.0.0-rc.1", want: "v1.0.0-rc.1"},
-		{in: "", runapiV: "dev", wantErr: true},
-		{in: "", runapiV: "0.0.0-20260520123456-abc1234567ab", wantErr: true},
 		{in: "../etc", wantErr: true},
 	}
-	prev := runapi.Version
-	defer func() { runapi.Version = prev }()
 	for _, tc := range cases {
-		if tc.runapiV != "" {
-			runapi.Version = tc.runapiV
-		}
-		got, err := resolveSkillTag(tc.in)
+		got, err := normalizeSkillTag(tc.in)
 		if tc.wantErr {
 			if err == nil {
 				t.Fatalf("input %q: expected error, got %q", tc.in, got)
@@ -71,6 +61,36 @@ func TestResolveSkillTag(t *testing.T) {
 		if got != tc.want {
 			t.Fatalf("input %q: want %q, got %q", tc.in, tc.want, got)
 		}
+	}
+}
+
+func TestDecodeSkillTagsKeepsStableReleaseTags(t *testing.T) {
+	tags, err := decodeSkillTags(strings.NewReader(`[
+		{"name":"v0.2.9"},
+		{"name":"v0.2.10"},
+		{"name":"v0.3.0-rc.1"},
+		{"name":"v0.2.10"},
+		{"name":"not-a-release"}
+	]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(tags, ",")
+	want := "v0.2.9,v0.2.10"
+	if got != want {
+		t.Fatalf("want %s, got %s", want, got)
+	}
+}
+
+func TestCompareSkillTagsSortsSemver(t *testing.T) {
+	tags := []string{"v0.2.9", "v0.10.0", "v0.2.10", "v1.0.0"}
+	sort.Slice(tags, func(i, j int) bool {
+		return compareSkillTags(tags[i], tags[j]) > 0
+	})
+	got := strings.Join(tags, ",")
+	want := "v1.0.0,v0.10.0,v0.2.10,v0.2.9"
+	if got != want {
+		t.Fatalf("want %s, got %s", want, got)
 	}
 }
 
@@ -211,6 +231,175 @@ func TestInstallSkillMissingArchive(t *testing.T) {
 	})
 	if rc == 0 {
 		t.Fatalf("expected non-zero exit when archive missing")
+	}
+}
+
+func TestInstallSkillDefaultsToLatestStableTag(t *testing.T) {
+	tmp := t.TempDir()
+	repo := "runapi-ai/cli-skill"
+	latestTag := "v0.2.10"
+	archive := buildSkillTarball(t, map[string]string{
+		"cli-skill-0.2.10/skills/runapi-cli/SKILL.md": "fallback\n",
+	})
+
+	var requested []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requested = append(requested, r.URL.Path)
+		switch r.URL.Path {
+		case "/repos/" + repo + "/tags":
+			if got := r.Header.Get("Accept"); got != "application/vnd.github+json" {
+				http.Error(w, "json accept required", http.StatusUnsupportedMediaType)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`[
+				{"name":"v0.2.7"},
+				{"name":"v0.2.9"},
+				{"name":"v0.2.10"},
+				{"name":"v0.3.0-rc.1"},
+				{"name":"not-a-release"}
+			]`))
+		case "/" + repo + "/archive/refs/tags/" + latestTag + ".tar.gz":
+			if got := r.Header.Get("Accept"); got != "application/octet-stream" {
+				t.Errorf("archive Accept header = %q", got)
+				http.Error(w, "archive accept required", http.StatusUnsupportedMediaType)
+				return
+			}
+			w.Header().Set("Content-Type", "application/gzip")
+			w.Write(archive)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	c, out, errBuf := newTestCLIWithBuffers()
+	c.archiveBaseURL = srv.URL
+	c.httpClient = &http.Client{Timeout: 5 * time.Second}
+
+	rc := c.run([]string{
+		"agent", "install-skill",
+		"--target-dir", tmp,
+		"--source", repo,
+	})
+	if rc != 0 {
+		t.Fatalf("install-skill exit %d stderr=%s", rc, errBuf.String())
+	}
+
+	if data, err := os.ReadFile(filepath.Join(tmp, "runapi-cli", "SKILL.md")); err != nil || string(data) != "fallback\n" {
+		t.Fatalf("expected latest skill, got data=%q err=%v", string(data), err)
+	}
+
+	var payload struct {
+		Version string `json:"version"`
+		Source  string `json:"source"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+		t.Fatalf("decode stdout: %v", err)
+	}
+	if payload.Version != latestTag || payload.Source != repo {
+		t.Fatalf("unexpected payload: %+v", payload)
+	}
+
+	want := []string{
+		"/repos/" + repo + "/tags",
+		"/" + repo + "/archive/refs/tags/" + latestTag + ".tar.gz",
+	}
+	if strings.Join(requested, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("unexpected request sequence:\n%s", strings.Join(requested, "\n"))
+	}
+}
+
+func TestInstallSkillExplicitVersionUsesPinnedTag(t *testing.T) {
+	tmp := t.TempDir()
+	repo := "runapi-ai/cli-skill"
+	tag := "v0.2.11"
+	archive := buildSkillTarball(t, map[string]string{
+		"cli-skill-0.2.11/skills/runapi-cli/SKILL.md": "matching\n",
+	})
+
+	var requested []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requested = append(requested, r.URL.Path)
+		switch r.URL.Path {
+		case "/" + repo + "/archive/refs/tags/" + tag + ".tar.gz":
+			if got := r.Header.Get("Accept"); got != "application/octet-stream" {
+				t.Errorf("archive Accept header = %q", got)
+				http.Error(w, "archive accept required", http.StatusUnsupportedMediaType)
+				return
+			}
+			w.Header().Set("Content-Type", "application/gzip")
+			w.Write(archive)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	c, out, errBuf := newTestCLIWithBuffers()
+	c.archiveBaseURL = srv.URL
+	c.httpClient = &http.Client{Timeout: 5 * time.Second}
+
+	rc := c.run([]string{
+		"agent", "install-skill",
+		"--target-dir", tmp,
+		"--source", repo,
+		"--version", tag,
+	})
+	if rc != 0 {
+		t.Fatalf("install-skill exit %d stderr=%s", rc, errBuf.String())
+	}
+	if data, err := os.ReadFile(filepath.Join(tmp, "runapi-cli", "SKILL.md")); err != nil || string(data) != "matching\n" {
+		t.Fatalf("expected matching skill, got data=%q err=%v", string(data), err)
+	}
+
+	var payload struct {
+		Version string `json:"version"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+		t.Fatalf("decode stdout: %v", err)
+	}
+	if payload.Version != tag {
+		t.Fatalf("expected version %s, got %+v", tag, payload)
+	}
+
+	want := []string{
+		"/" + repo + "/archive/refs/tags/" + tag + ".tar.gz",
+	}
+	if strings.Join(requested, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("unexpected request sequence:\n%s", strings.Join(requested, "\n"))
+	}
+}
+
+func TestInstallSkillExplicitVersionDoesNotFallback(t *testing.T) {
+	tmp := t.TempDir()
+	repo := "runapi-ai/cli-skill"
+	tag := "v0.2.11"
+
+	var requested []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requested = append(requested, r.URL.Path)
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+
+	c, _, _ := newTestCLIWithBuffers()
+	c.archiveBaseURL = srv.URL
+	c.httpClient = &http.Client{Timeout: 5 * time.Second}
+
+	rc := c.run([]string{
+		"agent", "install-skill",
+		"--target-dir", tmp,
+		"--source", repo,
+		"--version", tag,
+	})
+	if rc == 0 {
+		t.Fatalf("expected non-zero exit when explicit archive is missing")
+	}
+
+	want := []string{"/" + repo + "/archive/refs/tags/" + tag + ".tar.gz"}
+	if strings.Join(requested, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("unexpected request sequence:\n%s", strings.Join(requested, "\n"))
 	}
 }
 

@@ -132,7 +132,7 @@ runapi agent install-skill --target hermes    # → ~/.hermes/skills/runapi-cli
 runapi agent list-targets                     # JSON list of supported targets
 ```
 
-The skill content is published at [`runapi-ai/cli-skill`](https://github.com/runapi-ai/cli-skill) and tagged in lockstep with CLI releases. Use `--target-dir <path>` to install into a non-standard location.
+The skill content is published at [`runapi-ai/cli-skill`](https://github.com/runapi-ai/cli-skill). By default, `install-skill` installs the latest stable skill tag. Use `--version <tag>` to pin an exact skill release, or `--target-dir <path>` to install into a non-standard location.
 
 ## Configuration reference
 

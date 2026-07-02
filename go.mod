@@ -3,7 +3,7 @@ module github.com/runapi-ai/cli
 go 1.26
 
 require (
-	github.com/runapi-ai/core-sdk/go v0.2.7
+	github.com/runapi-ai/core-sdk/go v0.2.8
 	github.com/runapi-ai/elevenlabs-sdk/go v0.2.7
 	github.com/runapi-ai/flux-2-sdk/go v0.2.7
 	github.com/runapi-ai/flux-kontext-sdk/go v0.2.7

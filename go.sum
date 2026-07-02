@@ -1,8 +1,8 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/runapi-ai/core-sdk/go v0.2.7 h1:QTEEyPkncn11md1UIbzxBMsniSIoxJWItEMuw5jJ67s=
-github.com/runapi-ai/core-sdk/go v0.2.7/go.mod h1:e5uC8RF6BNkAj1WkOi+nD71mZL+cir+Ia97XUQj+5N0=
+github.com/runapi-ai/core-sdk/go v0.2.8 h1:LS16f+uSipEyxDxi2vv8yCpcGf3iNJ37HVABmH1nzdY=
+github.com/runapi-ai/core-sdk/go v0.2.8/go.mod h1:e5uC8RF6BNkAj1WkOi+nD71mZL+cir+Ia97XUQj+5N0=
 github.com/runapi-ai/elevenlabs-sdk/go v0.2.7 h1:S8r+vcEjob9f1cJKUixxXraM3Ti6UmuTVNZ3luw6MD4=
 github.com/runapi-ai/elevenlabs-sdk/go v0.2.7/go.mod h1:0wCSJZgA3yqeF0BnUu3ULZBrD2HAAfsanJEdgKcJi+M=
 github.com/runapi-ai/flux-2-sdk/go v0.2.7 h1:ZMWin1owevtem8+cbhS4gyssJ3y+ipBB1euVM1PWSR8=

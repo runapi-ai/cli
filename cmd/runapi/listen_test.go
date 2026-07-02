@@ -27,6 +27,26 @@ func TestForwardEventTreatsNon2xxAsError(t *testing.T) {
 	}
 }
 
+func TestNormalizeForwardURLDefaultsLocalhostToHTTP(t *testing.T) {
+	got, err := normalizeForwardURL("localhost:3000/inbound_webhooks/runapi")
+	if err != nil {
+		t.Fatalf("normalizeForwardURL returned error: %v", err)
+	}
+	if got != "http://localhost:3000/inbound_webhooks/runapi" {
+		t.Fatalf("expected http localhost URL, got %q", got)
+	}
+}
+
+func TestNormalizeForwardURLPreservesExplicitScheme(t *testing.T) {
+	got, err := normalizeForwardURL("https://your-domain.com/webhooks/runapi")
+	if err != nil {
+		t.Fatalf("normalizeForwardURL returned error: %v", err)
+	}
+	if got != "https://your-domain.com/webhooks/runapi" {
+		t.Fatalf("expected explicit scheme to be preserved, got %q", got)
+	}
+}
+
 func TestAckEventPostsAckEndpoint(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

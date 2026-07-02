@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -42,7 +43,7 @@ func (c *cli) listenCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "listen",
 		Short: "Receive RunAPI callbacks locally",
-		Long:  "Forward task callbacks to a local URL. Only tasks created without a callback_url are delivered.",
+		Long:  "Forward task callbacks to a local URL. Tasks with a callback_url are also copied to the listener while still being delivered to that URL.",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg, _ := loadConfig()
@@ -50,6 +51,10 @@ func (c *cli) listenCommand() *cobra.Command {
 			baseURL := firstNonEmpty(strings.TrimSpace(c.baseURLFlag), strings.TrimSpace(os.Getenv("RUNAPI_BASE_URL")), strings.TrimSpace(cfg.BaseURL), core.DefaultBaseURL)
 			if apiKey == "" {
 				return fmt.Errorf("API key required (--api-key, RUNAPI_API_KEY, or runapi login)")
+			}
+			forwardTo, err := normalizeForwardURL(forwardTo)
+			if err != nil {
+				return err
 			}
 
 			hc := &http.Client{Timeout: 30 * time.Second}
@@ -298,4 +303,26 @@ func forwardEvent(ctx context.Context, hc *http.Client, targetURL string, ev lis
 		return resp.StatusCode, fmt.Errorf("local endpoint returned %d", resp.StatusCode)
 	}
 	return resp.StatusCode, nil
+}
+
+func normalizeForwardURL(raw string) (string, error) {
+	target := strings.TrimSpace(raw)
+	if target == "" {
+		return "", nil
+	}
+	if !strings.Contains(target, "://") {
+		target = "http://" + target
+	}
+
+	parsed, err := url.Parse(target)
+	if err != nil {
+		return "", fmt.Errorf("invalid --forward-to URL: %w", err)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", fmt.Errorf("--forward-to must use http or https")
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("--forward-to must include a host")
+	}
+	return parsed.String(), nil
 }
