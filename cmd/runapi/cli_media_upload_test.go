@@ -11,6 +11,61 @@ import (
 	"testing"
 )
 
+type mediaFieldDetectionParams struct {
+	FirstFrameURL string   `json:"first_frame_url"`
+	SourceURLs    []string `json:"source_urls"`
+	CallbackURL   string   `json:"callback_url"`
+	ResultURL     string   `json:"result_url"`
+}
+
+func TestMediaInputFieldsIncludeGenericURLInputsAndExcludeNonMediaURLs(t *testing.T) {
+	spec := actionSpec{
+		decode: func([]byte) (any, error) {
+			return mediaFieldDetectionParams{}, nil
+		},
+	}
+
+	fields := mediaInputFieldsForSpec(spec)
+
+	assertStringSliceContains(t, fields, "first_frame_url")
+	assertStringSliceContains(t, fields, "source_urls")
+	assertStringSliceNotContains(t, fields, "callback_url")
+	assertStringSliceNotContains(t, fields, "result_url")
+}
+
+func TestAutoUploadMediaInputsReusesUploadForDuplicateLocalPaths(t *testing.T) {
+	dir := t.TempDir()
+	localImage := filepath.Join(dir, "input.png")
+	if err := os.WriteFile(localImage, []byte("png"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	c := newCLI()
+	var stderr bytes.Buffer
+	c.stderr = &stderr
+	uploadCount := 0
+	payload := []byte(`{"source_image_url":"` + localImage + `","mask_url":"` + localImage + `"}`)
+
+	next, err := c.autoUploadMediaInputs([]string{"source_image_url", "mask_url"}, payload, func(value string) (string, error) {
+		uploadCount++
+		return "https://files.runapi.ai/temp/input.png", nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if uploadCount != 1 {
+		t.Fatalf("expected one upload for duplicate local path, got %d", uploadCount)
+	}
+
+	var body map[string]string
+	if err := json.Unmarshal(next, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["source_image_url"] != "https://files.runapi.ai/temp/input.png" || body["mask_url"] != "https://files.runapi.ai/temp/input.png" {
+		t.Fatalf("expected both fields to reuse uploaded URL, got %#v", body)
+	}
+}
+
 func TestServiceCommandUploadsLocalMediaInputsBeforeCreate(t *testing.T) {
 	isolateConfig(t)
 	t.Setenv("RUNAPI_API_KEY", "test-key")
@@ -121,7 +176,7 @@ func TestServiceCommandPreservesNullMediaInputsWhenUploadingLocalPaths(t *testin
 	}))
 	defer server.Close()
 
-	input := `{"model":"gpt-image-1.5","prompt":"edit","source_image_urls":["https://example.com/input.png",null,"` + localImage + `"],"aspect_ratio":"1:1","quality":"medium"}`
+	input := `{"model":"gpt-image-1.5","prompt":"edit","source_image_urls":["https://cdn.runapi.ai/public/samples/input.png",null,"` + localImage + `"],"aspect_ratio":"1:1","quality":"medium"}`
 	c := newCLI()
 	var stdout, stderr bytes.Buffer
 	c.stdout = &stdout
@@ -133,7 +188,7 @@ func TestServiceCommandPreservesNullMediaInputsWhenUploadingLocalPaths(t *testin
 	}
 
 	urls := createBody["source_image_urls"].([]any)
-	if urls[0] != "https://example.com/input.png" || urls[1] != nil || urls[2] != "https://files.runapi.ai/temp/input.png" {
+	if urls[0] != "https://cdn.runapi.ai/public/samples/input.png" || urls[1] != nil || urls[2] != "https://files.runapi.ai/temp/input.png" {
 		t.Fatalf("expected remote URL, null, uploaded URL in create body, got %#v", createBody)
 	}
 }
@@ -158,7 +213,7 @@ func TestServiceCommandDoesNotUploadCallbackOrRemoteMediaURL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	input := `{"model":"gpt-image-1.5","prompt":"edit","source_image_urls":["https://example.com/input.png"],"aspect_ratio":"1:1","quality":"medium","callback_url":"./callback.json"}`
+	input := `{"model":"gpt-image-1.5","prompt":"edit","source_image_urls":["https://cdn.runapi.ai/public/samples/input.png"],"aspect_ratio":"1:1","quality":"medium","callback_url":"./callback.json"}`
 	c := newCLI()
 	var stdout, stderr bytes.Buffer
 	c.stdout = &stdout
@@ -172,11 +227,30 @@ func TestServiceCommandDoesNotUploadCallbackOrRemoteMediaURL(t *testing.T) {
 		t.Fatalf("expected callback_url to stay untouched, got %#v", createBody)
 	}
 	urls := createBody["source_image_urls"].([]any)
-	if urls[0] != "https://example.com/input.png" {
+	if urls[0] != "https://cdn.runapi.ai/public/samples/input.png" {
 		t.Fatalf("expected remote media URL to stay untouched, got %#v", createBody)
 	}
 	if strings.Contains(stderr.String(), "uploaded ") {
 		t.Fatalf("did not expect upload log, got %q", stderr.String())
+	}
+}
+
+func assertStringSliceContains(t *testing.T, values []string, expected string) {
+	t.Helper()
+	for _, value := range values {
+		if value == expected {
+			return
+		}
+	}
+	t.Fatalf("expected %q in %#v", expected, values)
+}
+
+func assertStringSliceNotContains(t *testing.T, values []string, forbidden string) {
+	t.Helper()
+	for _, value := range values {
+		if value == forbidden {
+			t.Fatalf("did not expect %q in %#v", forbidden, values)
+		}
 	}
 }
 

@@ -27,7 +27,7 @@ func TestFilesCreateFromURLWritesJSONResponse(t *testing.T) {
 			t.Fatal(err)
 		}
 		source := body["source"].(map[string]any)
-		if source["type"] != "url" || source["url"] != "https://example.com/image.png" {
+		if source["type"] != "url" || source["url"] != "https://cdn.runapi.ai/public/samples/mask.png" {
 			t.Fatalf("unexpected body: %#v", body)
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -46,7 +46,7 @@ func TestFilesCreateFromURLWritesJSONResponse(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	c.stdout = &stdout
 	c.stderr = &stderr
-	code := c.run([]string{"--base-url", server.URL, "files", "create", "--url", "https://example.com/image.png", "--file-name", "image.png"})
+	code := c.run([]string{"--base-url", server.URL, "files", "create", "--url", "https://cdn.runapi.ai/public/samples/mask.png", "--file-name", "image.png"})
 	if code != 0 {
 		t.Fatalf("expected zero exit code, got %d stderr=%s stdout=%s", code, stderr.String(), stdout.String())
 	}
@@ -118,7 +118,7 @@ func TestFilesCreateRejectsMultipleSources(t *testing.T) {
 	c.stdout = &bytes.Buffer{}
 	c.stderr = &bytes.Buffer{}
 
-	code := c.run([]string{"files", "create", "image.png", "--url", "https://example.com/image.png"})
+	code := c.run([]string{"files", "create", "image.png", "--url", "https://cdn.runapi.ai/public/samples/mask.png"})
 	if code == 0 {
 		t.Fatal("expected non-zero exit code")
 	}

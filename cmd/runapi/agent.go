@@ -315,7 +315,7 @@ func isSafeTag(t string) bool {
 			return false
 		}
 	}
-	_, err := url.Parse("https://example.com/" + t)
+	_, err := url.Parse("https://runapi.ai/" + t)
 	return err == nil
 }
 

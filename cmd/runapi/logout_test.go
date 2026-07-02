@@ -47,7 +47,7 @@ func TestLogout(t *testing.T) {
 func TestLogoutPreservesBaseURL(t *testing.T) {
 	isolateConfig(t)
 
-	if err := saveConfig(configFile{APIKey: "key", BaseURL: "https://custom.example.com"}); err != nil {
+	if err := saveConfig(configFile{APIKey: "key", BaseURL: "https://custom.runapi.ai"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -68,8 +68,8 @@ func TestLogoutPreservesBaseURL(t *testing.T) {
 	if cfg.APIKey != "" {
 		t.Fatalf("expected api_key cleared, got %q", cfg.APIKey)
 	}
-	if cfg.BaseURL != "https://custom.example.com" {
-		t.Fatalf("expected base_url 'https://custom.example.com', got %q", cfg.BaseURL)
+	if cfg.BaseURL != "https://custom.runapi.ai" {
+		t.Fatalf("expected base_url 'https://custom.runapi.ai', got %q", cfg.BaseURL)
 	}
 }
 

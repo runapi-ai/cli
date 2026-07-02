@@ -134,7 +134,7 @@ func TestLoginFlowEndToEnd(t *testing.T) {
 			"key":        "test-token-abc123",
 			"token_type": "standard",
 			"name":       "RunAPI CLI on test",
-			"user":       map[string]string{"email": "test@example.com"},
+			"user":       map[string]string{"email": "developer@runapi.ai"},
 		})
 	}))
 	defer exchangeServer.Close()
@@ -163,8 +163,8 @@ func TestLoginFlowEndToEnd(t *testing.T) {
 	if resp.Key != "test-token-abc123" {
 		t.Fatalf("expected token 'test-token-abc123', got %q", resp.Key)
 	}
-	if resp.User.Email != "test@example.com" {
-		t.Fatalf("expected email 'test@example.com', got %q", resp.User.Email)
+	if resp.User.Email != "developer@runapi.ai" {
+		t.Fatalf("expected email 'developer@runapi.ai', got %q", resp.User.Email)
 	}
 }
 

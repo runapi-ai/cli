@@ -19,7 +19,7 @@ func TestAuthStatusFromConfig(t *testing.T) {
 		if r.URL.Path == "/api/v1/me" {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]any{
-				"id": 42, "name": "Gary", "email": "gary@example.com",
+				"id": 42, "name": "Gary", "email": "gary@runapi.ai",
 				"account": map[string]any{"id": 1, "name": "Personal"},
 			})
 			return
@@ -52,8 +52,8 @@ func TestAuthStatusFromConfig(t *testing.T) {
 		t.Fatalf("expected source 'config', got %v", result["source"])
 	}
 	user := result["user"].(map[string]any)
-	if user["email"] != "gary@example.com" {
-		t.Fatalf("expected email 'gary@example.com', got %v", user["email"])
+	if user["email"] != "gary@runapi.ai" {
+		t.Fatalf("expected email 'gary@runapi.ai', got %v", user["email"])
 	}
 	if user["name"] != "Gary" {
 		t.Fatalf("expected name 'Gary', got %v", user["name"])
@@ -69,7 +69,7 @@ func TestAuthStatusFromEnv(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
-			"id": 1, "name": "Test", "email": "env@example.com",
+			"id": 1, "name": "Test", "email": "env@runapi.ai",
 			"account": map[string]any{"id": 1, "name": "Acme"},
 		})
 	}))
@@ -180,7 +180,7 @@ func TestAuthImportTokenVerifiesAndWritesConfig(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
-			"id": 1, "name": "Test", "email": "import@example.com",
+			"id": 1, "name": "Test", "email": "import@runapi.ai",
 			"account": map[string]any{"id": 1, "name": "Acme"},
 		})
 	}))

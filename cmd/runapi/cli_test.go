@@ -42,21 +42,21 @@ func TestLoadConfigFromUserConfigDir(t *testing.T) {
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte(`{"api_key":"from-config","base_url":"https://example.com"}`), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(`{"api_key":"from-config","base_url":"https://runapi.ai"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := loadConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.APIKey != "from-config" || cfg.BaseURL != "https://example.com" {
+	if cfg.APIKey != "from-config" || cfg.BaseURL != "https://runapi.ai" {
 		t.Fatalf("unexpected config: %#v", cfg)
 	}
 }
 
 func TestRunAPIBaseURLEnvOverridesConfig(t *testing.T) {
 	isolateConfig(t)
-	t.Setenv("RUNAPI_BASE_URL", "http://env.example")
+	t.Setenv("RUNAPI_BASE_URL", "http://env.runapi.ai")
 	path, err := configFilePath()
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +75,7 @@ func TestRunAPIBaseURLEnvOverridesConfig(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if resolved.BaseURL != "http://env.example" {
+		if resolved.BaseURL != "http://env.runapi.ai" {
 			t.Fatalf("expected env base url, got %q", resolved.BaseURL)
 		}
 		return &runapi.Client{}, nil

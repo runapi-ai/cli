@@ -465,14 +465,6 @@ func (c *cli) clientForCommand(cmd *cobra.Command) (*runapi.Client, []option.Req
 	return client, callOpts, ctx, cancel, nil
 }
 
-func (c *cli) decodeInput(spec actionSpec, input, inputFile string) (any, error) {
-	payload, err := c.readInput(input, inputFile)
-	if err != nil {
-		return nil, err
-	}
-	return spec.decode(payload)
-}
-
 func mediaInputFieldsForSpec(spec actionSpec) []string {
 	value, err := spec.decode([]byte(`{}`))
 	if err != nil || value == nil {
@@ -498,13 +490,29 @@ func (c *cli) autoUploadMediaInputs(mediaFields []string, payload []byte, upload
 	if !ok {
 		return payload, nil
 	}
+	uploadedFiles := map[string]string{}
+	uploadOnce := func(value string) (string, error) {
+		cacheKey, err := filepath.Abs(value)
+		if err != nil {
+			cacheKey = value
+		}
+		if url, ok := uploadedFiles[cacheKey]; ok {
+			return url, nil
+		}
+		url, err := upload(value)
+		if err != nil {
+			return "", err
+		}
+		uploadedFiles[cacheKey] = url
+		return url, nil
+	}
 	changed := false
 	for _, field := range mediaFields {
 		raw, ok := object[field]
 		if !ok {
 			continue
 		}
-		next, fieldChanged, err := c.autoUploadMediaValue(field, raw, upload)
+		next, fieldChanged, err := c.autoUploadMediaValue(field, raw, uploadOnce)
 		if err != nil {
 			return nil, err
 		}
@@ -1035,17 +1043,7 @@ func collectJSONFields(t reflect.Type) []jsonField {
 }
 
 func isMediaURLInputField(field jsonField) bool {
-	if !isStringURLField(field) || isNonMediaURLField(field.name, field.help) {
-		return false
-	}
-	name := strings.ToLower(field.name)
-	help := strings.ToLower(field.help)
-	for _, token := range []string{"image", "audio", "video", "media", "file", "mask", "upload", "voice", "recording"} {
-		if strings.Contains(name, token) || strings.Contains(help, token) {
-			return true
-		}
-	}
-	return strings.HasPrefix(name, "source_") || strings.HasPrefix(name, "reference_")
+	return isStringURLField(field) && !isNonMediaURLField(field.name, field.help)
 }
 
 func isStringURLField(field jsonField) bool {
