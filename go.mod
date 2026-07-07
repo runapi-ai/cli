@@ -3,7 +3,7 @@ module github.com/runapi-ai/cli
 go 1.26
 
 require (
-	github.com/runapi-ai/core-sdk/go v0.2.8
+	github.com/runapi-ai/core-sdk/go v0.2.9
 	github.com/runapi-ai/elevenlabs-sdk/go v0.2.7
 	github.com/runapi-ai/flux-2-sdk/go v0.2.7
 	github.com/runapi-ai/flux-kontext-sdk/go v0.2.7
@@ -19,7 +19,7 @@ require (
 	github.com/runapi-ai/infinitetalk-sdk/go v0.2.7
 	github.com/runapi-ai/kling-sdk/go v0.2.8
 	github.com/runapi-ai/luma-sdk/go v0.2.7
-	github.com/runapi-ai/nano-banana-sdk/go v0.2.7
+	github.com/runapi-ai/nano-banana-sdk/go v0.2.9
 	github.com/runapi-ai/qwen-2-sdk/go v0.2.7
 	github.com/runapi-ai/recraft-sdk/go v0.2.7
 	github.com/runapi-ai/runway-aleph-sdk/go v0.2.7
