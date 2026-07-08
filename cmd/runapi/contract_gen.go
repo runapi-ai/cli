@@ -323,7 +323,7 @@ var generatedContract = map[string]generatedContractAction{
 				"aspect_ratio": {Enum: []any{"1:1", "16:9", "9:16", "3:4", "4:3"}},
 			},
 			"imagen-4-fast": {
-				"aspect_ratio": {Enum: []any{"1:1", "16:9", "9:16", "3:4", "4:3"}},
+				"aspect_ratio": {Enum: []any{"1:1", "16:9", "9:16", "3:4", "4:3", "auto"}},
 				"output_count": {Enum: []any{1, 2, 3, 4}},
 			},
 			"imagen-4-ultra": {
@@ -409,7 +409,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"nano-banana/text-to-image": {
-		Models: []string{"nano-banana", "nano-banana-2", "nano-banana-2-lite", "nano-banana-pro"},
+		Models: []string{"nano-banana", "nano-banana-2", "nano-banana-pro"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"nano-banana": {
 				"aspect_ratio":  {Enum: []any{"1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9", "auto"}},
@@ -419,9 +419,6 @@ var generatedContract = map[string]generatedContractAction{
 				"aspect_ratio":      {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
 				"output_format":     {Enum: []any{"png", "jpeg", "jpg"}},
 				"output_resolution": {Enum: []any{"1k", "2k", "4k"}},
-			},
-			"nano-banana-2-lite": {
-				"aspect_ratio": {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
 			},
 			"nano-banana-pro": {
 				"aspect_ratio":      {Enum: []any{"1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9", "auto"}},
@@ -496,11 +493,15 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"seedance/text-to-video": {
-		Models: []string{"seedance-1.5-pro", "seedance-2.0", "seedance-2.0-fast", "seedance-v1-lite", "seedance-v1-pro", "seedance-v1-pro-fast"},
+		Models: []string{"seedance-1.5-pro", "seedance-2-mini", "seedance-2.0", "seedance-2.0-fast", "seedance-v1-lite", "seedance-v1-pro", "seedance-v1-pro-fast"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"seedance-1.5-pro": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9"}},
 				"output_resolution": {Enum: []any{"480p", "720p", "1080p"}},
+			},
+			"seedance-2-mini": {
+				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
+				"output_resolution": {Enum: []any{"480p", "720p"}},
 			},
 			"seedance-2.0": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},

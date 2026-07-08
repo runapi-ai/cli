@@ -24,7 +24,7 @@ require (
 	github.com/runapi-ai/recraft-sdk/go v0.2.7
 	github.com/runapi-ai/runway-aleph-sdk/go v0.2.7
 	github.com/runapi-ai/runway-sdk/go v0.2.7
-	github.com/runapi-ai/seedance-sdk/go v0.2.7
+	github.com/runapi-ai/seedance-sdk/go v0.2.8
 	github.com/runapi-ai/seedream-sdk/go v0.2.7
 	github.com/runapi-ai/suno-sdk/go v0.2.7
 	github.com/runapi-ai/topaz-sdk/go v0.2.7
