@@ -324,7 +324,6 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"imagen-4-fast": {
 				"aspect_ratio": {Enum: []any{"1:1", "16:9", "9:16", "3:4", "4:3", "auto"}},
-				"output_count": {Enum: []any{1, 2, 3, 4}},
 			},
 			"imagen-4-ultra": {
 				"aspect_ratio": {Enum: []any{"1:1", "16:9", "9:16", "3:4", "4:3"}},
@@ -409,7 +408,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"nano-banana/text-to-image": {
-		Models: []string{"nano-banana", "nano-banana-2", "nano-banana-pro"},
+		Models: []string{"nano-banana", "nano-banana-2", "nano-banana-2-lite", "nano-banana-pro"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"nano-banana": {
 				"aspect_ratio":  {Enum: []any{"1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9", "auto"}},
@@ -419,6 +418,9 @@ var generatedContract = map[string]generatedContractAction{
 				"aspect_ratio":      {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
 				"output_format":     {Enum: []any{"png", "jpeg", "jpg"}},
 				"output_resolution": {Enum: []any{"1k", "2k", "4k"}},
+			},
+			"nano-banana-2-lite": {
+				"aspect_ratio": {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
 			},
 			"nano-banana-pro": {
 				"aspect_ratio":      {Enum: []any{"1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9", "auto"}},
@@ -505,7 +507,7 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"seedance-2.0": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
-				"output_resolution": {Enum: []any{"480p", "720p", "1080p"}},
+				"output_resolution": {Enum: []any{"480p", "720p", "1080p", "4k"}},
 			},
 			"seedance-2.0-fast": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
@@ -758,7 +760,9 @@ var generatedContract = map[string]generatedContractAction{
 	"suno/replace-section": {
 		Models: []string{},
 		FieldsByModel: map[string]map[string]generatedContractField{
-			"_": {},
+			"_": {
+				"model": {Enum: []any{"suno-v4", "suno-v4.5", "suno-v4.5-all", "suno-v4.5-plus", "suno-v5", "suno-v5.5"}},
+			},
 		},
 	},
 	"suno/separate-audio-stems": {

@@ -3,7 +3,7 @@ module github.com/runapi-ai/cli
 go 1.26
 
 require (
-	github.com/runapi-ai/core-sdk/go v0.2.9
+	github.com/runapi-ai/core-sdk/go v0.2.10
 	github.com/runapi-ai/elevenlabs-sdk/go v0.2.7
 	github.com/runapi-ai/flux-2-sdk/go v0.2.7
 	github.com/runapi-ai/flux-kontext-sdk/go v0.2.7
@@ -15,7 +15,7 @@ require (
 	github.com/runapi-ai/hailuo-sdk/go v0.2.7
 	github.com/runapi-ai/happyhorse-sdk/go v0.2.7
 	github.com/runapi-ai/ideogram-v3-sdk/go v0.2.7
-	github.com/runapi-ai/imagen-4-sdk/go v0.2.7
+	github.com/runapi-ai/imagen-4-sdk/go v0.2.8
 	github.com/runapi-ai/infinitetalk-sdk/go v0.2.7
 	github.com/runapi-ai/kling-sdk/go v0.2.8
 	github.com/runapi-ai/luma-sdk/go v0.2.7
@@ -24,9 +24,9 @@ require (
 	github.com/runapi-ai/recraft-sdk/go v0.2.7
 	github.com/runapi-ai/runway-aleph-sdk/go v0.2.7
 	github.com/runapi-ai/runway-sdk/go v0.2.7
-	github.com/runapi-ai/seedance-sdk/go v0.2.8
+	github.com/runapi-ai/seedance-sdk/go v0.2.9
 	github.com/runapi-ai/seedream-sdk/go v0.2.7
-	github.com/runapi-ai/suno-sdk/go v0.2.7
+	github.com/runapi-ai/suno-sdk/go v0.2.8
 	github.com/runapi-ai/topaz-sdk/go v0.2.7
 	github.com/runapi-ai/veo-3.1-sdk/go v0.2.7
 	github.com/runapi-ai/wan-sdk/go v0.2.7
