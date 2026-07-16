@@ -35,6 +35,7 @@ import (
 	"github.com/runapi-ai/kling-sdk/go/kling"
 	"github.com/runapi-ai/luma-sdk/go/luma"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
+	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
@@ -44,6 +45,7 @@ import (
 	"github.com/runapi-ai/suno-sdk/go/suno"
 	"github.com/runapi-ai/topaz-sdk/go/topaz"
 	"github.com/runapi-ai/veo-3.1-sdk/go/veo31"
+	volcenginelipsync "github.com/runapi-ai/volcengine-lip-sync-sdk/go/volcenginelipsync"
 	"github.com/runapi-ai/wan-sdk/go/wan"
 	"github.com/runapi-ai/z-image-sdk/go/zimage"
 	"github.com/spf13/cobra"
@@ -143,9 +145,11 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("ideogram-v3"))
 	root.AddCommand(c.serviceCommand("elevenlabs"))
 	root.AddCommand(c.serviceCommand("infinitetalk"))
+	root.AddCommand(c.serviceCommand("omnihuman"))
 	root.AddCommand(c.serviceCommand("wan"))
 	root.AddCommand(c.serviceCommand("luma"))
 	root.AddCommand(c.serviceCommand("hailuo"))
+	root.AddCommand(c.serviceCommand("volcengine-lip-sync"))
 	root.AddCommand(c.serviceCommand("happyhorse"))
 	root.AddCommand(c.serviceCommand("gpt-image"))
 	root.AddCommand(c.serviceCommand("gpt-image-2"))
@@ -1118,10 +1122,12 @@ var allSpecs = []actionSpec{
 	newIdeogramV3TextToImageSpec(), newIdeogramV3EditImageSpec(), newIdeogramV3RemixImageSpec(), newIdeogramV3ReframeImageSpec(),
 	newElevenlabsSpeechSpec(), newElevenlabsDialogueSpec(), newElevenlabsSoundEffectSpec(), newElevenlabsTranscriptionSpec(), newElevenlabsAudioIsolationSpec(),
 	newInfiniteTalkAudioToVideoSpec(),
+	newOmniHumanAudioToVideoSpec(), newOmniHumanHumanIdentificationSpec(), newOmniHumanSubjectDetectionSpec(),
 	newWanTextToVideoSpec(), newWanImageToVideoSpec(), newWanSpeechToVideoSpec(),
 	newWanAnimateSpec(), newWanTextToImageSpec(), newWanEditVideoSpec(),
 	newLumaModifySpec(),
 	newHailuoTextToVideoSpec(), newHailuoImageToVideoSpec(),
+	newVolcengineLipSyncVideoSpec(),
 	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
 	newGptImageTextToImageSpec(), newGptImageEditImageSpec(), newGptImage2TextToImageSpec(), newGptImage2EditImageSpec(), newGpt4oImageTextToImageSpec(),
 	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineEditImageSpec(),
@@ -1679,6 +1685,36 @@ func newInfiniteTalkAudioToVideoSpec() actionSpec {
 	}}
 }
 
+func newOmniHumanAudioToVideoSpec() actionSpec {
+	return actionSpec{service: "omnihuman", action: "audio-to-video", isAsync: true, inputFields: inputFieldsFor[omnihuman.AudioToVideoParams](), decode: decodeInto[omnihuman.AudioToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.OmniHuman.AudioToVideo.Create(ctx, params.(omnihuman.AudioToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.OmniHuman.AudioToVideo.Run(ctx, params.(omnihuman.AudioToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.OmniHuman.AudioToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newOmniHumanHumanIdentificationSpec() actionSpec {
+	return actionSpec{service: "omnihuman", action: "human-identification", isAsync: true, inputFields: inputFieldsFor[omnihuman.HumanIdentificationParams](), decode: decodeInto[omnihuman.HumanIdentificationParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.OmniHuman.HumanIdentification.Create(ctx, params.(omnihuman.HumanIdentificationParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.OmniHuman.HumanIdentification.Run(ctx, params.(omnihuman.HumanIdentificationParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.OmniHuman.HumanIdentification.Get(ctx, id, opts...)
+	}}
+}
+
+func newOmniHumanSubjectDetectionSpec() actionSpec {
+	return actionSpec{service: "omnihuman", action: "subject-detection", isAsync: true, inputFields: inputFieldsFor[omnihuman.SubjectDetectionParams](), decode: decodeInto[omnihuman.SubjectDetectionParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.OmniHuman.SubjectDetection.Create(ctx, params.(omnihuman.SubjectDetectionParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.OmniHuman.SubjectDetection.Run(ctx, params.(omnihuman.SubjectDetectionParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.OmniHuman.SubjectDetection.Get(ctx, id, opts...)
+	}}
+}
+
 func newWanTextToVideoSpec() actionSpec {
 	return actionSpec{service: "wan", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[wan.TextToVideoParams](), decode: decodeInto[wan.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.Wan.TextToVideo.Create(ctx, params.(wan.TextToVideoParams), opts...)
@@ -1816,6 +1852,16 @@ func newHailuoImageToVideoSpec() actionSpec {
 		return client.Hailuo.ImageToVideo.Run(ctx, params.(hailuo.ImageToVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Hailuo.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newVolcengineLipSyncVideoSpec() actionSpec {
+	return actionSpec{service: "volcengine-lip-sync", action: "lip-sync-video", isAsync: true, inputFields: inputFieldsFor[volcenginelipsync.LipSyncVideoParams](), decode: decodeInto[volcenginelipsync.LipSyncVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.VolcengineLipSync.LipSyncVideo.Create(ctx, params.(volcenginelipsync.LipSyncVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.VolcengineLipSync.LipSyncVideo.Run(ctx, params.(volcenginelipsync.LipSyncVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.VolcengineLipSync.LipSyncVideo.Get(ctx, id, opts...)
 	}}
 }
 

@@ -250,13 +250,13 @@ func TestKlingTextToVideoHelpUsesCanonicalFields(t *testing.T) {
 	}
 
 	output := c.stdout.(*bytes.Buffer).String()
-	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro.") {
+	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v3-turbo-text-to-video.") {
 		t.Fatalf("expected Kling text-to-video help to include generated model values, got:\n%s", output)
 	}
 	if !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") {
 		t.Fatalf("expected Kling text-to-video help to include frame media fields, got:\n%s", output)
 	}
-	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro: 5, 10.") {
+	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0, kling-v3-turbo-text-to-video: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro: 5, 10.") {
 		t.Fatalf("expected Kling text-to-video help to include model-specific duration_seconds values, got:\n%s", output)
 	}
 	if strings.Contains(output, "duration_seconds          string     optional; duration in seconds. Accepted values: 5, 10.") {

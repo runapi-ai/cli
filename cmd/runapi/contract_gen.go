@@ -157,11 +157,15 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"grok-imagine/image-to-video": {
-		Models: []string{"grok-imagine-image-to-video"},
+		Models: []string{"grok-imagine-image-to-video", "grok-imagine-video-1.5-preview"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"grok-imagine-image-to-video": {
 				"aspect_ratio":      {Enum: []any{"2:3", "3:2", "1:1", "16:9", "9:16"}},
 				"motion_style":      {Enum: []any{"fun", "normal", "spicy"}},
+				"output_resolution": {Enum: []any{"480p", "720p"}},
+			},
+			"grok-imagine-video-1.5-preview": {
+				"aspect_ratio":      {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3", "auto"}},
 				"output_resolution": {Enum: []any{"480p", "720p"}},
 			},
 		},
@@ -175,11 +179,15 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"grok-imagine/text-to-video": {
-		Models: []string{"grok-imagine-text-to-video"},
+		Models: []string{"grok-imagine-text-to-video", "grok-imagine-video-1.5-preview"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"grok-imagine-text-to-video": {
 				"aspect_ratio":      {Enum: []any{"2:3", "3:2", "1:1", "16:9", "9:16"}},
 				"motion_style":      {Enum: []any{"fun", "normal", "spicy"}},
+				"output_resolution": {Enum: []any{"480p", "720p"}},
+			},
+			"grok-imagine-video-1.5-preview": {
+				"aspect_ratio":      {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3", "auto"}},
 				"output_resolution": {Enum: []any{"480p", "720p"}},
 			},
 		},
@@ -348,7 +356,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/image-to-video": {
-		Models: []string{"kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro"},
+		Models: []string{"kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro", "kling-v3-turbo-image-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-v2.1-master-image-to-video": {
 				"duration_seconds": {Enum: []any{5, 10}},
@@ -361,6 +369,10 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"kling-v2.5-turbo-image-to-video-pro": {
 				"duration_seconds": {Enum: []any{5, 10}},
+			},
+			"kling-v3-turbo-image-to-video": {
+				"duration_seconds":  {Enum: []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+				"output_resolution": {Enum: []any{"720p", "1080p"}},
 			},
 		},
 	},
@@ -375,7 +387,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/text-to-video": {
-		Models: []string{"kling-3.0", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro"},
+		Models: []string{"kling-3.0", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v3-turbo-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
@@ -390,6 +402,11 @@ var generatedContract = map[string]generatedContractAction{
 				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "1:1"}},
 				"duration_seconds": {Enum: []any{5, 10}},
 			},
+			"kling-v3-turbo-text-to-video": {
+				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
+				"duration_seconds":  {Enum: []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+				"output_resolution": {Enum: []any{"720p", "1080p"}},
+			},
 		},
 	},
 	"luma/modify-video": {
@@ -399,8 +416,11 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"nano-banana/edit-image": {
-		Models: []string{"nano-banana-edit"},
+		Models: []string{"nano-banana-2-lite", "nano-banana-edit"},
 		FieldsByModel: map[string]map[string]generatedContractField{
+			"nano-banana-2-lite": {
+				"aspect_ratio": {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
+			},
 			"nano-banana-edit": {
 				"aspect_ratio":  {Enum: []any{"1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9", "auto"}},
 				"output_format": {Enum: []any{"png", "jpeg"}},
@@ -427,6 +447,26 @@ var generatedContract = map[string]generatedContractAction{
 				"output_format":     {Enum: []any{"png", "jpeg", "jpg"}},
 				"output_resolution": {Enum: []any{"1k", "2k", "4k"}},
 			},
+		},
+	},
+	"omnihuman/audio-to-video": {
+		Models: []string{"omnihuman-1.5"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"omnihuman-1.5": {
+				"output_resolution": {Enum: []any{"720p", "1080p"}},
+			},
+		},
+	},
+	"omnihuman/human-identification": {
+		Models: []string{"omnihuman-1.5-human-identification"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"omnihuman-1.5-human-identification": {},
+		},
+	},
+	"omnihuman/subject-detection": {
+		Models: []string{"omnihuman-1.5-subject-detection"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"omnihuman-1.5-subject-detection": {},
 		},
 	},
 	"qwen-2/edit-image": {
@@ -873,6 +913,14 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"_": {
 				"output_resolution": {Enum: []any{"1080p", "4k"}},
+			},
+		},
+	},
+	"volcengine-lip-sync/lip-sync-video": {
+		Models: []string{"volcengine-lip-sync"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"volcengine-lip-sync": {
+				"mode": {Enum: []any{"lite", "basic"}},
 			},
 		},
 	},
