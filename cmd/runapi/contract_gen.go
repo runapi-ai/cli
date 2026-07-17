@@ -157,11 +157,15 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"grok-imagine/image-to-video": {
-		Models: []string{"grok-imagine-image-to-video", "grok-imagine-video-1.5-preview"},
+		Models: []string{"grok-imagine-image-to-video", "grok-imagine-video-1.5-fast", "grok-imagine-video-1.5-preview"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"grok-imagine-image-to-video": {
 				"aspect_ratio":      {Enum: []any{"2:3", "3:2", "1:1", "16:9", "9:16"}},
 				"motion_style":      {Enum: []any{"fun", "normal", "spicy"}},
+				"output_resolution": {Enum: []any{"480p", "720p"}},
+			},
+			"grok-imagine-video-1.5-fast": {
+				"aspect_ratio":      {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3"}},
 				"output_resolution": {Enum: []any{"480p", "720p"}},
 			},
 			"grok-imagine-video-1.5-preview": {
@@ -179,11 +183,15 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"grok-imagine/text-to-video": {
-		Models: []string{"grok-imagine-text-to-video", "grok-imagine-video-1.5-preview"},
+		Models: []string{"grok-imagine-text-to-video", "grok-imagine-video-1.5-fast", "grok-imagine-video-1.5-preview"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"grok-imagine-text-to-video": {
 				"aspect_ratio":      {Enum: []any{"2:3", "3:2", "1:1", "16:9", "9:16"}},
 				"motion_style":      {Enum: []any{"fun", "normal", "spicy"}},
+				"output_resolution": {Enum: []any{"480p", "720p"}},
+			},
+			"grok-imagine-video-1.5-fast": {
+				"aspect_ratio":      {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3"}},
 				"output_resolution": {Enum: []any{"480p", "720p"}},
 			},
 			"grok-imagine-video-1.5-preview": {

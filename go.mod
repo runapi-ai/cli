@@ -13,7 +13,7 @@ require (
 	github.com/runapi-ai/gpt-4o-image-sdk/go v0.2.7
 	github.com/runapi-ai/gpt-image-2-sdk/go v0.2.7
 	github.com/runapi-ai/gpt-image-sdk/go v0.2.7
-	github.com/runapi-ai/grok-imagine-sdk/go v0.2.8
+	github.com/runapi-ai/grok-imagine-sdk/go v0.2.9
 	github.com/runapi-ai/hailuo-sdk/go v0.2.7
 	github.com/runapi-ai/happyhorse-sdk/go v0.2.7
 	github.com/runapi-ai/ideogram-v3-sdk/go v0.2.7
