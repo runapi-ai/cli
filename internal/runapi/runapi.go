@@ -30,6 +30,7 @@ import (
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
 	"github.com/runapi-ai/kling-sdk/go/kling"
 	"github.com/runapi-ai/luma-sdk/go/luma"
+	"github.com/runapi-ai/midjourney-sdk/go/midjourney"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
 	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
@@ -100,6 +101,8 @@ type Client struct {
 	Wan *wan.Client
 	// Luma modifies existing video using Luma models.
 	Luma *luma.Client
+	// Midjourney generates and edits images, animates images, and exposes image helpers.
+	Midjourney *midjourney.Client
 	// Hailuo generates video from text or images with Hailuo models.
 	Hailuo *hailuo.Client
 	// VolcengineLipSync drives source video lip movement from audio.
@@ -165,6 +168,7 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		OmniHuman:         omnihuman.NewClientWithHTTP(httpClient),
 		Wan:               wan.NewClientWithHTTP(httpClient),
 		Luma:              luma.NewClientWithHTTP(httpClient),
+		Midjourney:        midjourney.NewClientWithHTTP(httpClient),
 		Hailuo:            hailuo.NewClientWithHTTP(httpClient),
 		VolcengineLipSync: volcenginelipsync.NewClientWithHTTP(httpClient),
 		HappyHorse:        happyhorse.NewClientWithHTTP(httpClient),

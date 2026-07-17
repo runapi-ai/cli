@@ -415,6 +415,38 @@ var generatedContract = map[string]generatedContractAction{
 			"luma-modify-video": {},
 		},
 	},
+	"midjourney/edit-image": {
+		Models: []string{"midjourney-edit-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"midjourney-edit-image": {},
+		},
+	},
+	"midjourney/get-seed": {
+		Models: []string{},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"_": {},
+		},
+	},
+	"midjourney/image-to-prompt": {
+		Models: []string{},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"_": {},
+		},
+	},
+	"midjourney/image-to-video": {
+		Models: []string{"midjourney-image-to-video"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"midjourney-image-to-video": {
+				"output_resolution": {Enum: []any{"480p"}},
+			},
+		},
+	},
+	"midjourney/text-to-image": {
+		Models: []string{"midjourney-v8.1"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"midjourney-v8.1": {},
+		},
+	},
 	"nano-banana/edit-image": {
 		Models: []string{"nano-banana-2-lite", "nano-banana-edit"},
 		FieldsByModel: map[string]map[string]generatedContractField{

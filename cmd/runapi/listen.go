@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -18,14 +17,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var errSessionExpired = errors.New("session expired")
+var (
+	errSessionExpired         = errors.New("session expired")
+	errCallbackAPIKeyUnusable = errors.New("callback API key is no longer usable")
+)
 
 type listenSecretResponse struct {
-	ListenSecret string `json:"listen_secret"`
+	ListenSecret   string         `json:"listen_secret"`
+	CallbackAPIKey callbackAPIKey `json:"callback_api_key"`
 }
 
 type createSessionResponse struct {
-	SessionToken string `json:"session_token"`
+	SessionToken   string         `json:"session_token"`
+	ListenSecret   string         `json:"listen_secret"`
+	CallbackAPIKey callbackAPIKey `json:"callback_api_key"`
 }
 
 type listenEvent struct {
@@ -39,40 +44,77 @@ type pollResponse struct {
 }
 
 func (c *cli) listenCommand() *cobra.Command {
-	var forwardTo string
+	var forwardTo, callbackAPIKeyID string
+	var printSecret bool
 	cmd := &cobra.Command{
-		Use:   "listen",
+		Use:   "listen [url]",
 		Short: "Receive RunAPI callbacks locally",
 		Long:  "Forward task callbacks to a local URL. Tasks with a callback_url are also copied to the listener while still being delivered to that URL.",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			cfg, _ := loadConfig()
-			apiKey := firstNonEmpty(strings.TrimSpace(c.apiKeyFlag), strings.TrimSpace(os.Getenv("RUNAPI_API_KEY")), strings.TrimSpace(cfg.APIKey))
-			baseURL := firstNonEmpty(strings.TrimSpace(c.baseURLFlag), strings.TrimSpace(os.Getenv("RUNAPI_BASE_URL")), strings.TrimSpace(cfg.BaseURL), core.DefaultBaseURL)
-			if apiKey == "" {
-				return fmt.Errorf("API key required (--api-key, RUNAPI_API_KEY, or runapi login)")
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 1 {
+				if strings.TrimSpace(forwardTo) != "" {
+					return core.NewError(
+						core.ErrValidation,
+						"listen URL and --forward-to are mutually exclusive",
+						http.StatusUnprocessableEntity,
+						"",
+						nil,
+						nil,
+					)
+				}
+				forwardTo = args[0]
 			}
 			forwardTo, err := normalizeForwardURL(forwardTo)
 			if err != nil {
 				return err
 			}
+			apiKey, baseURL, err := c.listenerCredentials()
+			if err != nil {
+				return err
+			}
 
-			hc := &http.Client{Timeout: 30 * time.Second}
+			hc := c.listenHTTPClient()
 			ctx, cancel := context.WithCancel(cmd.Context())
 			defer cancel()
 
-			secret, err := fetchListenSecret(ctx, hc, baseURL, apiKey)
+			selection, err := c.resolveCallbackAPIKey(ctx, hc, baseURL, apiKey, callbackAPIKeyID)
 			if err != nil {
-				return fmt.Errorf("failed to fetch listen secret: %w", err)
+				return err
+			}
+			if printSecret {
+				secret, err := c.fetchSecretResolvingStaleConfig(ctx, hc, baseURL, apiKey, &selection)
+				if err != nil {
+					return err
+				}
+				_, err = fmt.Fprintln(c.stdout, secret.ListenSecret)
+				return err
 			}
 
-			sessionToken, err := createListenSession(ctx, hc, baseURL, apiKey)
+			session, err := c.createSessionResolvingStaleConfig(ctx, hc, baseURL, apiKey, &selection)
 			if err != nil {
 				return fmt.Errorf("failed to create listen session: %w", err)
 			}
-			defer destroyListenSession(context.Background(), hc, baseURL, apiKey, sessionToken)
-
-			fmt.Fprintf(c.stderr, "Ready! Webhook signing secret: %s\n", secret)
+			sessionToken := session.SessionToken
+			defer func() {
+				destroyListenSession(context.Background(), hc, baseURL, apiKey, sessionToken)
+			}()
+			if selection.SaveAfterValidation {
+				if err := saveProjectConfig(selection.ConfigPath, projectConfig{CallbackAPIKeyID: session.CallbackAPIKey.ID}); err != nil {
+					return err
+				}
+			}
+			fmt.Fprintf(
+				c.stderr,
+				"Callback API key: %s (%s, %s)\n",
+				session.CallbackAPIKey.Name,
+				session.CallbackAPIKey.ID,
+				session.CallbackAPIKey.MaskedToken,
+			)
+			if selection.ConfigPath != "" {
+				fmt.Fprintf(c.stderr, "Project config: %s\n", selection.ConfigPath)
+			}
+			fmt.Fprintf(c.stderr, "Ready! Listen Signing Secret: %s\n", session.ListenSecret)
 			if forwardTo != "" {
 				fmt.Fprintf(c.stderr, "Forwarding to %s\n", forwardTo)
 			}
@@ -82,26 +124,33 @@ func (c *cli) listenCommand() *cobra.Command {
 			for ctx.Err() == nil {
 				resp, err := pollEvents(ctx, hc, baseURL, apiKey, sessionToken, lastID)
 				if err != nil {
+					if isTerminalListenerError(err) {
+						return err
+					}
 					if errors.Is(err, errSessionExpired) {
 						fmt.Fprintf(c.stderr, "[session expired] creating new session...\n")
-						sessionToken, err = createListenSession(ctx, hc, baseURL, apiKey)
-						if err != nil {
-							fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", err, backoff)
-							time.Sleep(backoff)
-							if backoff < 30*time.Second {
-								backoff *= 2
+						newToken, retriable, recreateErr := c.recreateSession(ctx, hc, baseURL, apiKey, selection.ID)
+						if recreateErr != nil {
+							if !retriable {
+								return recreateErr
 							}
+							fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", recreateErr, backoff)
+							if !waitForContext(ctx, backoff) {
+								return nil
+							}
+							backoff = nextBackoff(backoff)
 							continue
 						}
+						sessionToken = newToken
 						lastID = 0
 						backoff = time.Second
 						continue
 					}
 					fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", err, backoff)
-					time.Sleep(backoff)
-					if backoff < 30*time.Second {
-						backoff *= 2
+					if !waitForContext(ctx, backoff) {
+						return nil
 					}
+					backoff = nextBackoff(backoff)
 					continue
 				}
 				backoff = time.Second
@@ -125,12 +174,19 @@ func (c *cli) listenCommand() *cobra.Command {
 					}
 					fmt.Fprintln(c.stdout, ev.SignedBody)
 					if err := ackEvent(ctx, hc, baseURL, apiKey, sessionToken, ev.ID); err != nil {
+						if isTerminalListenerError(err) {
+							return err
+						}
 						if errors.Is(err, errSessionExpired) {
 							fmt.Fprintf(c.stderr, "[session expired] creating new session...\n")
-							sessionToken, err = createListenSession(ctx, hc, baseURL, apiKey)
-							if err != nil {
-								fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", err, backoff)
+							newToken, retriable, recreateErr := c.recreateSession(ctx, hc, baseURL, apiKey, selection.ID)
+							if recreateErr != nil {
+								if !retriable {
+									return recreateErr
+								}
+								fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", recreateErr, backoff)
 							} else {
+								sessionToken = newToken
 								lastID = 0
 								backoff = time.Second
 							}
@@ -143,48 +199,192 @@ func (c *cli) listenCommand() *cobra.Command {
 					lastID = ev.ID
 				}
 				if retryEvent {
-					time.Sleep(1 * time.Second)
+					if !waitForContext(ctx, time.Second) {
+						return nil
+					}
 					continue
 				}
 				if len(resp.Events) == 0 {
-					time.Sleep(1 * time.Second)
+					if !waitForContext(ctx, time.Second) {
+						return nil
+					}
 				}
 			}
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&forwardTo, "forward-to", "", "Local URL to POST callbacks to")
+	cmd.Flags().StringVar(&callbackAPIKeyID, "callback-api-key-id", "", "Stable ID of the API key whose task callbacks should be received")
+	cmd.Flags().BoolVar(&printSecret, "print-secret", false, "Print the selected API key's Listen Signing Secret and exit")
 	return cmd
 }
 
-func fetchListenSecret(ctx context.Context, hc *http.Client, baseURL, apiKey string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/api/v1/cli/listen_secret", nil)
+func waitForContext(ctx context.Context, duration time.Duration) bool {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
+}
+
+func isListenerAccessRevoked(err error) bool {
+	apiErr, ok := errors.AsType[*core.Error](err)
+	return ok && (apiErr.Status == http.StatusUnauthorized || apiErr.Status == http.StatusForbidden)
+}
+
+// isTerminalListenerError reports errors that must stop the listener outright
+// rather than trigger a session retry: the selected callback key became unusable
+// (410 Gone) or the CLI credential's listen access was revoked (401/403).
+func isTerminalListenerError(err error) bool {
+	return errors.Is(err, errCallbackAPIKeyUnusable) || isListenerAccessRevoked(err)
+}
+
+// nextBackoff doubles the retry delay up to a 30s ceiling.
+func nextBackoff(current time.Duration) time.Duration {
+	if current < 30*time.Second {
+		return current * 2
+	}
+	return current
+}
+
+// createVerifiedSession creates a listener session for keyID and asserts the
+// server echoed that exact callback key back, guarding against a server that
+// silently resolved a different one.
+func createVerifiedSession(ctx context.Context, hc *http.Client, baseURL, apiKey, keyID string) (*createSessionResponse, error) {
+	session, err := createListenSession(ctx, hc, baseURL, apiKey, keyID)
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	if session.CallbackAPIKey.ID != keyID {
+		return nil, fmt.Errorf("listen session resolved unexpected callback API key %q", session.CallbackAPIKey.ID)
+	}
+	return session, nil
+}
+
+// fetchVerifiedSecret fetches the listen secret for keyID and asserts the server
+// echoed that exact callback key back.
+func fetchVerifiedSecret(ctx context.Context, hc *http.Client, baseURL, apiKey, keyID string) (*listenSecretResponse, error) {
+	secret, err := fetchListenSecret(ctx, hc, baseURL, apiKey, keyID)
+	if err != nil {
+		return nil, err
+	}
+	if secret.CallbackAPIKey.ID != keyID {
+		return nil, fmt.Errorf("listen secret resolved unexpected callback API key %q", secret.CallbackAPIKey.ID)
+	}
+	return secret, nil
+}
+
+// recreateSession makes a fresh session after the current one expired mid-run,
+// shared by the poll and ack loops. Deliberately unlike startup, a committed key
+// that has gone missing is NOT re-prompted (that would silently switch keys under
+// a long-running listener); it returns a non-retriable error so the caller exits.
+// retriable reports whether the caller should back off and try again instead.
+func (c *cli) recreateSession(ctx context.Context, hc *http.Client, baseURL, apiKey, keyID string) (token string, retriable bool, err error) {
+	session, createErr := createVerifiedSession(ctx, hc, baseURL, apiKey, keyID)
+	if createErr != nil {
+		if core.IsNotFound(createErr) {
+			return "", false, fmt.Errorf("callback API key is no longer available: %w", createErr)
+		}
+		if isTerminalListenerError(createErr) {
+			return "", false, createErr
+		}
+		return "", true, createErr
+	}
+	return session.SessionToken, false, nil
+}
+
+// maybeReselectStaleConfig re-runs interactive selection once when the key that
+// was committed to .runapi.toml (Source == "config") is the one reported missing.
+// It returns retry=true (with *selection replaced) when a fresh key was picked,
+// so the caller can retry its operation. An explicit --callback-api-key-id flag
+// or an already-interactive pick is never rewritten. Only used at startup: a
+// long-running listener deliberately does not re-prompt mid-stream (see the poll
+// loop) so it never silently switches keys under the user.
+func (c *cli) maybeReselectStaleConfig(ctx context.Context, hc *http.Client, baseURL, apiKey string, selection *callbackKeySelection, cause error) (retry bool, err error) {
+	if cause == nil || selection.Source != "config" || !core.IsNotFound(cause) {
+		return false, nil
+	}
+	newSelection, chooseErr := c.chooseCallbackAPIKey(ctx, hc, baseURL, apiKey, selection.ConfigPath)
+	if chooseErr != nil {
+		return false, chooseErr
+	}
+	*selection = newSelection
+	return true, nil
+}
+
+// createSessionResolvingStaleConfig creates a verified session, reselecting once
+// if a committed config key has gone missing.
+func (c *cli) createSessionResolvingStaleConfig(ctx context.Context, hc *http.Client, baseURL, apiKey string, selection *callbackKeySelection) (*createSessionResponse, error) {
+	session, err := createVerifiedSession(ctx, hc, baseURL, apiKey, selection.ID)
+	if retry, rerr := c.maybeReselectStaleConfig(ctx, hc, baseURL, apiKey, selection, err); rerr != nil {
+		return nil, rerr
+	} else if retry {
+		return createVerifiedSession(ctx, hc, baseURL, apiKey, selection.ID)
+	}
+	return session, err
+}
+
+// fetchSecretResolvingStaleConfig fetches a verified secret, reselecting once if
+// a committed config key has gone missing.
+func (c *cli) fetchSecretResolvingStaleConfig(ctx context.Context, hc *http.Client, baseURL, apiKey string, selection *callbackKeySelection) (*listenSecretResponse, error) {
+	secret, err := fetchVerifiedSecret(ctx, hc, baseURL, apiKey, selection.ID)
+	if retry, rerr := c.maybeReselectStaleConfig(ctx, hc, baseURL, apiKey, selection, err); rerr != nil {
+		return nil, rerr
+	} else if retry {
+		return fetchVerifiedSecret(ctx, hc, baseURL, apiKey, selection.ID)
+	}
+	return secret, err
+}
+
+// callbackKeyUnusableError wraps a 410 Gone response as errCallbackAPIKeyUnusable.
+func callbackKeyUnusableError(resp *http.Response, body []byte) error {
+	return fmt.Errorf("%w: %v", errCallbackAPIKeyUnusable, cliAPIError(resp, body))
+}
+
+func fetchListenSecret(ctx context.Context, hc *http.Client, baseURL, apiKey, callbackAPIKeyID string) (*listenSecretResponse, error) {
+	endpoint, err := url.Parse(baseURL + "/api/v1/cli/listen_secret")
+	if err != nil {
+		return nil, err
+	}
+	query := endpoint.Query()
+	query.Set("callback_api_key_id", callbackAPIKeyID)
+	endpoint.RawQuery = query.Encode()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 	req.Header.Set("X-API-Key", apiKey)
 	req.Header.Set("User-Agent", core.CLIUserAgent(runapi.Version))
 
 	resp, err := hc.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("GET listen_secret: %d %s", resp.StatusCode, body)
+		return nil, cliAPIError(resp, body)
 	}
 	var result listenSecretResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
+		return nil, err
 	}
-	return result.ListenSecret, nil
+	return &result, nil
 }
 
-func createListenSession(ctx context.Context, hc *http.Client, baseURL, apiKey string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/api/v1/cli/listen_sessions", nil)
+func createListenSession(ctx context.Context, hc *http.Client, baseURL, apiKey, callbackAPIKeyID string) (*createSessionResponse, error) {
+	body, err := json.Marshal(struct {
+		CallbackAPIKeyID string `json:"callback_api_key_id,omitempty"`
+	}{CallbackAPIKeyID: callbackAPIKeyID})
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/api/v1/cli/listen_sessions", bytes.NewReader(body))
+	if err != nil {
+		return nil, err
 	}
 	req.Header.Set("X-API-Key", apiKey)
 	req.Header.Set("Content-Type", "application/json")
@@ -192,18 +392,18 @@ func createListenSession(ctx context.Context, hc *http.Client, baseURL, apiKey s
 
 	resp, err := hc.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("POST listen_sessions: %d %s", resp.StatusCode, body)
+		return nil, cliAPIError(resp, body)
 	}
 	var result createSessionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
+		return nil, err
 	}
-	return result.SessionToken, nil
+	return &result, nil
 }
 
 func destroyListenSession(ctx context.Context, hc *http.Client, baseURL, apiKey, sessionToken string) {
@@ -240,9 +440,13 @@ func pollEvents(ctx context.Context, hc *http.Client, baseURL, apiKey, sessionTo
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, errSessionExpired
 	}
+	if resp.StatusCode == http.StatusGone {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return nil, callbackKeyUnusableError(resp, body)
+	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("GET listen_events: %d %s", resp.StatusCode, body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return nil, cliAPIError(resp, body)
 	}
 	var result pollResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -269,9 +473,13 @@ func ackEvent(ctx context.Context, hc *http.Client, baseURL, apiKey, sessionToke
 	if resp.StatusCode == http.StatusNotFound {
 		return errSessionExpired
 	}
+	if resp.StatusCode == http.StatusGone {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return callbackKeyUnusableError(resp, body)
+	}
 	if resp.StatusCode != http.StatusNoContent {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return fmt.Errorf("POST listen_events/%d/ack: %d %s", eventID, resp.StatusCode, strings.TrimSpace(string(body)))
+		return cliAPIError(resp, body)
 	}
 	return nil
 }

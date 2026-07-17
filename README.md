@@ -119,6 +119,42 @@ Build pipelines that need to verify downloads themselves can consume the stable 
 curl -fsSL https://runapi.ai/cli/latest.json | jq '.assets["linux-amd64"]'
 ```
 
+## Local callback listener
+
+Local listeners require the credential issued by browser login. On first use, the CLI lists your enabled API keys and lets you choose one by name, stable ID, and masked value. The validated stable ID is written to `.runapi.toml` at the git root, or in the current directory outside a git repository; no credential or signing secret is stored there.
+
+```bash
+runapi login
+runapi listen localhost:3000/webhooks/runapi
+```
+
+Only tasks created with the selected API key are copied to that listener. Tasks created with another key stay isolated, including keys owned by the same Account member. A committed `.runapi.toml` is reusable by the same member on another machine; another member is prompted to select a key they own.
+
+Selection precedence is `--callback-api-key-id` (one invocation only), then project `.runapi.toml`, then the TTY selector. The selector writes the config only after the server validates the session. The config has one allowed field:
+
+```toml
+callback_api_key_id = "token_abc123"
+```
+
+Renaming the API key does not invalidate this stable ID. Do not add credentials, names, masks, signing secrets, forwarding URLs, or `base_url`; unknown fields are rejected.
+
+Agents and non-interactive shells can discover and select the key explicitly:
+
+```bash
+runapi api-keys list --json
+runapi listen localhost:3000/webhooks/runapi --callback-api-key-id token_abc123
+```
+
+Without `--callback-api-key-id` or `.runapi.toml`, a non-interactive invocation returns `callback_api_key_required` with the available key metadata and never chooses automatically. `cli_listen_required` means the active credential did not come from browser login: the imported API key keeps its existing API access, but cannot list or select listener keys. Remove any `--api-key` or `RUNAPI_API_KEY` override, run `runapi login`, then retry `runapi listen`. If the selected key becomes unusable, the listener exits without falling back to another key.
+
+Print the selected key's stable Listen Signing Secret without starting a listener with:
+
+```bash
+RUNAPI_WEBHOOK_SECRET="$(runapi listen --print-secret --callback-api-key-id token_abc123)"
+```
+
+After upgrading from the previous Account-wide listener behavior, update the CLI, run `runapi login` again, and restart listeners. Previous listener sessions and Account-wide listener secrets are invalid after the migration.
+
 ## Agent runtimes
 
 `runapi` ships a portable skill for the major AI agent runtimes. Install it once and the runtime can run RunAPI commands with full inline documentation:

@@ -34,6 +34,7 @@ import (
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
 	"github.com/runapi-ai/kling-sdk/go/kling"
 	"github.com/runapi-ai/luma-sdk/go/luma"
+	"github.com/runapi-ai/midjourney-sdk/go/midjourney"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
 	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
@@ -72,6 +73,11 @@ type cli struct {
 
 	archiveBaseURL string
 	httpClient     *http.Client
+
+	projectDir           string
+	stdinTTY             func() bool
+	stderrTTY            func() bool
+	selectCallbackAPIKey func([]callbackAPIKey) (callbackAPIKey, error)
 }
 
 type actionSpec struct {
@@ -86,12 +92,16 @@ type actionSpec struct {
 }
 
 func newCLI() *cli {
-	return &cli{
+	c := &cli{
 		stdout:    os.Stdout,
 		stderr:    os.Stderr,
 		stdin:     os.Stdin,
 		newClient: runapi.NewClient,
 	}
+	c.stdinTTY = func() bool { return isReaderTTY(c.stdin) }
+	c.stderrTTY = func() bool { return isWriterTTY(c.stderr) }
+	c.selectCallbackAPIKey = c.promptForCallbackAPIKey
+	return c
 }
 
 func (c *cli) run(args []string) int {
@@ -127,6 +137,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.versionCommand())
 	root.AddCommand(c.accountCommand())
 	root.AddCommand(c.filesCommand())
+	root.AddCommand(c.apiKeysCommand())
 	root.AddCommand(c.serviceCommand("suno"))
 	root.AddCommand(c.serviceCommand("veo-3-1"))
 	root.AddCommand(c.serviceCommand("nano-banana"))
@@ -148,6 +159,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("omnihuman"))
 	root.AddCommand(c.serviceCommand("wan"))
 	root.AddCommand(c.serviceCommand("luma"))
+	root.AddCommand(c.serviceCommand("midjourney"))
 	root.AddCommand(c.serviceCommand("hailuo"))
 	root.AddCommand(c.serviceCommand("volcengine-lip-sync"))
 	root.AddCommand(c.serviceCommand("happyhorse"))
@@ -789,7 +801,15 @@ func firstNonEmpty(values ...string) string {
 }
 
 func isReaderTTY(reader io.Reader) bool {
-	file, ok := reader.(*os.File)
+	return isFileTTY(reader)
+}
+
+func isWriterTTY(writer io.Writer) bool {
+	return isFileTTY(writer)
+}
+
+func isFileTTY(value any) bool {
+	file, ok := value.(*os.File)
 	if !ok {
 		return false
 	}
@@ -819,7 +839,21 @@ func exitCode(err error) int {
 	case core.ErrTaskFailed:
 		return 7
 	default:
-		return 1
+		switch apiErr.Status {
+		case http.StatusUnauthorized, http.StatusForbidden:
+			return 2
+		case http.StatusPaymentRequired:
+			return 3
+		case http.StatusBadRequest, http.StatusNotFound, http.StatusConflict,
+			http.StatusGone, http.StatusUnprocessableEntity:
+			return 4
+		case http.StatusRequestTimeout, http.StatusGatewayTimeout:
+			return 5
+		case http.StatusTooManyRequests:
+			return 6
+		default:
+			return 1
+		}
 	}
 }
 
@@ -1126,6 +1160,8 @@ var allSpecs = []actionSpec{
 	newWanTextToVideoSpec(), newWanImageToVideoSpec(), newWanSpeechToVideoSpec(),
 	newWanAnimateSpec(), newWanTextToImageSpec(), newWanEditVideoSpec(),
 	newLumaModifySpec(),
+	newMidjourneyTextToImageSpec(), newMidjourneyEditImageSpec(), newMidjourneyImageToVideoSpec(),
+	newMidjourneyImageToPromptSpec(), newMidjourneyGetSeedSpec(),
 	newHailuoTextToVideoSpec(), newHailuoImageToVideoSpec(),
 	newVolcengineLipSyncVideoSpec(),
 	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
@@ -1782,6 +1818,48 @@ func newLumaModifySpec() actionSpec {
 		return client.Luma.ModifyVideo.Run(ctx, params.(luma.ModifyVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Luma.ModifyVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newMidjourneyTextToImageSpec() actionSpec {
+	return actionSpec{service: "midjourney", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[midjourney.TextToImageParams](), decode: decodeInto[midjourney.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Midjourney.TextToImage.Create(ctx, params.(midjourney.TextToImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Midjourney.TextToImage.Run(ctx, params.(midjourney.TextToImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Midjourney.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newMidjourneyEditImageSpec() actionSpec {
+	return actionSpec{service: "midjourney", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[midjourney.EditImageParams](), decode: decodeInto[midjourney.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Midjourney.EditImage.Create(ctx, params.(midjourney.EditImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Midjourney.EditImage.Run(ctx, params.(midjourney.EditImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Midjourney.EditImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newMidjourneyImageToVideoSpec() actionSpec {
+	return actionSpec{service: "midjourney", action: "image-to-video", isAsync: true, inputFields: inputFieldsFor[midjourney.ImageToVideoParams](), decode: decodeInto[midjourney.ImageToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Midjourney.ImageToVideo.Create(ctx, params.(midjourney.ImageToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Midjourney.ImageToVideo.Run(ctx, params.(midjourney.ImageToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Midjourney.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newMidjourneyImageToPromptSpec() actionSpec {
+	return actionSpec{service: "midjourney", action: "image-to-prompt", isAsync: false, inputFields: inputFieldsFor[midjourney.ImageToPromptParams](), decode: decodeInto[midjourney.ImageToPromptParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Midjourney.ImageToPrompt.Run(ctx, params.(midjourney.ImageToPromptParams), opts...)
+	}}
+}
+
+func newMidjourneyGetSeedSpec() actionSpec {
+	return actionSpec{service: "midjourney", action: "get-seed", isAsync: false, inputFields: inputFieldsFor[midjourney.GetSeedParams](), decode: decodeInto[midjourney.GetSeedParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Midjourney.GetSeed.Run(ctx, params.(midjourney.GetSeedParams), opts...)
 	}}
 }
 
