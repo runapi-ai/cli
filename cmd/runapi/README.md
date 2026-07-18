@@ -19,6 +19,12 @@ curl -fsSL https://runapi.ai/cli/install.sh | sh
 brew install runapi-ai/tap/runapi
 ```
 
+**Windows (precompiled archive):**
+
+Download `windows-amd64` or `windows-arm64` from the
+[latest release](https://github.com/runapi-ai/cli/releases/latest), extract
+`runapi.exe`, and place it on `PATH`.
+
 **Go source build (Go 1.22+):**
 
 ```bash
@@ -30,16 +36,26 @@ go install github.com/runapi-ai/cli/cmd/runapi@latest
 ```
 Install the RunAPI CLI on this machine and wire it into this agent runtime:
 
-1. Run `curl -fsSL https://runapi.ai/cli/install.sh | sh`.
-2. Save my API key with `printf '%s' "$RUNAPI_API_KEY" | runapi auth import-token --token -`
-   (or run `runapi login` if I'm on a laptop with a browser).
+1. On Linux or macOS, run `curl -fsSL https://runapi.ai/cli/install.sh | sh`.
+   On Windows, download the matching `windows-amd64` or `windows-arm64` archive
+   from https://github.com/runapi-ai/cli/releases/latest, extract `runapi.exe`,
+   and place it on `PATH`.
+2. Save my API key with `runapi auth import-token`; it reads `RUNAPI_API_KEY`
+   from the current environment. (Or run `runapi login` on a laptop with a
+   browser.)
 3. Install the CLI skill into this runtime with `runapi agent install-skill --target <claude|codex|gemini|openclaw|hermes>`.
 4. Confirm it works by running `runapi version` and `runapi auth status`.
 
 Docs: https://runapi.ai/docs#runapi-cli
 ```
 
-The curl install script detects OS and CPU architecture (Linux and macOS, amd64 and arm64), verifies a SHA-256 checksum from `https://runapi.ai/cli/latest.json`, and writes the binary to `/usr/local/bin` (or `~/.local/bin` if it cannot get write access). On a musl libc distro (Alpine) it exits early with a clear message rather than installing a binary that will crash at runtime.
+Precompiled archives are published for macOS, Linux, and Windows on amd64 and
+arm64. The curl install script supports Linux and macOS: it detects OS and CPU
+architecture, verifies a SHA-256 checksum from
+`https://runapi.ai/cli/latest.json`, and writes the binary to `/usr/local/bin`
+(or `~/.local/bin` if it cannot get write access). On a musl libc distro
+(Alpine) it exits early with a clear message rather than installing a binary
+that will crash at runtime.
 
 ### Pin a release or pick a directory
 
