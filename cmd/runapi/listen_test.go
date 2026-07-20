@@ -279,6 +279,116 @@ func TestListenPrintSecretUsesSelectedCallbackAPIKeyAndExits(t *testing.T) {
 	}
 }
 
+func TestListenRotateSecretUsesSelectedCallbackAPIKeyAndExits(t *testing.T) {
+	isolateConfig(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch || r.URL.Path != "/api/v1/cli/listen_secret" {
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if got := r.URL.Query().Get("callback_api_key_id"); got != "token_project" {
+			t.Errorf("expected selected callback API key, got %q", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"listen_secret":"rotated_secret_123",
+			"callback_api_key":{"id":"token_project","name":"Project key","masked_token":"runapi_abcd••••••••1234"}
+		}`))
+	}))
+	defer server.Close()
+	if err := saveConfig(configFile{APIKey: "cli-credential", BaseURL: server.URL}); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout bytes.Buffer
+	c := newCLI()
+	c.stdout = &stdout
+	c.stderr = &bytes.Buffer{}
+	c.httpClient = server.Client()
+	c.projectDir = projectRootFixture(t, "")
+	cmd := c.command()
+	cmd.SetArgs([]string{
+		"listen",
+		"--callback-api-key-id", "token_project",
+		"--rotate-secret",
+	})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if stdout.String() != "rotated_secret_123\n" {
+		t.Fatalf("expected rotated secret only on stdout, got %q", stdout.String())
+	}
+}
+
+func TestListenStopsWhenSecretChangesDuringSessionRecreation(t *testing.T) {
+	isolateConfig(t)
+	var createCount atomic.Int32
+	var destroyedNewSession atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/cli/keys":
+			_, _ = w.Write([]byte(`{"api_keys":[{"id":"token_project","name":"Project key","masked_token":"runapi_abcd","enabled":true}]}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_sessions":
+			count := createCount.Add(1)
+			w.WriteHeader(http.StatusCreated)
+			if count == 1 {
+				_, _ = w.Write([]byte(`{
+					"session_token":"session_old",
+					"listen_secret":"secret_old",
+					"callback_api_key":{"id":"token_project","name":"Project key","masked_token":"runapi_abcd"}
+				}`))
+				return
+			}
+			_, _ = w.Write([]byte(`{
+				"session_token":"session_new",
+				"listen_secret":"secret_new",
+				"callback_api_key":{"id":"token_project","name":"Project key","masked_token":"runapi_abcd"}
+			}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/cli/listen_events":
+			if r.Header.Get("X-Session-Token") == "session_old" {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			w.WriteHeader(http.StatusGone)
+			_, _ = w.Write([]byte(`{"error":"unexpected continued listener","code":"callback_api_key_unusable"}`))
+		case r.Method == http.MethodDelete && strings.HasSuffix(r.URL.Path, "/session_new"):
+			destroyedNewSession.Store(true)
+			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodDelete:
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+	if err := saveConfig(configFile{APIKey: "cli-credential", BaseURL: server.URL}); err != nil {
+		t.Fatal(err)
+	}
+
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+	c.httpClient = server.Client()
+	c.projectDir = projectRootFixture(t, "callback_api_key_id = \"token_project\"\n")
+	cmd := c.command()
+	cmd.SetArgs([]string{"listen"})
+
+	err := cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "listen signing secret changed") {
+		t.Fatalf("expected rotated-secret error, got %v", err)
+	}
+	if got := createCount.Load(); got != 2 {
+		t.Fatalf("expected one initial and one replacement session, got %d", got)
+	}
+	if !destroyedNewSession.Load() {
+		t.Fatal("expected replacement session with the new secret to be destroyed")
+	}
+}
+
 func TestCreateListenSessionSendsSelectedCallbackAPIKey(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/cli/listen_sessions" {

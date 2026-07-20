@@ -18,7 +18,9 @@ import (
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
+	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
+	"github.com/runapi-ai/gemini-tts-sdk/go/geminitts"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
 	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
@@ -33,6 +35,8 @@ import (
 	"github.com/runapi-ai/midjourney-sdk/go/midjourney"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
 	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
+	"github.com/runapi-ai/openai-tts-sdk/go/openaitts"
+	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
@@ -58,6 +62,8 @@ type Client struct {
 	// Suno creates and manipulates music: text-to-music, extend, cover, remix,
 	// stem separation, lyrics, MIDI, sound effects, persona voices, and more.
 	Suno *suno.Client
+	// Producer generates FUZZ music from exact lyrics or instrumental briefs.
+	Producer *producer.Client
 	// Veo31 generates, extends, and upscales video with Veo 3.1 models.
 	Veo31 *veo31.Client
 	// NanoBanana generates and edits images with Nano Banana models.
@@ -81,6 +87,12 @@ type Client struct {
 	Flux2 *flux2.Client
 	// GeminiOmni creates audio, character voices, and video with Gemini models.
 	GeminiOmni *geminiomni.Client
+	// OpenAITTS generates speech with OpenAI TTS models.
+	OpenAITTS *openaitts.Client
+	// FishAudio generates speech with Fish Audio models.
+	FishAudio *fishaudio.Client
+	// GeminiTTS generates multi-speaker speech from ordered dialogue turns.
+	GeminiTTS *geminitts.Client
 	// Qwen2 generates, remixes, and edits images with Qwen 2 models.
 	Qwen2 *qwen2.Client
 	// Recraft upscales images and removes backgrounds using Recraft models.
@@ -148,6 +160,7 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		http:              httpClient,
 		Base:              base.New(httpClient),
 		Suno:              suno.NewClientWithHTTP(httpClient),
+		Producer:          producer.NewClientWithHTTP(httpClient),
 		Veo31:             veo31.NewClientWithHTTP(httpClient),
 		NanoBanana:        nanobanana.NewClientWithHTTP(httpClient),
 		Imagen4:           imagen4.NewClientWithHTTP(httpClient),
@@ -159,6 +172,9 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		FluxKontext:       fluxkontext.NewClientWithHTTP(httpClient),
 		Flux2:             flux2.NewClientWithHTTP(httpClient),
 		GeminiOmni:        geminiomni.NewClientWithHTTP(httpClient),
+		OpenAITTS:         openaitts.NewClientWithHTTP(httpClient),
+		FishAudio:         fishaudio.NewClientWithHTTP(httpClient),
+		GeminiTTS:         geminitts.NewClientWithHTTP(httpClient),
 		Qwen2:             qwen2.NewClientWithHTTP(httpClient),
 		Recraft:           recraft.NewClientWithHTTP(httpClient),
 		ZImage:            zimage.NewClientWithHTTP(httpClient),

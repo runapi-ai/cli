@@ -69,8 +69,46 @@ func TestGeminiOmniServiceCommandIsRegistered(t *testing.T) {
 	}
 
 	output = c.stdout.(*bytes.Buffer).String()
-	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "character_ids") || !helpHasField(output, "reference_image_urls") || helpHasField(output, "image_urls") {
+	if !helpHasField(output, "model") || !strings.Contains(output, "gemini-omni-flash-preview") || !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "character_ids") || !helpHasField(output, "reference_image_urls") || helpHasField(output, "image_urls") {
 		t.Fatalf("expected Gemini Omni text-to-video help to include video fields, got:\n%s", output)
+	}
+}
+
+func TestMidjourneyShortenPromptCommandIsRegistered(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"midjourney", "shorten-prompt", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "prompt") {
+		t.Fatalf("expected Midjourney shorten-prompt help to include prompt, got:\n%s", output)
+	}
+	if helpHasField(output, "model") || helpHasField(output, "callback_url") {
+		t.Fatalf("expected Midjourney shorten-prompt help to expose only its synchronous input, got:\n%s", output)
+	}
+}
+
+func TestTTSServiceCommandsAreRegistered(t *testing.T) {
+	for _, service := range []string{"openai-tts", "fish-audio"} {
+		c := newCLI()
+		c.stdout = &bytes.Buffer{}
+		c.stderr = &bytes.Buffer{}
+		cmd := c.command()
+		cmd.SetArgs([]string{service, "text-to-speech", "--help"})
+		if err := cmd.Execute(); err != nil {
+			t.Fatal(err)
+		}
+
+		output := c.stdout.(*bytes.Buffer).String()
+		if !helpHasField(output, "model") || !helpHasField(output, "text") {
+			t.Fatalf("expected %s text-to-speech help to include model and text, got:\n%s", service, output)
+		}
 	}
 }
 
@@ -264,6 +302,27 @@ func TestKlingTextToVideoHelpUsesCanonicalFields(t *testing.T) {
 	}
 	if helpHasField(output, "mode") || helpHasField(output, "image_urls") {
 		t.Fatalf("expected Kling text-to-video help not to expose provider or roleless fields, got:\n%s", output)
+	}
+}
+
+func TestGeneratedContractHelpIncludesArrayItemCounts(t *testing.T) {
+	common := generatedContractAction{
+		Models: []string{"m-a", "m-b"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"m-a": {"reference_image_urls": {MinItems: 1, MaxItems: 3}},
+			"m-b": {"reference_image_urls": {MinItems: 1, MaxItems: 3}},
+		},
+	}
+	if got := generatedContractHelpSentenceFor(common, "reference_image_urls"); got != "Item count: 1-3." {
+		t.Fatalf("got %q", got)
+	}
+
+	divergent := common
+	divergent.FieldsByModel["m-a"] = map[string]generatedContractField{
+		"reference_image_urls": {MinItems: 1, MaxItems: 2},
+	}
+	if got := generatedContractHelpSentenceFor(divergent, "reference_image_urls"); got != "Item count by model: m-a: 1-2; m-b: 1-3." {
+		t.Fatalf("got %q", got)
 	}
 }
 
@@ -673,7 +732,7 @@ func TestDynamicImageActionsAreRegistered(t *testing.T) {
 	}{
 		{service: "flux-2", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: flux-2-flex-remix-image, flux-2-pro-remix-image."}},
 		{service: "imagen-4", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: imagen-4-pro-remix-image."}},
-		{service: "seedream", action: "edit-image", fields: []string{"source_image_urls", "Accepted values: seedream-4.5-edit, seedream-5-lite-edit, seedream-v4-edit."}},
+		{service: "seedream", action: "edit-image", fields: []string{"source_image_urls", "Accepted values: seedream-4.5-edit, seedream-5-lite-edit, seedream-5-pro-edit, seedream-v4-edit."}},
 	}
 
 	for _, tc := range cases {

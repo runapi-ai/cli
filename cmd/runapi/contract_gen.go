@@ -36,16 +36,25 @@ var generatedContract = map[string]generatedContractAction{
 			"text-to-speech-turbo-v2.5":      {},
 		},
 	},
+	"fish-audio/text-to-speech": {
+		Models: []string{"s1", "s2-pro"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"s1":     {},
+			"s2-pro": {},
+		},
+	},
 	"flux-2/remix-image": {
 		Models: []string{"flux-2-flex-remix-image", "flux-2-pro-remix-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"flux-2-flex-remix-image": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}},
 				"output_resolution": {Enum: []any{"1k", "2k"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 8},
 			},
 			"flux-2-pro-remix-image": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}},
 				"output_resolution": {Enum: []any{"1k", "2k"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 8},
 			},
 		},
 	},
@@ -88,12 +97,33 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"gemini-omni/text-to-video": {
-		Models: []string{"gemini-omni-text-to-video"},
+		Models: []string{"gemini-omni-flash-preview", "gemini-omni-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
-			"gemini-omni-text-to-video": {
+			"gemini-omni-flash-preview": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16"}},
-				"duration_seconds":  {Enum: []any{4, 6, 8, 10}},
-				"output_resolution": {Enum: []any{"720p", "1080p", "4k"}},
+				"output_resolution": {Enum: []any{"720p"}},
+			},
+			"gemini-omni-text-to-video": {
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16"}},
+				"audio_ids":            {MaxItems: 3},
+				"character_ids":        {MaxItems: 3},
+				"duration_seconds":     {Enum: []any{4, 6, 8, 10}},
+				"output_resolution":    {Enum: []any{"720p", "1080p", "4k"}},
+				"reference_image_urls": {MaxItems: 7},
+				"video_list":           {MaxItems: 1},
+			},
+		},
+	},
+	"gemini-tts/text-to-speech": {
+		Models: []string{"gemini-2.5-pro-tts", "gemini-3.1-flash-tts"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"gemini-2.5-pro-tts": {
+				"dialogue_turns": {MinItems: 1},
+				"speakers":       {MinItems: 1},
+			},
+			"gemini-3.1-flash-tts": {
+				"dialogue_turns": {MinItems: 1},
+				"speakers":       {MinItems: 1},
 			},
 		},
 	},
@@ -101,8 +131,9 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"gpt-4o-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"gpt-4o-image": {
-				"aspect_ratio": {Enum: []any{"1:1", "3:2", "2:3"}},
-				"output_count": {Enum: []any{1, 2, 4}},
+				"aspect_ratio":      {Enum: []any{"1:1", "3:2", "2:3"}},
+				"output_count":      {Enum: []any{1, 2, 4}},
+				"source_image_urls": {MaxItems: 5},
 			},
 		},
 	},
@@ -237,8 +268,9 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"happyhorse-edit-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"happyhorse-edit-video": {
-				"audio_setting":     {Enum: []any{"auto", "original"}},
-				"output_resolution": {Enum: []any{"720p", "1080p"}},
+				"audio_setting":        {Enum: []any{"auto", "original"}},
+				"output_resolution":    {Enum: []any{"720p", "1080p"}},
+				"reference_image_urls": {MaxItems: 5},
 			},
 		},
 	},
@@ -254,8 +286,9 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"happyhorse-character", "happyhorse-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"happyhorse-character": {
-				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1", "4:3", "3:4"}},
-				"output_resolution": {Enum: []any{"720p", "1080p"}},
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "1:1", "4:3", "3:4"}},
+				"output_resolution":    {Enum: []any{"720p", "1080p"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 9},
 			},
 			"happyhorse-text-to-video": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1", "4:3", "3:4"}},
@@ -329,6 +362,7 @@ var generatedContract = map[string]generatedContractAction{
 				"aspect_ratio":      {Enum: []any{"1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9", "auto"}},
 				"output_format":     {Enum: []any{"png", "jpg"}},
 				"output_resolution": {Enum: []any{"1k", "2k", "4k"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 8},
 			},
 		},
 	},
@@ -449,6 +483,12 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
+	"midjourney/shorten-prompt": {
+		Models: []string{},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"_": {},
+		},
+	},
 	"midjourney/text-to-image": {
 		Models: []string{"midjourney-v8.1"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -459,7 +499,8 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"nano-banana-2-lite", "nano-banana-edit"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"nano-banana-2-lite": {
-				"aspect_ratio": {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
+				"aspect_ratio":      {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 10},
 			},
 			"nano-banana-edit": {
 				"aspect_ratio":  {Enum: []any{"1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9", "auto"}},
@@ -480,7 +521,8 @@ var generatedContract = map[string]generatedContractAction{
 				"output_resolution": {Enum: []any{"1k", "2k", "4k"}},
 			},
 			"nano-banana-2-lite": {
-				"aspect_ratio": {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
+				"aspect_ratio":         {Enum: []any{"1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9", "auto"}},
+				"reference_image_urls": {MaxItems: 10},
 			},
 			"nano-banana-pro": {
 				"aspect_ratio":      {Enum: []any{"1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9", "auto"}},
@@ -493,6 +535,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"omnihuman-1.5"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"omnihuman-1.5": {
+				"mask_urls":         {MaxItems: 5},
 				"output_resolution": {Enum: []any{"720p", "1080p"}},
 			},
 		},
@@ -507,6 +550,21 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"omnihuman-1.5-subject-detection"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"omnihuman-1.5-subject-detection": {},
+		},
+	},
+	"openai-tts/text-to-speech": {
+		Models: []string{"tts-1", "tts-1-hd"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"tts-1":    {},
+			"tts-1-hd": {},
+		},
+	},
+	"producer/text-to-music": {
+		Models: []string{"fuzz-2.0"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"fuzz-2.0": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
 		},
 	},
 	"qwen-2/edit-image": {
@@ -580,18 +638,28 @@ var generatedContract = map[string]generatedContractAction{
 			"seedance-1.5-pro": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9"}},
 				"output_resolution": {Enum: []any{"480p", "720p", "1080p"}},
+				"source_image_urls": {MaxItems: 2},
 			},
 			"seedance-2-mini": {
-				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
-				"output_resolution": {Enum: []any{"480p", "720p"}},
+				"aspect_ratio":         {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
+				"output_resolution":    {Enum: []any{"480p", "720p"}},
+				"reference_audio_urls": {MaxItems: 3},
+				"reference_image_urls": {MaxItems: 9},
+				"reference_video_urls": {MaxItems: 3},
 			},
 			"seedance-2.0": {
-				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
-				"output_resolution": {Enum: []any{"480p", "720p", "1080p", "4k"}},
+				"aspect_ratio":         {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
+				"output_resolution":    {Enum: []any{"480p", "720p", "1080p", "4k"}},
+				"reference_audio_urls": {MaxItems: 3},
+				"reference_image_urls": {MaxItems: 9},
+				"reference_video_urls": {MaxItems: 3},
 			},
 			"seedance-2.0-fast": {
-				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
-				"output_resolution": {Enum: []any{"480p", "720p"}},
+				"aspect_ratio":         {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}},
+				"output_resolution":    {Enum: []any{"480p", "720p"}},
+				"reference_audio_urls": {MaxItems: 3},
+				"reference_image_urls": {MaxItems: 9},
+				"reference_video_urls": {MaxItems: 3},
 			},
 			"seedance-v1-lite": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "9:21"}},
@@ -610,25 +678,35 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"seedream/edit-image": {
-		Models: []string{"seedream-4.5-edit", "seedream-5-lite-edit", "seedream-v4-edit"},
+		Models: []string{"seedream-4.5-edit", "seedream-5-lite-edit", "seedream-5-pro-edit", "seedream-v4-edit"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"seedream-4.5-edit": {
-				"aspect_ratio":   {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
-				"output_quality": {Enum: []any{"basic", "high"}},
+				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
+				"output_quality":    {Enum: []any{"basic", "high"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 14},
 			},
 			"seedream-5-lite-edit": {
-				"aspect_ratio":   {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
-				"output_quality": {Enum: []any{"basic", "high"}},
+				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
+				"output_format":     {Enum: []any{"png", "jpeg"}},
+				"output_quality":    {Enum: []any{"basic", "high"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 14},
+			},
+			"seedream-5-pro-edit": {
+				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
+				"output_format":     {Enum: []any{"png", "jpeg"}},
+				"output_quality":    {Enum: []any{"basic", "high"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 10},
 			},
 			"seedream-v4-edit": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"}},
 				"output_count":      {Enum: []any{1, 2, 3, 4, 5, 6}},
 				"output_resolution": {Enum: []any{"1k", "2k", "4k"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 10},
 			},
 		},
 	},
 	"seedream/text-to-image": {
-		Models: []string{"seedream-4.5-text-to-image", "seedream-5-lite-text-to-image", "seedream-v4-text-to-image"},
+		Models: []string{"seedream-4.5-text-to-image", "seedream-5-lite-text-to-image", "seedream-5-pro-text-to-image", "seedream-v4-text-to-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"seedream-4.5-text-to-image": {
 				"aspect_ratio":   {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
@@ -636,6 +714,12 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"seedream-5-lite-text-to-image": {
 				"aspect_ratio":   {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
+				"output_format":  {Enum: []any{"png", "jpeg"}},
+				"output_quality": {Enum: []any{"basic", "high"}},
+			},
+			"seedream-5-pro-text-to-image": {
+				"aspect_ratio":   {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
+				"output_format":  {Enum: []any{"png", "jpeg"}},
 				"output_quality": {Enum: []any{"basic", "high"}},
 			},
 			"seedream-v4-text-to-image": {
@@ -727,34 +811,40 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-all", "suno-v4.5-plus", "suno-v5", "suno-v5.5"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"suno-v4": {
-				"persona_type": {Enum: []any{"style", "voice"}},
-				"vocal_gender": {Enum: []any{"male", "female"}},
-				"vocal_mode":   {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
+				"persona_type":    {Enum: []any{"style", "voice"}},
+				"upload_url_list": {MinItems: 2, MaxItems: 2},
+				"vocal_gender":    {Enum: []any{"male", "female"}},
+				"vocal_mode":      {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
 			},
 			"suno-v4.5": {
-				"persona_type": {Enum: []any{"style", "voice"}},
-				"vocal_gender": {Enum: []any{"male", "female"}},
-				"vocal_mode":   {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
+				"persona_type":    {Enum: []any{"style", "voice"}},
+				"upload_url_list": {MinItems: 2, MaxItems: 2},
+				"vocal_gender":    {Enum: []any{"male", "female"}},
+				"vocal_mode":      {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
 			},
 			"suno-v4.5-all": {
-				"persona_type": {Enum: []any{"style", "voice"}},
-				"vocal_gender": {Enum: []any{"male", "female"}},
-				"vocal_mode":   {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
+				"persona_type":    {Enum: []any{"style", "voice"}},
+				"upload_url_list": {MinItems: 2, MaxItems: 2},
+				"vocal_gender":    {Enum: []any{"male", "female"}},
+				"vocal_mode":      {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
 			},
 			"suno-v4.5-plus": {
-				"persona_type": {Enum: []any{"style", "voice"}},
-				"vocal_gender": {Enum: []any{"male", "female"}},
-				"vocal_mode":   {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
+				"persona_type":    {Enum: []any{"style", "voice"}},
+				"upload_url_list": {MinItems: 2, MaxItems: 2},
+				"vocal_gender":    {Enum: []any{"male", "female"}},
+				"vocal_mode":      {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
 			},
 			"suno-v5": {
-				"persona_type": {Enum: []any{"style", "voice"}},
-				"vocal_gender": {Enum: []any{"male", "female"}},
-				"vocal_mode":   {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
+				"persona_type":    {Enum: []any{"style", "voice"}},
+				"upload_url_list": {MinItems: 2, MaxItems: 2},
+				"vocal_gender":    {Enum: []any{"male", "female"}},
+				"vocal_mode":      {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
 			},
 			"suno-v5.5": {
-				"persona_type": {Enum: []any{"style", "voice"}},
-				"vocal_gender": {Enum: []any{"male", "female"}},
-				"vocal_mode":   {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
+				"persona_type":    {Enum: []any{"style", "voice"}},
+				"upload_url_list": {MinItems: 2, MaxItems: 2},
+				"vocal_gender":    {Enum: []any{"male", "female"}},
+				"vocal_mode":      {Enum: []any{"auto_lyrics", "exact_lyrics", "instrumental"}},
 			},
 		},
 	},
@@ -848,7 +938,10 @@ var generatedContract = map[string]generatedContractAction{
 	"suno/separate-audio-stems": {
 		Models: []string{},
 		FieldsByModel: map[string]map[string]generatedContractField{
-			"_": {},
+			"_": {
+				"stem_name": {Enum: []any{"Lead Vocal", "Drum Kit", "Kick", "Snare", "Risers", "Bass", "Backing Vocals", "Piano", "Electric Guitar", "Percussion", "String Section", "Synth", "Acoustic Guitar", "Sound Effects", "Synth Pad", "Synth Bass", "Guitar", "Brass Section", "Organ", "Electronic Drum Kit", "Lead Electric Guitar", "Synth Keys", "Rhythm Electric Guitar", "Electric Piano", "Upright Bass", "Keyboards", "Distorted Electric Guitar", "Synth Strings", "Synth Lead", "Woodwinds", "Rhythm Acoustic Guitar", "Flute", "Harp", "Tambourine", "Trumpet", "Arpeggiator", "Accordion", "Fiddle", "Pedal Steel Guitar", "Synth Voice", "Violin", "Digital Piano", "Synth Brass", "Mandolin", "Choir", "Banjo", "Bells", "Clarinet", "Tenor Saxophone", "Trombone", "Shaker", "French Horn", "Glockenspiel", "Electric Bass", "Cello", "Timpani", "Harmonica", "Marimba", "Vibraphone", "Lap Steel Guitar", "Saxophone", "Orchestra", "Horns", "Cymbals", "Hand Clap", "Oboe", "Celesta", "Congas", "Drone", "Alto Saxophone", "Double Bass", "Ukulele", "Harpsichord", "Baritone Saxophone", "Xylophone", "Tuba", "Bass Guitar", "Whistle", "Lead Guitar", "Rhodes", "808", "Bongos", "Bassoon", "Cowbell", "Viola", "Sitar", "Steel Drums", "Piccolo", "Theremin", "Bagpipes", "Hi-Hat", "Music Box", "Melodica", "Tabla", "Koto", "Djembe", "Taiko", "Didgeridoo"}},
+				"type":      {Enum: []any{"separate_vocal", "split_stem", "split_stem_advanced"}},
+			},
 		},
 	},
 	"suno/text-to-music": {
@@ -937,14 +1030,16 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"veo-3.1", "veo-3.1-fast"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"veo-3.1": {
-				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "auto"}},
-				"duration_seconds": {Enum: []any{4, 6, 8}},
-				"input_mode":       {Enum: []any{"text", "first_and_last_frames", "reference"}},
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "auto"}},
+				"duration_seconds":     {Enum: []any{4, 6, 8}},
+				"input_mode":           {Enum: []any{"text", "first_and_last_frames", "reference"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 3},
 			},
 			"veo-3.1-fast": {
-				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "auto"}},
-				"duration_seconds": {Enum: []any{4, 6, 8}},
-				"input_mode":       {Enum: []any{"text", "first_and_last_frames", "reference"}},
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "auto"}},
+				"duration_seconds":     {Enum: []any{4, 6, 8}},
+				"input_mode":           {Enum: []any{"text", "first_and_last_frames", "reference"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 3},
 			},
 		},
 	},

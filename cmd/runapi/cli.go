@@ -22,7 +22,9 @@ import (
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
+	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
+	"github.com/runapi-ai/gemini-tts-sdk/go/geminitts"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
 	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
@@ -37,6 +39,8 @@ import (
 	"github.com/runapi-ai/midjourney-sdk/go/midjourney"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
 	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
+	"github.com/runapi-ai/openai-tts-sdk/go/openaitts"
+	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
@@ -139,6 +143,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.filesCommand())
 	root.AddCommand(c.apiKeysCommand())
 	root.AddCommand(c.serviceCommand("suno"))
+	root.AddCommand(c.serviceCommand("producer"))
 	root.AddCommand(c.serviceCommand("veo-3-1"))
 	root.AddCommand(c.serviceCommand("nano-banana"))
 	root.AddCommand(c.serviceCommand("imagen-4"))
@@ -150,6 +155,9 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("flux-kontext"))
 	root.AddCommand(c.serviceCommand("flux-2"))
 	root.AddCommand(c.serviceCommand("gemini-omni"))
+	root.AddCommand(c.serviceCommand("openai-tts"))
+	root.AddCommand(c.serviceCommand("fish-audio"))
+	root.AddCommand(c.serviceCommand("gemini-tts"))
 	root.AddCommand(c.serviceCommand("qwen-2"))
 	root.AddCommand(c.serviceCommand("recraft"))
 	root.AddCommand(c.serviceCommand("z-image"))
@@ -729,7 +737,11 @@ func (c *cli) writeJSON(value any) error {
 
 func (c *cli) printError(err error) {
 	if apiErr, ok := errors.AsType[*core.Error](err); ok {
-		_ = c.writeJSON(map[string]any{"error": map[string]any{"message": apiErr.Message, "code": apiErr.Code, "status": apiErr.Status, "details": apiErr.Details}})
+		payload := map[string]any{"message": apiErr.Message, "status": apiErr.Status, "details": apiErr.Details}
+		if apiErr.Code != "" {
+			payload["code"] = apiErr.Code
+		}
+		_ = c.writeJSON(map[string]any{"error": payload})
 	} else {
 		_ = c.writeJSON(map[string]any{"error": map[string]any{"message": err.Error()}})
 	}
@@ -825,18 +837,18 @@ func exitCode(err error) int {
 	if !ok {
 		return 1
 	}
-	switch apiErr.Code {
-	case core.ErrAuthentication:
+	switch {
+	case core.IsAuthentication(apiErr):
 		return 2
-	case core.ErrInsufficientCredits:
+	case core.IsInsufficientCredits(apiErr):
 		return 3
-	case core.ErrValidation, core.ErrNotFound, core.ErrConflict:
+	case core.IsValidation(apiErr), core.IsNotFound(apiErr), core.IsConflict(apiErr):
 		return 4
-	case core.ErrTimeout, core.ErrTaskTimeout:
+	case core.IsTimeout(apiErr), core.IsTaskTimeout(apiErr):
 		return 5
-	case core.ErrRateLimit:
+	case core.IsRateLimit(apiErr):
 		return 6
-	case core.ErrTaskFailed:
+	case core.IsTaskFailed(apiErr):
 		return 7
 	default:
 		switch apiErr.Status {
@@ -905,7 +917,9 @@ func composeInputFields(spec actionSpec) string {
 }
 
 type generatedContractField struct {
-	Enum []any
+	Enum     []any
+	MinItems int
+	MaxItems int
 }
 
 type generatedContractAction struct {
@@ -945,17 +959,75 @@ func generatedContractHelpSentenceFor(contract generatedContractAction, field st
 		return fmt.Sprintf("Accepted values: %s.", strings.Join(contract.Models, ", "))
 	}
 
+	sentences := []string{}
+	if itemCountSentence := generatedContractItemCountHelpSentenceFor(contract, field); itemCountSentence != "" {
+		sentences = append(sentences, itemCountSentence)
+	}
+
 	valuesByModel := generatedContractValuesByModelFor(contract, field)
 	if len(valuesByModel) == 0 {
-		return ""
+		return strings.Join(sentences, " ")
 	}
 
 	commonValues := commonGeneratedContractValues(generatedContractFieldModelKeys(contract), valuesByModel)
 	if len(commonValues) > 0 {
-		return fmt.Sprintf("Accepted values: %s.", strings.Join(commonValues, ", "))
+		sentences = append(sentences, fmt.Sprintf("Accepted values: %s.", strings.Join(commonValues, ", ")))
+		return strings.Join(sentences, " ")
 	}
 
-	return fmt.Sprintf("Accepted values by model: %s.", formatGeneratedContractValuesByModel(contract.Models, valuesByModel))
+	sentences = append(sentences, fmt.Sprintf("Accepted values by model: %s.", formatGeneratedContractValuesByModel(contract.Models, valuesByModel)))
+	return strings.Join(sentences, " ")
+}
+
+type generatedContractItemCount struct {
+	min int
+	max int
+}
+
+func generatedContractItemCountHelpSentenceFor(contract generatedContractAction, field string) string {
+	models := generatedContractFieldModelKeys(contract)
+	counts := map[string]generatedContractItemCount{}
+	for _, model := range models {
+		fieldContract, ok := contract.FieldsByModel[model][field]
+		if !ok || (fieldContract.MinItems == 0 && fieldContract.MaxItems == 0) {
+			continue
+		}
+		counts[model] = generatedContractItemCount{min: fieldContract.MinItems, max: fieldContract.MaxItems}
+	}
+	if len(counts) == 0 {
+		return ""
+	}
+
+	if len(counts) == len(models) {
+		common := counts[models[0]]
+		allCommon := true
+		for _, model := range models[1:] {
+			allCommon = allCommon && counts[model] == common
+		}
+		if allCommon {
+			return fmt.Sprintf("Item count: %s.", formatGeneratedContractItemCount(common))
+		}
+	}
+
+	parts := []string{}
+	for _, model := range models {
+		count, ok := counts[model]
+		if ok {
+			parts = append(parts, fmt.Sprintf("%s: %s", model, formatGeneratedContractItemCount(count)))
+		}
+	}
+	return fmt.Sprintf("Item count by model: %s.", strings.Join(parts, "; "))
+}
+
+func formatGeneratedContractItemCount(count generatedContractItemCount) string {
+	switch {
+	case count.min > 0 && count.max > 0:
+		return fmt.Sprintf("%d-%d", count.min, count.max)
+	case count.min > 0:
+		return fmt.Sprintf("at least %d", count.min)
+	default:
+		return fmt.Sprintf("at most %d", count.max)
+	}
 }
 
 func generatedContractValuesByModelFor(contract generatedContractAction, field string) map[string][]string {
@@ -1143,6 +1215,7 @@ var allSpecs = []actionSpec{
 	newSunoVisualizeMusicSpec(), newSunoGenerateLyricsSpec(), newSunoGetTimestampedLyricsSpec(), newSunoReplaceSectionSpec(), newSunoCreateMashupSpec(),
 	newSunoTextToSoundSpec(), newSunoVoiceToValidationPhraseSpec(), newSunoRegenerateValidationPhraseSpec(), newSunoGenerateVoiceSpec(), newSunoCheckVoiceSpec(),
 	newSunoGeneratePersonaSpec(), newSunoBoostStyleSpec(),
+	newProducerTextToMusicSpec(),
 	newVeo31TextToVideoSpec(), newVeo31ExtendVideoSpec(), newVeo31UpscaleVideoSpec(),
 	newNanoBananaTextToImageSpec(), newNanoBananaEditImageSpec(), newImagen4TextToImageSpec(), newImagen4RemixImageSpec(),
 	newSeedanceTextToVideoSpec(),
@@ -1151,6 +1224,8 @@ var allSpecs = []actionSpec{
 	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(),
 	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(),
 	newGeminiOmniCreateAudioSpec(), newGeminiOmniCreateCharacterSpec(), newGeminiOmniTextToVideoSpec(),
+	newOpenAITTSTextToSpeechSpec(), newFishAudioTextToSpeechSpec(),
+	newGeminiTTSTextToSpeechSpec(),
 	newQwen2TextToImageSpec(), newQwen2RemixImageSpec(), newQwen2EditSpec(),
 	newRecraftUpscaleSpec(), newRecraftBackgroundRemovalSpec(), newZImageTextToImageSpec(),
 	newIdeogramV3TextToImageSpec(), newIdeogramV3EditImageSpec(), newIdeogramV3RemixImageSpec(), newIdeogramV3ReframeImageSpec(),
@@ -1161,7 +1236,7 @@ var allSpecs = []actionSpec{
 	newWanAnimateSpec(), newWanTextToImageSpec(), newWanEditVideoSpec(),
 	newLumaModifySpec(),
 	newMidjourneyTextToImageSpec(), newMidjourneyEditImageSpec(), newMidjourneyImageToVideoSpec(),
-	newMidjourneyImageToPromptSpec(), newMidjourneyGetSeedSpec(),
+	newMidjourneyImageToPromptSpec(), newMidjourneyShortenPromptSpec(), newMidjourneyGetSeedSpec(),
 	newHailuoTextToVideoSpec(), newHailuoImageToVideoSpec(),
 	newVolcengineLipSyncVideoSpec(),
 	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
@@ -1178,6 +1253,16 @@ func newSunoTextToMusicSpec() actionSpec {
 		return client.Suno.TextToMusic.Run(ctx, params.(suno.TextToMusicParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Suno.TextToMusic.Get(ctx, id, opts...)
+	}}
+}
+
+func newProducerTextToMusicSpec() actionSpec {
+	return actionSpec{service: "producer", action: "text-to-music", isAsync: true, inputFields: inputFieldsFor[producer.TextToMusicParams](), decode: decodeInto[producer.TextToMusicParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Producer.TextToMusic.Create(ctx, params.(producer.TextToMusicParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Producer.TextToMusic.Run(ctx, params.(producer.TextToMusicParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Producer.TextToMusic.Get(ctx, id, opts...)
 	}}
 }
 
@@ -1554,6 +1639,18 @@ func newGeminiOmniCreateAudioSpec() actionSpec {
 	}}
 }
 
+func newOpenAITTSTextToSpeechSpec() actionSpec {
+	return actionSpec{service: "openai-tts", action: "text-to-speech", isAsync: false, inputFields: inputFieldsFor[openaitts.TextToSpeechParams](), decode: decodeInto[openaitts.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.OpenAITTS.TextToSpeech.Run(ctx, params.(openaitts.TextToSpeechParams), opts...)
+	}}
+}
+
+func newFishAudioTextToSpeechSpec() actionSpec {
+	return actionSpec{service: "fish-audio", action: "text-to-speech", isAsync: false, inputFields: inputFieldsFor[fishaudio.TextToSpeechParams](), decode: decodeInto[fishaudio.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.FishAudio.TextToSpeech.Run(ctx, params.(fishaudio.TextToSpeechParams), opts...)
+	}}
+}
+
 func newGeminiOmniCreateCharacterSpec() actionSpec {
 	return actionSpec{service: "gemini-omni", action: "create-character", isAsync: false, inputFields: inputFieldsFor[geminiomni.CreateCharacterParams](), decode: decodeInto[geminiomni.CreateCharacterParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.GeminiOmni.CreateCharacter.Run(ctx, params.(geminiomni.CreateCharacterParams), opts...)
@@ -1658,6 +1755,16 @@ func newIdeogramV3ReframeImageSpec() actionSpec {
 		return client.IdeogramV3.ReframeImage.Run(ctx, params.(ideogramv3.ReframeImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.IdeogramV3.ReframeImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newGeminiTTSTextToSpeechSpec() actionSpec {
+	return actionSpec{service: "gemini-tts", action: "text-to-speech", isAsync: true, inputFields: inputFieldsFor[geminitts.TextToSpeechParams](), decode: decodeInto[geminitts.TextToSpeechParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.GeminiTTS.TextToSpeech.Create(ctx, params.(geminitts.TextToSpeechParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.GeminiTTS.TextToSpeech.Run(ctx, params.(geminitts.TextToSpeechParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.GeminiTTS.TextToSpeech.Get(ctx, id, opts...)
 	}}
 }
 
@@ -1854,6 +1961,12 @@ func newMidjourneyImageToVideoSpec() actionSpec {
 func newMidjourneyImageToPromptSpec() actionSpec {
 	return actionSpec{service: "midjourney", action: "image-to-prompt", isAsync: false, inputFields: inputFieldsFor[midjourney.ImageToPromptParams](), decode: decodeInto[midjourney.ImageToPromptParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.Midjourney.ImageToPrompt.Run(ctx, params.(midjourney.ImageToPromptParams), opts...)
+	}}
+}
+
+func newMidjourneyShortenPromptSpec() actionSpec {
+	return actionSpec{service: "midjourney", action: "shorten-prompt", isAsync: false, inputFields: inputFieldsFor[midjourney.ShortenPromptParams](), decode: decodeInto[midjourney.ShortenPromptParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Midjourney.ShortenPrompt.Run(ctx, params.(midjourney.ShortenPromptParams), opts...)
 	}}
 }
 

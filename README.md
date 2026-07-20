@@ -169,6 +169,14 @@ Print the selected key's stable Listen Signing Secret without starting a listene
 RUNAPI_WEBHOOK_SECRET="$(runapi listen --print-secret --callback-api-key-id token_abc123)"
 ```
 
+If the Listen Signing Secret is exposed, rotate it without replacing the business API key:
+
+```bash
+RUNAPI_WEBHOOK_SECRET="$(runapi listen --rotate-secret --callback-api-key-id token_abc123)"
+```
+
+Rotation invalidates every active listener using the selected key. Update each local verifier with the printed secret, then restart those listeners. Other API keys and ordinary API requests are unaffected.
+
 After upgrading from the previous Account-wide listener behavior, update the CLI, run `runapi login` again, and restart listeners. Previous listener sessions and Account-wide listener secrets are invalid after the migration.
 
 ## Agent runtimes

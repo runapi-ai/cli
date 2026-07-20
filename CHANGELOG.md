@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.4.1](https://github.com/runapi-ai/cli/releases/tag/v0.4.1) - 2026-07-20
+
+### Added
+- Add `runapi listen --rotate-secret` for explicit per-key Listen Signing Secret recovery.
+
+### Changed
+- Verify the selected key echoed by the API, print only the rotated secret, and document listener restart behavior.
+
+
 ## [v0.4.0](https://github.com/runapi-ai/cli/releases/tag/v0.4.0) - 2026-07-18
 
 ### Changed

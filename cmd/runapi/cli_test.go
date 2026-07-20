@@ -112,6 +112,44 @@ func TestRunVersionOutputsJSON(t *testing.T) {
 	}
 }
 
+func TestPrintErrorOmitsMissingHTTPCodeAndPreservesExplicitCode(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		code     core.ErrorCode
+		expected any
+	}{
+		{"missing", "", nil},
+		{"explicit", "source_task_not_ready", "source_task_not_ready"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			cli := newCLI()
+			stdout := &bytes.Buffer{}
+			cli.stdout = stdout
+			cli.stderr = &bytes.Buffer{}
+			cli.printError(core.NewError(test.code, "wait", 409, "", nil, nil))
+
+			var payload map[string]map[string]any
+			if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+				t.Fatal(err)
+			}
+			value, present := payload["error"]["code"]
+			if test.expected == nil && present {
+				t.Fatalf("expected code to be omitted, got %v", value)
+			}
+			if test.expected != nil && value != test.expected {
+				t.Fatalf("unexpected code: %v", value)
+			}
+		})
+	}
+}
+
+func TestExitCodeClassifiesHTTPErrorByStatus(t *testing.T) {
+	err := core.NewError("source_task_not_ready", "wait", 409, "", nil, nil)
+	if code := exitCode(err); code != 4 {
+		t.Fatalf("expected conflict exit code 4, got %d", code)
+	}
+}
+
 func TestAccountBalanceUsesConfigAPIKey(t *testing.T) {
 	isolateConfig(t)
 	path, err := configFilePath()
