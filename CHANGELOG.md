@@ -1,5 +1,30 @@
 # Changelog
 
+## [v0.5.0](https://github.com/runapi-ai/cli/releases/tag/v0.5.0) - 2026-07-20
+
+### Breaking
+- Replace Grok Imagine image-to-video `source_image_urls` with scalar `source_image_url`.
+  Migration: Pass `--source-image-url URL` or provide `source_image_url` in JSON input.
+
+### Added
+- Add the synchronous `runapi midjourney shorten-prompt` command with generated input validation and help.
+- Add synchronous text-to-speech commands for OpenAI TTS and Fish Audio.
+- Expose model and text input help from the generated contract.
+- Add Gemini Omni Flash Preview model selection and model-specific text-to-video help.
+- Add the gemini-tts text-to-speech command with generated input help and validation.
+- Add Seedream 5 Pro text-to-image and edit-image models to CLI help and validation.
+- Expose advanced stem separation mode and supported stem names in CLI help and validation.
+- Add the Producer text-to-music command with generated contract help and typed SDK wiring.
+
+### Changed
+- Expose Seedream 5-Lite `output_format` values and default in CLI help and validation.
+- Include minimum and maximum item counts for constrained array fields in generated CLI metadata and help.
+
+### Fixed
+- Preserve API-provided error codes in JSON output and omit the code when the response does not provide one.
+- Classify command exit and retry behavior by HTTP status or SDK error type instead of generating substitute codes.
+
+
 ## [v0.4.1](https://github.com/runapi-ai/cli/releases/tag/v0.4.1) - 2026-07-20
 
 ### Added
