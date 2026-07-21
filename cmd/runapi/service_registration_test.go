@@ -109,6 +109,9 @@ func TestTTSServiceCommandsAreRegistered(t *testing.T) {
 		if !helpHasField(output, "model") || !helpHasField(output, "text") {
 			t.Fatalf("expected %s text-to-speech help to include model and text, got:\n%s", service, output)
 		}
+		if service == "fish-audio" && !helpHasField(output, "references") {
+			t.Fatalf("expected Fish Audio help to include references, got:\n%s", output)
+		}
 	}
 }
 

@@ -754,6 +754,12 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
+	"suno/blend-lyrics": {
+		Models: []string{},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"_": {},
+		},
+	},
 	"suno/boost-style": {
 		Models: []string{},
 		FieldsByModel: map[string]map[string]generatedContractField{

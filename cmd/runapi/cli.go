@@ -20,9 +20,9 @@ import (
 	"github.com/runapi-ai/core-sdk/go/files"
 	"github.com/runapi-ai/core-sdk/go/option"
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
+	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
-	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
 	"github.com/runapi-ai/gemini-tts-sdk/go/geminitts"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
@@ -1212,7 +1212,7 @@ func describeAction(spec actionSpec) string {
 var allSpecs = []actionSpec{
 	newSunoTextToMusicSpec(), newSunoExtendMusicSpec(), newSunoGenerateArtworkSpec(), newSunoCoverAudioSpec(),
 	newSunoAddInstrumentalSpec(), newSunoAddVocalsSpec(), newSunoSeparateAudioStemsSpec(), newSunoGenerateMidiSpec(), newSunoConvertAudioSpec(),
-	newSunoVisualizeMusicSpec(), newSunoGenerateLyricsSpec(), newSunoGetTimestampedLyricsSpec(), newSunoReplaceSectionSpec(), newSunoCreateMashupSpec(),
+	newSunoVisualizeMusicSpec(), newSunoGenerateLyricsSpec(), newSunoBlendLyricsSpec(), newSunoGetTimestampedLyricsSpec(), newSunoReplaceSectionSpec(), newSunoCreateMashupSpec(),
 	newSunoTextToSoundSpec(), newSunoVoiceToValidationPhraseSpec(), newSunoRegenerateValidationPhraseSpec(), newSunoGenerateVoiceSpec(), newSunoCheckVoiceSpec(),
 	newSunoGeneratePersonaSpec(), newSunoBoostStyleSpec(),
 	newProducerTextToMusicSpec(),
@@ -1363,6 +1363,16 @@ func newSunoGenerateLyricsSpec() actionSpec {
 		return client.Suno.GenerateLyrics.Run(ctx, params.(suno.GenerateLyricsParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Suno.GenerateLyrics.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoBlendLyricsSpec() actionSpec {
+	return actionSpec{service: "suno", action: "blend-lyrics", isAsync: true, inputFields: inputFieldsFor[suno.BlendLyricsParams](), decode: decodeInto[suno.BlendLyricsParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.BlendLyrics.Create(ctx, params.(suno.BlendLyricsParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.BlendLyrics.Run(ctx, params.(suno.BlendLyricsParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.BlendLyrics.Get(ctx, id, opts...)
 	}}
 }
 

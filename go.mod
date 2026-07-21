@@ -7,7 +7,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/runapi-ai/core-sdk/go v0.2.14
 	github.com/runapi-ai/elevenlabs-sdk/go v0.2.8
-	github.com/runapi-ai/fish-audio-sdk/go v0.1.0
+	github.com/runapi-ai/fish-audio-sdk/go v0.1.1
 	github.com/runapi-ai/flux-2-sdk/go v0.2.8
 	github.com/runapi-ai/flux-kontext-sdk/go v0.2.7
 	github.com/runapi-ai/gemini-omni-sdk/go v0.3.1
@@ -32,9 +32,9 @@ require (
 	github.com/runapi-ai/recraft-sdk/go v0.2.7
 	github.com/runapi-ai/runway-aleph-sdk/go v0.2.7
 	github.com/runapi-ai/runway-sdk/go v0.2.8
-	github.com/runapi-ai/seedance-sdk/go v0.2.10
+	github.com/runapi-ai/seedance-sdk/go v0.2.11
 	github.com/runapi-ai/seedream-sdk/go v0.2.10
-	github.com/runapi-ai/suno-sdk/go v0.2.10
+	github.com/runapi-ai/suno-sdk/go v0.3.0
 	github.com/runapi-ai/topaz-sdk/go v0.2.7
 	github.com/runapi-ai/veo-3.1-sdk/go v0.2.9
 	github.com/runapi-ai/volcengine-lip-sync-sdk/go v0.2.9

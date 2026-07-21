@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.6.0](https://github.com/runapi-ai/cli/releases/tag/v0.6.0) - 2026-07-21
+
+### Added
+- Expose request-scoped reference audio entries for Fish Audio text-to-speech input files.
+- Add lyric blending command flags and generated contract help.
+
+
 ## [v0.5.0](https://github.com/runapi-ai/cli/releases/tag/v0.5.0) - 2026-07-20
 
 ### Breaking

@@ -15,8 +15,8 @@ github.com/runapi-ai/core-sdk/go v0.2.14 h1:TXg99/CPwS479w5BdtB+SnFyZQCzjliME2pj
 github.com/runapi-ai/core-sdk/go v0.2.14/go.mod h1:e5uC8RF6BNkAj1WkOi+nD71mZL+cir+Ia97XUQj+5N0=
 github.com/runapi-ai/elevenlabs-sdk/go v0.2.8 h1:l6HyFmQxfgZK4BnBFCdrY16teC5rk5uPlXgIYQ4nmCM=
 github.com/runapi-ai/elevenlabs-sdk/go v0.2.8/go.mod h1:2W2ht7CUBth6GlRDeb5xcvtKGY/x2ke9F4K8NNzyYo4=
-github.com/runapi-ai/fish-audio-sdk/go v0.1.0 h1:PRjM2O/XVTB9FOlgdbNKoI22NJNSbwuWeJOJRJ6kpSQ=
-github.com/runapi-ai/fish-audio-sdk/go v0.1.0/go.mod h1:rFJyk8/vgrmqwgej3FxEo967zEjw87SqapCaEznGebs=
+github.com/runapi-ai/fish-audio-sdk/go v0.1.1 h1:ZDuEZhRyTJfmDEAvfLRwHfDB+ZeFQmF+i/tL6JGoC0Q=
+github.com/runapi-ai/fish-audio-sdk/go v0.1.1/go.mod h1:2AlHRmrSUsesJsz9wATQKrgaDAqaTgE9wNDzDHSNeVI=
 github.com/runapi-ai/flux-2-sdk/go v0.2.8 h1:9n+WJMS9WclXC7+aoybSb0Q9yz6/DSvvKLhDJIGsiNk=
 github.com/runapi-ai/flux-2-sdk/go v0.2.8/go.mod h1:cq/+MEAgapjCkNrmiO4ihn5OKb7eyjD6cTNuPQ1OLnA=
 github.com/runapi-ai/flux-kontext-sdk/go v0.2.7 h1:3uxIhpYN+dCqkBbSJT5Dz+wifRINRm+fabZo7+4BkDY=
@@ -65,12 +65,12 @@ github.com/runapi-ai/runway-aleph-sdk/go v0.2.7 h1:479xEkFrF1Qt9wrDoWOtDr7JPZfAN
 github.com/runapi-ai/runway-aleph-sdk/go v0.2.7/go.mod h1:9O4a1okynVasXzRLdB7rvKq6pSOjkj5EXk3o+sEug3U=
 github.com/runapi-ai/runway-sdk/go v0.2.8 h1:tsD1K6whMVtMLHWY78NLFKO/rqMqr789ae45/qu/Isw=
 github.com/runapi-ai/runway-sdk/go v0.2.8/go.mod h1:QVA3EmD4ibcRTOtxctc+QH7Nhvmq6KG6fb6DFkrrjiQ=
-github.com/runapi-ai/seedance-sdk/go v0.2.10 h1:zkoX9Va5KL8EFVHcaITmqeSCyb2o0SUvn4ZeMzH6kT8=
-github.com/runapi-ai/seedance-sdk/go v0.2.10/go.mod h1:EIOFR0xSypEmM4H50hioHcS4x6UzeBHIseTq90QBFr0=
+github.com/runapi-ai/seedance-sdk/go v0.2.11 h1:IY5qiQzP2nDt4n1LzqS5OS6wtTi426IxUXy2/s8hNUw=
+github.com/runapi-ai/seedance-sdk/go v0.2.11/go.mod h1:EIOFR0xSypEmM4H50hioHcS4x6UzeBHIseTq90QBFr0=
 github.com/runapi-ai/seedream-sdk/go v0.2.10 h1:ZF1B5z8BIAB4n/JrmNbyzMBvMXqs0Bf+XNKueayD9ZQ=
 github.com/runapi-ai/seedream-sdk/go v0.2.10/go.mod h1:GiGdxknYHGubhWGhSiQJsD1vLLXMqs34nhwDmgmOoGk=
-github.com/runapi-ai/suno-sdk/go v0.2.10 h1:cXYcnxbNIdN44dWzTJZ6FvhSR5vs0c8EheHAh6AITMA=
-github.com/runapi-ai/suno-sdk/go v0.2.10/go.mod h1:sZFIYM9OtkwIK3CeT0eYqIwZrFmLtuQjyZjQrEyQ37I=
+github.com/runapi-ai/suno-sdk/go v0.3.0 h1:BRb5KNOefTnTbiwBWePw2z2ETvpmFjtH2a3+EyLYeF8=
+github.com/runapi-ai/suno-sdk/go v0.3.0/go.mod h1:sZFIYM9OtkwIK3CeT0eYqIwZrFmLtuQjyZjQrEyQ37I=
 github.com/runapi-ai/topaz-sdk/go v0.2.7 h1:K0HamqdpnJz+GbnCNQmf8fQ6fwkpCRc1+va47hB/IVQ=
 github.com/runapi-ai/topaz-sdk/go v0.2.7/go.mod h1:y0iL3t0K/Nqgz0mjAJK6mGQJdYByXUyd22aRCNAG8D4=
 github.com/runapi-ai/veo-3.1-sdk/go v0.2.9 h1:7RXXaAclf2L5nynqMDoYu+0G7qOJhnJbPcD3U31Z3yw=
