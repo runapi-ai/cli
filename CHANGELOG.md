@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.7.0](https://github.com/runapi-ai/cli/releases/tag/v0.7.0) - 2026-07-22
+
+### Added
+- Add Kling 2.6 model, mode, sound, duration, and frame constraints to generated Kling command help.
+- Add the Midjourney extend-video command with task creation, polling, and public input help.
+- Add Flux text-to-image and remix-image commands with generated request validation and task polling.
+- Expose Veo 3.1 Lite model and input constraints in generated CLI help.
+- Add Qwen Image text-to-image, remix-image, and edit-image commands with generated contract help.
+
+
 ## [v0.6.0](https://github.com/runapi-ai/cli/releases/tag/v0.6.0) - 2026-07-21
 
 ### Added

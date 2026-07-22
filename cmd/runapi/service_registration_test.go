@@ -94,6 +94,30 @@ func TestMidjourneyShortenPromptCommandIsRegistered(t *testing.T) {
 	}
 }
 
+func TestMidjourneyExtendVideoCommandIsRegistered(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"midjourney", "extend-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	for _, field := range []string{"source_task_id", "prompt", "callback_url"} {
+		if !helpHasField(output, field) {
+			t.Fatalf("expected Midjourney extend-video help to include %s, got:\n%s", field, output)
+		}
+	}
+	for _, field := range []string{"model", "video_id", "video_index", "output_resolution"} {
+		if helpHasField(output, field) {
+			t.Fatalf("expected Midjourney extend-video help to omit %s, got:\n%s", field, output)
+		}
+	}
+}
+
 func TestTTSServiceCommandsAreRegistered(t *testing.T) {
 	for _, service := range []string{"openai-tts", "fish-audio"} {
 		c := newCLI()
@@ -291,20 +315,23 @@ func TestKlingTextToVideoHelpUsesCanonicalFields(t *testing.T) {
 	}
 
 	output := c.stdout.(*bytes.Buffer).String()
-	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v3-turbo-text-to-video.") {
+	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6, kling-v3-turbo-text-to-video.") {
 		t.Fatalf("expected Kling text-to-video help to include generated model values, got:\n%s", output)
 	}
 	if !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") {
 		t.Fatalf("expected Kling text-to-video help to include frame media fields, got:\n%s", output)
 	}
-	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0, kling-v3-turbo-text-to-video: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro: 5, 10.") {
+	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0, kling-v3-turbo-text-to-video: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6: 5, 10.") {
 		t.Fatalf("expected Kling text-to-video help to include model-specific duration_seconds values, got:\n%s", output)
 	}
 	if strings.Contains(output, "duration_seconds          string     optional; duration in seconds. Accepted values: 5, 10.") {
 		t.Fatalf("expected Kling text-to-video help not to advertise action-level duration_seconds values, got:\n%s", output)
 	}
-	if helpHasField(output, "mode") || helpHasField(output, "image_urls") {
-		t.Fatalf("expected Kling text-to-video help not to expose provider or roleless fields, got:\n%s", output)
+	if !helpHasField(output, "mode") || !strings.Contains(output, "Accepted values by model: kling-v2.6: std, pro.") {
+		t.Fatalf("expected Kling text-to-video help to include Kling 2.6 mode values, got:\n%s", output)
+	}
+	if helpHasField(output, "image_urls") {
+		t.Fatalf("expected Kling text-to-video help not to expose roleless media fields, got:\n%s", output)
 	}
 }
 
@@ -672,23 +699,6 @@ func TestQwen2HelpUsesCanonicalAspectRatio(t *testing.T) {
 		t.Fatalf("expected Qwen 2 edit-image help not to expose old image field name, got:\n%s", output)
 	}
 
-	c = newCLI()
-	c.stdout = &bytes.Buffer{}
-	c.stderr = &bytes.Buffer{}
-
-	cmd = c.command()
-	cmd.SetArgs([]string{"qwen-2", "remix-image", "--help"})
-	if err := cmd.Execute(); err != nil {
-		t.Fatal(err)
-	}
-
-	output = c.stdout.(*bytes.Buffer).String()
-	if !helpHasField(output, "source_image_url") {
-		t.Fatalf("expected Qwen 2 remix-image help to include source_image_url, got:\n%s", output)
-	}
-	if helpHasField(output, "image_url") || strings.Contains(output, "image-to-image") {
-		t.Fatalf("expected Qwen 2 remix-image help not to expose old image field/action names, got:\n%s", output)
-	}
 }
 
 func TestGeneratedContractValuesAreComposedIntoHelp(t *testing.T) {
@@ -722,7 +732,7 @@ func TestGeneratedContractValuesAreComposedIntoHelp(t *testing.T) {
 	if !strings.Contains(output, "Accepted values: text, first_and_last_frames, reference.") {
 		t.Fatalf("expected Veo 3.1 help to append generated input_mode values, got:\n%s", output)
 	}
-	if !strings.Contains(output, "Accepted values: veo-3.1, veo-3.1-fast.") {
+	if !strings.Contains(output, "Accepted values: veo-3.1, veo-3.1-fast, veo-3.1-lite.") {
 		t.Fatalf("expected Veo 3.1 help to append generated model values, got:\n%s", output)
 	}
 }
@@ -734,6 +744,8 @@ func TestDynamicImageActionsAreRegistered(t *testing.T) {
 		fields  []string
 	}{
 		{service: "flux-2", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: flux-2-flex-remix-image, flux-2-pro-remix-image."}},
+		{service: "flux", action: "text-to-image", fields: []string{"output_count", "Accepted values: flux-2-klein, flux-dev, flux-pro."}},
+		{service: "flux", action: "remix-image", fields: []string{"source_image_url", "Accepted values: flux-dev, flux-pro."}},
 		{service: "imagen-4", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: imagen-4-pro-remix-image."}},
 		{service: "seedream", action: "edit-image", fields: []string{"source_image_urls", "Accepted values: seedream-4.5-edit, seedream-5-lite-edit, seedream-5-pro-edit, seedream-v4-edit."}},
 	}

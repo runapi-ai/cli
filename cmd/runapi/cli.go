@@ -23,6 +23,7 @@ import (
 	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
+	"github.com/runapi-ai/flux-sdk/go/flux"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
 	"github.com/runapi-ai/gemini-tts-sdk/go/geminitts"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
@@ -42,6 +43,7 @@ import (
 	"github.com/runapi-ai/openai-tts-sdk/go/openaitts"
 	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
+	"github.com/runapi-ai/qwen-image-sdk/go/qwenimage"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
 	"github.com/runapi-ai/runway-sdk/go/runway"
@@ -154,11 +156,13 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("kling"))
 	root.AddCommand(c.serviceCommand("flux-kontext"))
 	root.AddCommand(c.serviceCommand("flux-2"))
+	root.AddCommand(c.serviceCommand("flux"))
 	root.AddCommand(c.serviceCommand("gemini-omni"))
 	root.AddCommand(c.serviceCommand("openai-tts"))
 	root.AddCommand(c.serviceCommand("fish-audio"))
 	root.AddCommand(c.serviceCommand("gemini-tts"))
 	root.AddCommand(c.serviceCommand("qwen-2"))
+	root.AddCommand(c.serviceCommand("qwen-image"))
 	root.AddCommand(c.serviceCommand("recraft"))
 	root.AddCommand(c.serviceCommand("z-image"))
 	root.AddCommand(c.serviceCommand("ideogram-v3"))
@@ -1222,11 +1226,12 @@ var allSpecs = []actionSpec{
 	newSeedreamTextToImageSpec(), newSeedreamEditImageSpec(),
 	newRunwayTextToVideoSpec(), newRunwayExtendVideoSpec(), newRunwayAlephEditVideoSpec(),
 	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(),
-	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(),
+	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(), newFluxTextToImageSpec(), newFluxRemixImageSpec(),
 	newGeminiOmniCreateAudioSpec(), newGeminiOmniCreateCharacterSpec(), newGeminiOmniTextToVideoSpec(),
 	newOpenAITTSTextToSpeechSpec(), newFishAudioTextToSpeechSpec(),
 	newGeminiTTSTextToSpeechSpec(),
-	newQwen2TextToImageSpec(), newQwen2RemixImageSpec(), newQwen2EditSpec(),
+	newQwen2TextToImageSpec(), newQwen2EditSpec(),
+	newQwenImageTextToImageSpec(), newQwenImageRemixImageSpec(), newQwenImageEditSpec(),
 	newRecraftUpscaleSpec(), newRecraftBackgroundRemovalSpec(), newZImageTextToImageSpec(),
 	newIdeogramV3TextToImageSpec(), newIdeogramV3EditImageSpec(), newIdeogramV3RemixImageSpec(), newIdeogramV3ReframeImageSpec(),
 	newElevenlabsSpeechSpec(), newElevenlabsDialogueSpec(), newElevenlabsSoundEffectSpec(), newElevenlabsTranscriptionSpec(), newElevenlabsAudioIsolationSpec(),
@@ -1235,7 +1240,7 @@ var allSpecs = []actionSpec{
 	newWanTextToVideoSpec(), newWanImageToVideoSpec(), newWanSpeechToVideoSpec(),
 	newWanAnimateSpec(), newWanTextToImageSpec(), newWanEditVideoSpec(),
 	newLumaModifySpec(),
-	newMidjourneyTextToImageSpec(), newMidjourneyEditImageSpec(), newMidjourneyImageToVideoSpec(),
+	newMidjourneyTextToImageSpec(), newMidjourneyEditImageSpec(), newMidjourneyImageToVideoSpec(), newMidjourneyExtendVideoSpec(),
 	newMidjourneyImageToPromptSpec(), newMidjourneyShortenPromptSpec(), newMidjourneyGetSeedSpec(),
 	newHailuoTextToVideoSpec(), newHailuoImageToVideoSpec(),
 	newVolcengineLipSyncVideoSpec(),
@@ -1643,6 +1648,26 @@ func newFlux2RemixImageSpec() actionSpec {
 	}}
 }
 
+func newFluxTextToImageSpec() actionSpec {
+	return actionSpec{service: "flux", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[flux.TextToImageParams](), decode: decodeInto[flux.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Flux.TextToImage.Create(ctx, params.(flux.TextToImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Flux.TextToImage.Run(ctx, params.(flux.TextToImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Flux.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newFluxRemixImageSpec() actionSpec {
+	return actionSpec{service: "flux", action: "remix-image", isAsync: true, inputFields: inputFieldsFor[flux.RemixImageParams](), decode: decodeInto[flux.RemixImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Flux.RemixImage.Create(ctx, params.(flux.RemixImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Flux.RemixImage.Run(ctx, params.(flux.RemixImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Flux.RemixImage.Get(ctx, id, opts...)
+	}}
+}
+
 func newGeminiOmniCreateAudioSpec() actionSpec {
 	return actionSpec{service: "gemini-omni", action: "create-audio", isAsync: false, inputFields: inputFieldsFor[geminiomni.CreateAudioParams](), decode: decodeInto[geminiomni.CreateAudioParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.GeminiOmni.CreateAudio.Run(ctx, params.(geminiomni.CreateAudioParams), opts...)
@@ -1686,15 +1711,6 @@ func newQwen2TextToImageSpec() actionSpec {
 		return client.Qwen2.TextToImage.Get(ctx, id, opts...)
 	}}
 }
-func newQwen2RemixImageSpec() actionSpec {
-	return actionSpec{service: "qwen-2", action: "remix-image", isAsync: true, inputFields: inputFieldsFor[qwen2.RemixImageParams](), decode: decodeInto[qwen2.RemixImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
-		return client.Qwen2.RemixImage.Create(ctx, params.(qwen2.RemixImageParams), opts...)
-	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
-		return client.Qwen2.RemixImage.Run(ctx, params.(qwen2.RemixImageParams), opts...)
-	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
-		return client.Qwen2.RemixImage.Get(ctx, id, opts...)
-	}}
-}
 func newQwen2EditSpec() actionSpec {
 	return actionSpec{service: "qwen-2", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[qwen2.EditImageParams](), decode: decodeInto[qwen2.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.Qwen2.EditImage.Create(ctx, params.(qwen2.EditImageParams), opts...)
@@ -1702,6 +1718,36 @@ func newQwen2EditSpec() actionSpec {
 		return client.Qwen2.EditImage.Run(ctx, params.(qwen2.EditImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Qwen2.EditImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newQwenImageTextToImageSpec() actionSpec {
+	return actionSpec{service: "qwen-image", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[qwenimage.TextToImageParams](), decode: decodeInto[qwenimage.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.QwenImage.TextToImage.Create(ctx, params.(qwenimage.TextToImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.QwenImage.TextToImage.Run(ctx, params.(qwenimage.TextToImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.QwenImage.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newQwenImageRemixImageSpec() actionSpec {
+	return actionSpec{service: "qwen-image", action: "remix-image", isAsync: true, inputFields: inputFieldsFor[qwenimage.RemixImageParams](), decode: decodeInto[qwenimage.RemixImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.QwenImage.RemixImage.Create(ctx, params.(qwenimage.RemixImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.QwenImage.RemixImage.Run(ctx, params.(qwenimage.RemixImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.QwenImage.RemixImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newQwenImageEditSpec() actionSpec {
+	return actionSpec{service: "qwen-image", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[qwenimage.EditImageParams](), decode: decodeInto[qwenimage.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.QwenImage.EditImage.Create(ctx, params.(qwenimage.EditImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.QwenImage.EditImage.Run(ctx, params.(qwenimage.EditImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.QwenImage.EditImage.Get(ctx, id, opts...)
 	}}
 }
 func newRecraftUpscaleSpec() actionSpec {
@@ -1965,6 +2011,16 @@ func newMidjourneyImageToVideoSpec() actionSpec {
 		return client.Midjourney.ImageToVideo.Run(ctx, params.(midjourney.ImageToVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Midjourney.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newMidjourneyExtendVideoSpec() actionSpec {
+	return actionSpec{service: "midjourney", action: "extend-video", isAsync: true, inputFields: inputFieldsFor[midjourney.ExtendVideoParams](), decode: decodeInto[midjourney.ExtendVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Midjourney.ExtendVideo.Create(ctx, params.(midjourney.ExtendVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Midjourney.ExtendVideo.Run(ctx, params.(midjourney.ExtendVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Midjourney.ExtendVideo.Get(ctx, id, opts...)
 	}}
 }
 

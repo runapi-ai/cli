@@ -84,6 +84,36 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
+	"flux/remix-image": {
+		Models: []string{"flux-dev", "flux-pro"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"flux-dev": {
+				"aspect_ratio": {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
+				"output_count": {Enum: []any{1}},
+			},
+			"flux-pro": {
+				"aspect_ratio": {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
+				"output_count": {Enum: []any{1}},
+			},
+		},
+	},
+	"flux/text-to-image": {
+		Models: []string{"flux-2-klein", "flux-dev", "flux-pro"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"flux-2-klein": {
+				"aspect_ratio": {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
+				"output_count": {Enum: []any{1}},
+			},
+			"flux-dev": {
+				"aspect_ratio": {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
+				"output_count": {Enum: []any{1}},
+			},
+			"flux-pro": {
+				"aspect_ratio": {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
+				"output_count": {Enum: []any{1}},
+			},
+		},
+	},
 	"gemini-omni/create-audio": {
 		Models: []string{"gemini-omni-audio"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -275,16 +305,28 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"happyhorse/image-to-video": {
-		Models: []string{"happyhorse-image-to-video"},
+		Models: []string{"happyhorse-1.0-i2v", "happyhorse-image-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
+			"happyhorse-1.0-i2v": {
+				"output_resolution": {Enum: []any{"720p", "1080p"}},
+			},
 			"happyhorse-image-to-video": {
 				"output_resolution": {Enum: []any{"720p", "1080p"}},
 			},
 		},
 	},
 	"happyhorse/text-to-video": {
-		Models: []string{"happyhorse-character", "happyhorse-text-to-video"},
+		Models: []string{"happyhorse-1.0-r2v", "happyhorse-1.0-t2v", "happyhorse-character", "happyhorse-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
+			"happyhorse-1.0-r2v": {
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "1:1", "4:3", "3:4"}},
+				"output_resolution":    {Enum: []any{"720p", "1080p"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 9},
+			},
+			"happyhorse-1.0-t2v": {
+				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1", "4:3", "3:4"}},
+				"output_resolution": {Enum: []any{"720p", "1080p"}},
+			},
 			"happyhorse-character": {
 				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "1:1", "4:3", "3:4"}},
 				"output_resolution":    {Enum: []any{"720p", "1080p"}},
@@ -398,7 +440,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/image-to-video": {
-		Models: []string{"kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro", "kling-v3-turbo-image-to-video"},
+		Models: []string{"kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro", "kling-v2.6", "kling-v3-turbo-image-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-v2.1-master-image-to-video": {
 				"duration_seconds": {Enum: []any{5, 10}},
@@ -411,6 +453,11 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"kling-v2.5-turbo-image-to-video-pro": {
 				"duration_seconds": {Enum: []any{5, 10}},
+			},
+			"kling-v2.6": {
+				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "1:1"}},
+				"duration_seconds": {Enum: []any{5, 10}},
+				"mode":             {Enum: []any{"std", "pro"}},
 			},
 			"kling-v3-turbo-image-to-video": {
 				"duration_seconds":  {Enum: []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
@@ -429,7 +476,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/text-to-video": {
-		Models: []string{"kling-3.0", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v3-turbo-text-to-video"},
+		Models: []string{"kling-3.0", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-turbo-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
@@ -443,6 +490,11 @@ var generatedContract = map[string]generatedContractAction{
 			"kling-v2.5-turbo-text-to-video-pro": {
 				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "1:1"}},
 				"duration_seconds": {Enum: []any{5, 10}},
+			},
+			"kling-v2.6": {
+				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "1:1"}},
+				"duration_seconds": {Enum: []any{5, 10}},
+				"mode":             {Enum: []any{"std", "pro"}},
 			},
 			"kling-v3-turbo-text-to-video": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
@@ -461,6 +513,12 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"midjourney-edit-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"midjourney-edit-image": {},
+		},
+	},
+	"midjourney/extend-video": {
+		Models: []string{"midjourney-image-to-video"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"midjourney-image-to-video": {},
 		},
 	},
 	"midjourney/get-seed": {
@@ -576,20 +634,37 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
-	"qwen-2/remix-image": {
-		Models: []string{"qwen-2-remix-image"},
-		FieldsByModel: map[string]map[string]generatedContractField{
-			"qwen-2-remix-image": {
-				"acceleration":  {Enum: []any{"none", "regular", "high"}},
-				"output_format": {Enum: []any{"png", "jpeg"}},
-			},
-		},
-	},
 	"qwen-2/text-to-image": {
 		Models: []string{"qwen-2-text-to-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"qwen-2-text-to-image": {
 				"aspect_ratio":  {Enum: []any{"1:1", "3:4", "4:3", "9:16", "16:9"}},
+				"output_format": {Enum: []any{"png", "jpeg"}},
+			},
+		},
+	},
+	"qwen-image/edit-image": {
+		Models: []string{"qwen-image-edit-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"qwen-image-edit-image": {
+				"aspect_ratio":  {Enum: []any{"1:1", "3:4", "9:16", "4:3", "16:9"}},
+				"output_format": {Enum: []any{"png", "jpeg"}},
+			},
+		},
+	},
+	"qwen-image/remix-image": {
+		Models: []string{"qwen-image-remix-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"qwen-image-remix-image": {
+				"output_format": {Enum: []any{"png", "jpeg"}},
+			},
+		},
+	},
+	"qwen-image/text-to-image": {
+		Models: []string{"qwen-image-text-to-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"qwen-image-text-to-image": {
+				"aspect_ratio":  {Enum: []any{"1:1", "3:4", "9:16", "4:3", "16:9"}},
 				"output_format": {Enum: []any{"png", "jpeg"}},
 			},
 		},
@@ -1033,7 +1108,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"veo-3-1/text-to-video": {
-		Models: []string{"veo-3.1", "veo-3.1-fast"},
+		Models: []string{"veo-3.1", "veo-3.1-fast", "veo-3.1-lite"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"veo-3.1": {
 				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "auto"}},
@@ -1043,6 +1118,12 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"veo-3.1-fast": {
 				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "auto"}},
+				"duration_seconds":     {Enum: []any{4, 6, 8}},
+				"input_mode":           {Enum: []any{"text", "first_and_last_frames", "reference"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 3},
+			},
+			"veo-3.1-lite": {
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16"}},
 				"duration_seconds":     {Enum: []any{4, 6, 8}},
 				"input_mode":           {Enum: []any{"text", "first_and_last_frames", "reference"}},
 				"reference_image_urls": {MinItems: 1, MaxItems: 3},

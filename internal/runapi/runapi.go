@@ -16,9 +16,10 @@ import (
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/runapi-ai/core-sdk/go/option"
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
+	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
 	"github.com/runapi-ai/flux-kontext-sdk/go/fluxkontext"
-	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
+	"github.com/runapi-ai/flux-sdk/go/flux"
 	"github.com/runapi-ai/gemini-omni-sdk/go/geminiomni"
 	"github.com/runapi-ai/gemini-tts-sdk/go/geminitts"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
@@ -38,6 +39,7 @@ import (
 	"github.com/runapi-ai/openai-tts-sdk/go/openaitts"
 	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
+	"github.com/runapi-ai/qwen-image-sdk/go/qwenimage"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
 	"github.com/runapi-ai/runway-sdk/go/runway"
@@ -85,6 +87,8 @@ type Client struct {
 	FluxKontext *fluxkontext.Client
 	// Flux2 generates images and remixes existing ones with Flux 2 models.
 	Flux2 *flux2.Client
+	// Flux generates and edits images with Flux Dev, Flux Pro, and Flux 2 Klein.
+	Flux *flux.Client
 	// GeminiOmni creates audio, character voices, and video with Gemini models.
 	GeminiOmni *geminiomni.Client
 	// OpenAITTS generates speech with OpenAI TTS models.
@@ -95,6 +99,8 @@ type Client struct {
 	GeminiTTS *geminitts.Client
 	// Qwen2 generates, remixes, and edits images with Qwen 2 models.
 	Qwen2 *qwen2.Client
+	// QwenImage generates, remixes, and edits images with Qwen Image models.
+	QwenImage *qwenimage.Client
 	// Recraft upscales images and removes backgrounds using Recraft models.
 	Recraft *recraft.Client
 	// ZImage generates images from text with Z-Image models.
@@ -171,11 +177,13 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		Kling:             kling.NewClientWithHTTP(httpClient),
 		FluxKontext:       fluxkontext.NewClientWithHTTP(httpClient),
 		Flux2:             flux2.NewClientWithHTTP(httpClient),
+		Flux:              flux.NewClientWithHTTP(httpClient),
 		GeminiOmni:        geminiomni.NewClientWithHTTP(httpClient),
 		OpenAITTS:         openaitts.NewClientWithHTTP(httpClient),
 		FishAudio:         fishaudio.NewClientWithHTTP(httpClient),
 		GeminiTTS:         geminitts.NewClientWithHTTP(httpClient),
 		Qwen2:             qwen2.NewClientWithHTTP(httpClient),
+		QwenImage:         qwenimage.NewClientWithHTTP(httpClient),
 		Recraft:           recraft.NewClientWithHTTP(httpClient),
 		ZImage:            zimage.NewClientWithHTTP(httpClient),
 		IdeogramV3:        ideogramv3.NewClientWithHTTP(httpClient),
