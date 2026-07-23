@@ -22,7 +22,7 @@ require (
 	github.com/runapi-ai/ideogram-v3-sdk/go v0.2.8
 	github.com/runapi-ai/imagen-4-sdk/go v0.2.9
 	github.com/runapi-ai/infinitetalk-sdk/go v0.2.7
-	github.com/runapi-ai/kling-sdk/go v0.2.11
+	github.com/runapi-ai/kling-sdk/go v0.2.12
 	github.com/runapi-ai/luma-sdk/go v0.2.7
 	github.com/runapi-ai/midjourney-sdk/go v0.3.0
 	github.com/runapi-ai/nano-banana-sdk/go v0.2.11

@@ -482,10 +482,14 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/motion-control": {
-		Models: []string{"kling-3.0"},
+		Models: []string{"kling-3.0", "kling-v2.6"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
 				"background_source":     {Enum: []any{"video", "image"}},
+				"character_orientation": {Enum: []any{"video", "image"}},
+				"output_resolution":     {Enum: []any{"720p", "1080p"}},
+			},
+			"kling-v2.6": {
 				"character_orientation": {Enum: []any{"video", "image"}},
 				"output_resolution":     {Enum: []any{"720p", "1080p"}},
 			},

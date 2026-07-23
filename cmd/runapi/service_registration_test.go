@@ -417,6 +417,9 @@ func TestKlingMotionControlHelpUsesCanonicalMediaFields(t *testing.T) {
 	if helpHasField(output, "input_urls") || helpHasField(output, "video_urls") {
 		t.Fatalf("expected Kling motion-control help not to expose provider media fields, got:\n%s", output)
 	}
+	if !strings.Contains(output, "required for kling-v2.6") {
+		t.Fatalf("expected Kling motion-control help to explain v2.6 required fields, got:\n%s", output)
+	}
 }
 
 func TestVeo31TextToVideoHelpIncludesDurationSeconds(t *testing.T) {

@@ -45,8 +45,8 @@ github.com/runapi-ai/imagen-4-sdk/go v0.2.9 h1:CItbLjH8eu5Zqhcc4jkMFgKy8TGfSf1AA
 github.com/runapi-ai/imagen-4-sdk/go v0.2.9/go.mod h1:D62wmGhhZlVNQlnAE/0+iQAJdParMZ3bAw7km+wMeKA=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.7 h1:Lm++QQHLnPv/luzEuesEvZqQ+h+plxWQx08fqctIVFo=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.7/go.mod h1:Ld0B55FF26t+JePndLJWBPede6aHw91qRVgPCpomnew=
-github.com/runapi-ai/kling-sdk/go v0.2.11 h1:P2YXraYjPkpMWqv4CUvQjWwASErMNktSsCsCbNH3+A4=
-github.com/runapi-ai/kling-sdk/go v0.2.11/go.mod h1:a19r6ZSx34gWU0ty8mebxU91vp+QgbG1iuFxysyHrB8=
+github.com/runapi-ai/kling-sdk/go v0.2.12 h1:/X0N9TDEu4ZSEIRfsivF6GPFlWkgdr6jG2IWt8PBt6c=
+github.com/runapi-ai/kling-sdk/go v0.2.12/go.mod h1:a19r6ZSx34gWU0ty8mebxU91vp+QgbG1iuFxysyHrB8=
 github.com/runapi-ai/luma-sdk/go v0.2.7 h1:PbSG8rJIKBTJVbEhcAOPyaimNx2d49oHueJi45Uq6ZY=
 github.com/runapi-ai/luma-sdk/go v0.2.7/go.mod h1:McumWQgihPpE8tz1KWZMAmwUBZ46fp7hwvJLtCif4zI=
 github.com/runapi-ai/midjourney-sdk/go v0.3.0 h1:PHQoS5BCayYjMXi+OoqoyM8Il9Vd8kj7ixWfRWOeGI8=
