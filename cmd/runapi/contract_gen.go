@@ -439,8 +439,19 @@ var generatedContract = map[string]generatedContractAction{
 			"kling-v1-avatar-standard": {},
 		},
 	},
+	"kling/extend-video": {
+		Models: []string{"kling-v2.5-turbo-image-to-video-pro", "kling-v2.5-turbo-text-to-video-pro"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"kling-v2.5-turbo-image-to-video-pro": {
+				"mode": {Enum: []any{"std", "pro"}},
+			},
+			"kling-v2.5-turbo-text-to-video-pro": {
+				"mode": {Enum: []any{"std", "pro"}},
+			},
+		},
+	},
 	"kling/image-to-video": {
-		Models: []string{"kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro", "kling-v2.6", "kling-v3-turbo-image-to-video"},
+		Models: []string{"kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-turbo-image-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-v2.1-master-image-to-video": {
 				"duration_seconds": {Enum: []any{5, 10}},
@@ -459,6 +470,11 @@ var generatedContract = map[string]generatedContractAction{
 				"duration_seconds": {Enum: []any{5, 10}},
 				"mode":             {Enum: []any{"std", "pro"}},
 			},
+			"kling-v3-omni": {
+				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
+				"duration_seconds":  {Enum: []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+				"output_resolution": {Enum: []any{"720p", "1080p", "4k"}},
+			},
 			"kling-v3-turbo-image-to-video": {
 				"duration_seconds":  {Enum: []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
 				"output_resolution": {Enum: []any{"720p", "1080p"}},
@@ -476,7 +492,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/text-to-video": {
-		Models: []string{"kling-3.0", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-turbo-text-to-video"},
+		Models: []string{"kling-3.0", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-turbo-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
@@ -495,6 +511,11 @@ var generatedContract = map[string]generatedContractAction{
 				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "1:1"}},
 				"duration_seconds": {Enum: []any{5, 10}},
 				"mode":             {Enum: []any{"std", "pro"}},
+			},
+			"kling-v3-omni": {
+				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
+				"duration_seconds":  {Enum: []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+				"output_resolution": {Enum: []any{"720p", "1080p", "4k"}},
 			},
 			"kling-v3-turbo-text-to-video": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
@@ -618,9 +639,30 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"producer/text-to-music": {
-		Models: []string{"fuzz-2.0"},
+		Models: []string{"fuzz-0.8", "fuzz-1.0", "fuzz-1.0-pro", "fuzz-1.1", "fuzz-1.1-pro", "fuzz-2.0", "fuzz-2.0-pro", "fuzz-2.0-raw"},
 		FieldsByModel: map[string]map[string]generatedContractField{
+			"fuzz-0.8": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
+			"fuzz-1.0": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
+			"fuzz-1.0-pro": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
+			"fuzz-1.1": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
+			"fuzz-1.1-pro": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
 			"fuzz-2.0": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
+			"fuzz-2.0-pro": {
+				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
+			},
+			"fuzz-2.0-raw": {
 				"vocal_mode": {Enum: []any{"exact_lyrics", "instrumental"}},
 			},
 		},

@@ -1225,7 +1225,7 @@ var allSpecs = []actionSpec{
 	newSeedanceTextToVideoSpec(),
 	newSeedreamTextToImageSpec(), newSeedreamEditImageSpec(),
 	newRunwayTextToVideoSpec(), newRunwayExtendVideoSpec(), newRunwayAlephEditVideoSpec(),
-	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(),
+	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(), newKlingExtendVideoSpec(),
 	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(), newFluxTextToImageSpec(), newFluxRemixImageSpec(),
 	newGeminiOmniCreateAudioSpec(), newGeminiOmniCreateCharacterSpec(), newGeminiOmniTextToVideoSpec(),
 	newOpenAITTSTextToSpeechSpec(), newFishAudioTextToSpeechSpec(),
@@ -1618,6 +1618,15 @@ func newKlingMotionControlSpec() actionSpec {
 		return client.Kling.MotionControl.Run(ctx, params.(kling.MotionControlParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Kling.MotionControl.Get(ctx, id, opts...)
+	}}
+}
+func newKlingExtendVideoSpec() actionSpec {
+	return actionSpec{service: "kling", action: "extend-video", isAsync: true, inputFields: inputFieldsFor[kling.ExtendVideoParams](), decode: decodeInto[kling.ExtendVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Kling.ExtendVideo.Create(ctx, params.(kling.ExtendVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Kling.ExtendVideo.Run(ctx, params.(kling.ExtendVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Kling.ExtendVideo.Get(ctx, id, opts...)
 	}}
 }
 func newFluxKontextTextToImageSpec() actionSpec {

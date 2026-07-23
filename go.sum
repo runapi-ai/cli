@@ -45,8 +45,8 @@ github.com/runapi-ai/imagen-4-sdk/go v0.2.9 h1:CItbLjH8eu5Zqhcc4jkMFgKy8TGfSf1AA
 github.com/runapi-ai/imagen-4-sdk/go v0.2.9/go.mod h1:D62wmGhhZlVNQlnAE/0+iQAJdParMZ3bAw7km+wMeKA=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.7 h1:Lm++QQHLnPv/luzEuesEvZqQ+h+plxWQx08fqctIVFo=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.7/go.mod h1:Ld0B55FF26t+JePndLJWBPede6aHw91qRVgPCpomnew=
-github.com/runapi-ai/kling-sdk/go v0.2.10 h1:XWDaRdHm3yXFg8+3cVbjPWosD/MFTIdbxqgQImXOwo8=
-github.com/runapi-ai/kling-sdk/go v0.2.10/go.mod h1:a19r6ZSx34gWU0ty8mebxU91vp+QgbG1iuFxysyHrB8=
+github.com/runapi-ai/kling-sdk/go v0.2.11 h1:P2YXraYjPkpMWqv4CUvQjWwASErMNktSsCsCbNH3+A4=
+github.com/runapi-ai/kling-sdk/go v0.2.11/go.mod h1:a19r6ZSx34gWU0ty8mebxU91vp+QgbG1iuFxysyHrB8=
 github.com/runapi-ai/luma-sdk/go v0.2.7 h1:PbSG8rJIKBTJVbEhcAOPyaimNx2d49oHueJi45Uq6ZY=
 github.com/runapi-ai/luma-sdk/go v0.2.7/go.mod h1:McumWQgihPpE8tz1KWZMAmwUBZ46fp7hwvJLtCif4zI=
 github.com/runapi-ai/midjourney-sdk/go v0.3.0 h1:PHQoS5BCayYjMXi+OoqoyM8Il9Vd8kj7ixWfRWOeGI8=
@@ -57,8 +57,8 @@ github.com/runapi-ai/omnihuman-sdk/go v0.2.9 h1:FKhoIlJSgyBkgTiJURX2Fsjkf4Tl5mSU
 github.com/runapi-ai/omnihuman-sdk/go v0.2.9/go.mod h1:/OA+VPn47+V2p6PBmFBIM7YrMTkKQWee12oTsGoPpng=
 github.com/runapi-ai/openai-tts-sdk/go v0.1.0 h1:lrKN47KZM368TLYAf1Oxt/mgH6WZYSfuXpoSSwRik78=
 github.com/runapi-ai/openai-tts-sdk/go v0.1.0/go.mod h1:3TuYG4AtwZdm/RXUjOf3AFPIpaVh9J+fo8vb0ORAPaY=
-github.com/runapi-ai/producer-sdk/go v0.1.0 h1:9NZoc1f7XJjNDTbeXLe/h9iyu1T4E9J9hCsU8v+amYs=
-github.com/runapi-ai/producer-sdk/go v0.1.0/go.mod h1:+X7S75j7nE6BVK2XMVVYm4LuuYNHw3v7pde+lxQ5Luc=
+github.com/runapi-ai/producer-sdk/go v0.2.0 h1:bvRYcGC9tUdxw+G5wofEkhuYQUfiVT2TSfjcerCstMk=
+github.com/runapi-ai/producer-sdk/go v0.2.0/go.mod h1:oqJhZ8wmMy8gCQoN07pfBdyfH9t3ltpyHUCieXP7vd8=
 github.com/runapi-ai/qwen-2-sdk/go v0.2.8 h1:XL1lsiyaz0An8rAyXqMECtWHRZjwZHD6AtrVOUibsdo=
 github.com/runapi-ai/qwen-2-sdk/go v0.2.8/go.mod h1:gib8XmSFVPnjiMAGe6fCg84quBUuVGYn45bwegKUoPo=
 github.com/runapi-ai/qwen-image-sdk/go v0.1.0 h1:Fa7faiPAfnomdemVdGBEsiSyMDovzPs7CnLwCl0TrFQ=

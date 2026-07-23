@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.8.0](https://github.com/runapi-ai/cli/releases/tag/v0.8.0) - 2026-07-23
+
+### Added
+- Add the Kling V3 Omni model, output resolution, sound, duration, aspect ratio, and frame constraints to generated Kling command help.
+- Add seven Producer FUZZ versions to generated text-to-music model help and validation.
+- Add CLI support for continuing completed Kling v2.5 Turbo videos.
+
+
 ## [v0.7.0](https://github.com/runapi-ai/cli/releases/tag/v0.7.0) - 2026-07-22
 
 ### Added
