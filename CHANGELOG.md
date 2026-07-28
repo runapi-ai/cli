@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.8.2](https://github.com/runapi-ai/cli/releases/tag/v0.8.2) - 2026-07-28
+
+### Added
+- Add public commands for current Price Schedules and task reservation quotes.
+- Add Flux 2 Max text-to-image and remix-image model options with their supported request constraints.
+- Expose Kling O1 models and reference image, reference video, reference role, and audio-preservation fields in generated Kling commands.
+
+### Changed
+- Send the CLI version during browser sign-in so the authorization page can identify an available update and link to its release.
+
+
 ## [v0.8.1](https://github.com/runapi-ai/cli/releases/tag/v0.8.1) - 2026-07-23
 
 ### Added

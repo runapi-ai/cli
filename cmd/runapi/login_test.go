@@ -10,10 +10,13 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	runapi "github.com/runapi-ai/cli/internal/runapi"
 )
 
 func TestGenerateState(t *testing.T) {
@@ -46,6 +49,23 @@ func TestGeneratePKCE(t *testing.T) {
 	expected := base64.RawURLEncoding.EncodeToString(h[:])
 	if challenge != expected {
 		t.Fatalf("challenge mismatch: got %q, want %q", challenge, expected)
+	}
+}
+
+func TestAuthorizationURLIncludesCLIVersion(t *testing.T) {
+	authorizeURL, err := url.Parse(authorizationURL(
+		"https://runapi.ai", "state value", "challenge value", 58432, "pairing code", "test host",
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	params := authorizeURL.Query()
+	if got := params.Get("version"); got != runapi.Version {
+		t.Fatalf("expected version %q, got %q", runapi.Version, got)
+	}
+	if got := params.Get("state"); got != "state value" {
+		t.Fatalf("expected state to be URL encoded, got %q", got)
 	}
 }
 

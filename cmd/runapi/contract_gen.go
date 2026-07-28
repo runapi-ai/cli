@@ -44,12 +44,18 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"flux-2/remix-image": {
-		Models: []string{"flux-2-flex-remix-image", "flux-2-pro-remix-image"},
+		Models: []string{"flux-2-flex-remix-image", "flux-2-max-remix-image", "flux-2-pro-remix-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"flux-2-flex-remix-image": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}},
 				"output_resolution": {Enum: []any{"1k", "2k"}},
 				"source_image_urls": {MinItems: 1, MaxItems: 8},
+			},
+			"flux-2-max-remix-image": {
+				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
+				"output_count":      {Enum: []any{1}},
+				"output_resolution": {Enum: []any{"1k"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 1},
 			},
 			"flux-2-pro-remix-image": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}},
@@ -59,11 +65,16 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"flux-2/text-to-image": {
-		Models: []string{"flux-2-flex-text-to-image", "flux-2-pro-text-to-image"},
+		Models: []string{"flux-2-flex-text-to-image", "flux-2-max-text-to-image", "flux-2-pro-text-to-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"flux-2-flex-text-to-image": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
 				"output_resolution": {Enum: []any{"1k", "2k"}},
+			},
+			"flux-2-max-text-to-image": {
+				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
+				"output_count":      {Enum: []any{1}},
+				"output_resolution": {Enum: []any{"1k"}},
 			},
 			"flux-2-pro-text-to-image": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}},
@@ -451,8 +462,15 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/image-to-video": {
-		Models: []string{"kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-turbo-image-to-video"},
+		Models: []string{"kling-o1", "kling-v2.1-master-image-to-video", "kling-v2.1-pro", "kling-v2.1-standard", "kling-v2.5-turbo-image-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-turbo-image-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
+			"kling-o1": {
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "1:1"}},
+				"duration_seconds":     {Enum: []any{5}},
+				"mode":                 {Enum: []any{"std", "pro"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 7},
+				"reference_video_type": {Enum: []any{"base", "feature"}},
+			},
 			"kling-v2.1-master-image-to-video": {
 				"duration_seconds": {Enum: []any{5, 10}},
 			},
@@ -496,12 +514,19 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/text-to-video": {
-		Models: []string{"kling-3.0", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-turbo-text-to-video"},
+		Models: []string{"kling-3.0", "kling-o1", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-turbo-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
 				"aspect_ratio":      {Enum: []any{"16:9", "9:16", "1:1"}},
 				"duration_seconds":  {Enum: []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
 				"output_resolution": {Enum: []any{"720p", "1080p", "4k"}},
+			},
+			"kling-o1": {
+				"aspect_ratio":         {Enum: []any{"16:9", "9:16", "1:1"}},
+				"duration_seconds":     {Enum: []any{5}},
+				"mode":                 {Enum: []any{"std", "pro"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 7},
+				"reference_video_type": {Enum: []any{"base", "feature"}},
 			},
 			"kling-v2.1-master-text-to-video": {
 				"aspect_ratio":     {Enum: []any{"16:9", "9:16", "1:1"}},

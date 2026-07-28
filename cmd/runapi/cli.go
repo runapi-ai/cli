@@ -19,6 +19,7 @@ import (
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/runapi-ai/core-sdk/go/files"
 	"github.com/runapi-ai/core-sdk/go/option"
+	"github.com/runapi-ai/core-sdk/go/pricing"
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
@@ -69,13 +70,14 @@ type cli struct {
 	stderr io.Writer
 	stdin  io.Reader
 
-	apiKeyFlag   string
-	baseURLFlag  string
-	timeout      time.Duration
-	async        bool
-	pollInterval time.Duration
-	quiet        bool
-	newClient    func(...option.ClientOption) (*runapi.Client, error)
+	apiKeyFlag       string
+	baseURLFlag      string
+	timeout          time.Duration
+	async            bool
+	pollInterval     time.Duration
+	quiet            bool
+	newClient        func(...option.ClientOption) (*runapi.Client, error)
+	newPricingClient func(...option.ClientOption) (*pricing.Client, error)
 
 	archiveBaseURL string
 	httpClient     *http.Client
@@ -99,10 +101,11 @@ type actionSpec struct {
 
 func newCLI() *cli {
 	c := &cli{
-		stdout:    os.Stdout,
-		stderr:    os.Stderr,
-		stdin:     os.Stdin,
-		newClient: runapi.NewClient,
+		stdout:           os.Stdout,
+		stderr:           os.Stderr,
+		stdin:            os.Stdin,
+		newClient:        runapi.NewClient,
+		newPricingClient: pricing.NewClient,
 	}
 	c.stdinTTY = func() bool { return isReaderTTY(c.stdin) }
 	c.stderrTTY = func() bool { return isWriterTTY(c.stderr) }
@@ -143,6 +146,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.versionCommand())
 	root.AddCommand(c.accountCommand())
 	root.AddCommand(c.filesCommand())
+	root.AddCommand(c.pricingCommand())
 	root.AddCommand(c.apiKeysCommand())
 	root.AddCommand(c.serviceCommand("suno"))
 	root.AddCommand(c.serviceCommand("producer"))
@@ -185,6 +189,54 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.listenCommand())
 	root.AddCommand(c.agentCommand())
 	return root
+}
+
+func (c *cli) pricingCommand() *cobra.Command {
+	pricingCmd := &cobra.Command{Use: "pricing", Short: "Read live Price Schedules and Quotes", Args: cobra.NoArgs}
+
+	var service, action, model string
+	list := &cobra.Command{Use: "list", Short: "List current Price Schedules", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		client, ctx, cancel, err := c.pricingClientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.List(ctx, pricing.ListParams{Service: service, Action: action, Model: model})
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+	list.Flags().StringVar(&service, "service", "", "Filter by RunAPI service namespace.")
+	list.Flags().StringVar(&action, "action", "", "Filter by endpoint action.")
+	list.Flags().StringVar(&model, "model", "", "Filter by public model identifier.")
+
+	var quoteService, quoteAction, quoteModel, paramsInput, paramsFile string
+	quote := &cobra.Command{Use: "quote", Short: "Estimate a task reservation", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		params, err := c.readOptionalJSONObject(paramsInput, paramsFile, "params")
+		if err != nil {
+			return err
+		}
+		client, ctx, cancel, err := c.pricingClientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Quote(ctx, pricing.QuoteParams{Service: quoteService, Action: quoteAction, Model: quoteModel, Params: params})
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+	quote.Flags().StringVar(&quoteService, "service", "", "RunAPI service namespace.")
+	quote.Flags().StringVar(&quoteAction, "action", "", "Endpoint action.")
+	quote.Flags().StringVar(&quoteModel, "model", "", "Public model identifier, when the endpoint is model-specific.")
+	quote.Flags().StringVar(&paramsInput, "params", "", "Inline JSON object with Pricing Inputs. Mutually exclusive with --params-file.")
+	quote.Flags().StringVar(&paramsFile, "params-file", "", "Path to a JSON Pricing Inputs object. Use '-' to read stdin. Mutually exclusive with --params.")
+	_ = quote.MarkFlagRequired("service")
+	_ = quote.MarkFlagRequired("action")
+	pricingCmd.AddCommand(list, quote)
+	return pricingCmd
 }
 
 func (c *cli) filesCommand() *cobra.Command {
@@ -493,6 +545,21 @@ func (c *cli) clientForCommand(cmd *cobra.Command) (*runapi.Client, []option.Req
 	return client, callOpts, ctx, cancel, nil
 }
 
+func (c *cli) pricingClientForCommand(cmd *cobra.Command) (*pricing.Client, context.Context, context.CancelFunc, error) {
+	cfg, err := loadConfig()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	apiKey := firstNonEmpty(strings.TrimSpace(c.apiKeyFlag), strings.TrimSpace(os.Getenv("RUNAPI_API_KEY")), strings.TrimSpace(cfg.APIKey))
+	baseURL := firstNonEmpty(strings.TrimSpace(c.baseURLFlag), strings.TrimSpace(os.Getenv("RUNAPI_BASE_URL")), strings.TrimSpace(cfg.BaseURL), core.DefaultBaseURL)
+	client, err := c.newPricingClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseURL), option.WithTimeout(c.timeout), option.WithUserAgent(core.CLIUserAgent(runapi.Version)))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	ctx, cancel := context.WithTimeout(cmd.Context(), c.timeout)
+	return client, ctx, cancel, nil
+}
+
 func mediaInputFieldsForSpec(spec actionSpec) []string {
 	value, err := spec.decode([]byte(`{}`))
 	if err != nil || value == nil {
@@ -700,6 +767,28 @@ func (c *cli) readInput(input, inputFile string) ([]byte, error) {
 		return nil, core.NewError(core.ErrValidation, "input is required; use --input, --input-file, or stdin", 422, "", nil, nil)
 	}
 	return io.ReadAll(c.stdin)
+}
+
+func (c *cli) readJSONObject(input, inputFile, name string) (map[string]any, error) {
+	if strings.TrimSpace(input) != "" && strings.TrimSpace(inputFile) != "" {
+		return nil, core.NewError(core.ErrValidation, "--"+name+" and --"+name+"-file are mutually exclusive", 422, "", nil, nil)
+	}
+	payload, err := c.readInput(input, inputFile)
+	if err != nil {
+		return nil, err
+	}
+	var value map[string]any
+	if err := json.Unmarshal(payload, &value); err != nil || value == nil {
+		return nil, core.NewError(core.ErrValidation, name+" must be a valid JSON object", 422, "", nil, err)
+	}
+	return value, nil
+}
+
+func (c *cli) readOptionalJSONObject(input, inputFile, name string) (map[string]any, error) {
+	if strings.TrimSpace(input) == "" && strings.TrimSpace(inputFile) == "" {
+		return map[string]any{}, nil
+	}
+	return c.readJSONObject(input, inputFile, name)
 }
 
 func (c *cli) waitFor(ctx context.Context, spec actionSpec, client *runapi.Client, taskID string, callOpts []option.RequestOption) (core.TaskResponse, error) {

@@ -315,20 +315,20 @@ func TestKlingTextToVideoHelpUsesCanonicalFields(t *testing.T) {
 	}
 
 	output := c.stdout.(*bytes.Buffer).String()
-	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6, kling-v3-omni, kling-v3-turbo-text-to-video.") {
+	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-o1, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6, kling-v3-omni, kling-v3-turbo-text-to-video.") {
 		t.Fatalf("expected Kling text-to-video help to include generated model values, got:\n%s", output)
 	}
 	if !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") {
 		t.Fatalf("expected Kling text-to-video help to include frame media fields, got:\n%s", output)
 	}
-	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0, kling-v3-omni, kling-v3-turbo-text-to-video: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6: 5, 10.") {
+	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0, kling-v3-omni, kling-v3-turbo-text-to-video: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-o1: 5; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6: 5, 10.") {
 		t.Fatalf("expected Kling text-to-video help to include model-specific duration_seconds values, got:\n%s", output)
 	}
 	if strings.Contains(output, "duration_seconds          string     optional; duration in seconds. Accepted values: 5, 10.") {
 		t.Fatalf("expected Kling text-to-video help not to advertise action-level duration_seconds values, got:\n%s", output)
 	}
-	if !helpHasField(output, "mode") || !strings.Contains(output, "Accepted values by model: kling-v2.6: std, pro.") {
-		t.Fatalf("expected Kling text-to-video help to include Kling 2.6 mode values, got:\n%s", output)
+	if !helpHasField(output, "mode") || !strings.Contains(output, "Accepted values by model: kling-o1, kling-v2.6: std, pro.") {
+		t.Fatalf("expected Kling text-to-video help to include Kling O1 and 2.6 mode values, got:\n%s", output)
 	}
 	if !strings.Contains(output, "kling-v3-omni: 720p, 1080p, 4k") {
 		t.Fatalf("expected Kling text-to-video help to include Kling V3 Omni output resolution values, got:\n%s", output)
@@ -749,7 +749,8 @@ func TestDynamicImageActionsAreRegistered(t *testing.T) {
 		action  string
 		fields  []string
 	}{
-		{service: "flux-2", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: flux-2-flex-remix-image, flux-2-pro-remix-image."}},
+		{service: "flux-2", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: flux-2-flex-remix-image, flux-2-max-remix-image, flux-2-pro-remix-image."}},
+		{service: "flux-2", action: "text-to-image", fields: []string{"output_count", "Accepted values: flux-2-flex-text-to-image, flux-2-max-text-to-image, flux-2-pro-text-to-image."}},
 		{service: "flux", action: "text-to-image", fields: []string{"output_count", "Accepted values: flux-2-klein, flux-dev, flux-pro."}},
 		{service: "flux", action: "remix-image", fields: []string{"source_image_url", "Accepted values: flux-dev, flux-pro."}},
 		{service: "imagen-4", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: imagen-4-pro-remix-image."}},

@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	runapi "github.com/runapi-ai/cli/internal/runapi"
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/spf13/cobra"
 )
@@ -70,10 +71,7 @@ func (c *cli) runLogin(cmd *cobra.Command) error {
 	}
 
 	// Build authorization URL
-	authURL := fmt.Sprintf("%s/cli/authorize?state=%s&code_challenge=%s&code_challenge_method=S256&redirect_port=%d&display_code=%s&hostname=%s",
-		baseURL,
-		url.QueryEscape(state), url.QueryEscape(challenge), port,
-		url.QueryEscape(displayCode), url.QueryEscape(hostname))
+	authURL := authorizationURL(baseURL, state, challenge, port, displayCode, hostname)
 
 	c.logf("Opening browser for authorization...")
 	c.logf("Your pairing code is: %s", displayCode)
@@ -117,6 +115,20 @@ func (c *cli) runLogin(cmd *cobra.Command) error {
 		"user":          map[string]string{"email": tokenResp.User.Email},
 		"config_path":   configPath,
 	})
+}
+
+func authorizationURL(baseURL, state, challenge string, port int, displayCode, hostname string) string {
+	params := url.Values{
+		"state":                 {state},
+		"code_challenge":        {challenge},
+		"code_challenge_method": {"S256"},
+		"redirect_port":         {fmt.Sprint(port)},
+		"display_code":          {displayCode},
+		"hostname":              {hostname},
+		"version":               {runapi.Version},
+	}
+
+	return fmt.Sprintf("%s/cli/authorize?%s", baseURL, params.Encode())
 }
 
 type callbackResult struct {

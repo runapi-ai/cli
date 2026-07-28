@@ -94,6 +94,20 @@ TASK_ID=$(runapi suno generate --async --input-file song.json | jq -r .id)
 runapi wait "$TASK_ID" --service suno --action generate
 ```
 
+## Live pricing
+
+Price Schedule listing and reservation quotes read the current RunAPI runtime
+contract. They return JSON on stdout and do not require credentials unless a
+quote's params refer to an Account-owned source task.
+
+```bash
+runapi pricing list --service suno --action text_to_music --model suno-v4
+runapi pricing quote --service suno --action text_to_music --model suno-v4 \
+  --params '{"vocal_mode":"auto_lyrics","prompt":"A chill lo-fi beat"}'
+runapi pricing quote --service suno --action text_to_music --model suno-v4 \
+  --params-file pricing-inputs.json
+```
+
 For top-level model media URL fields, readable local file paths are accepted directly. The CLI uploads them before submitting the request and keeps `http://` or `https://` values unchanged:
 
 ```bash
