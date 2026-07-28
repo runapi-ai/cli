@@ -1251,6 +1251,7 @@ var generatedContract = map[string]generatedContractAction{
 				"output_resolution": {Enum: []any{"720p", "1080p"}},
 			},
 			"wan-2.6-flash-image-to-video": {
+				"duration_seconds":  {Enum: []any{5, 10, 15}},
 				"output_resolution": {Enum: []any{"720p", "1080p"}},
 			},
 			"wan-2.6-image-to-video": {

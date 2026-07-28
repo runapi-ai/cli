@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.8.3](https://github.com/runapi-ai/cli/releases/tag/v0.8.3) - 2026-07-28
+
+### Changed
+- Describe and validate the documented Gemini Omni, Grok Imagine, and Topaz request fields.
+
+### Fixed
+- Expose supported Wan Flash image-to-video duration values in generated command metadata; request defaults remain API-applied.
+
+
 ## [v0.8.2](https://github.com/runapi-ai/cli/releases/tag/v0.8.2) - 2026-07-28
 
 ### Added
