@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.8.4](https://github.com/runapi-ai/cli/releases/tag/v0.8.4) - 2026-07-29
+
+### Removed
+- Remove seedance-v1-lite from Seedance CLI contract metadata.
+  Migration: Use seedance-v1-pro or another supported Seedance model.
+
+
 ## [v0.8.3](https://github.com/runapi-ai/cli/releases/tag/v0.8.3) - 2026-07-28
 
 ### Changed

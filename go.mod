@@ -34,7 +34,7 @@ require (
 	github.com/runapi-ai/recraft-sdk/go v0.2.8
 	github.com/runapi-ai/runway-aleph-sdk/go v0.2.8
 	github.com/runapi-ai/runway-sdk/go v0.2.9
-	github.com/runapi-ai/seedance-sdk/go v0.2.12
+	github.com/runapi-ai/seedance-sdk/go v0.2.13
 	github.com/runapi-ai/seedream-sdk/go v0.2.11
 	github.com/runapi-ai/suno-sdk/go v0.3.2
 	github.com/runapi-ai/topaz-sdk/go v0.2.9
@@ -52,4 +52,4 @@ require (
 	golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b // indirect
 )
 
-retract [v0.0.0, v0.4.0] // Upgrade to v0.4.1 or later to continue using RunAPI.
+retract [v0.0.0, v0.8.3] // Upgrade to v0.8.4 or later to continue using RunAPI.

@@ -779,7 +779,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"seedance/text-to-video": {
-		Models: []string{"seedance-1.5-pro", "seedance-2-mini", "seedance-2.0", "seedance-2.0-fast", "seedance-v1-lite", "seedance-v1-pro", "seedance-v1-pro-fast"},
+		Models: []string{"seedance-1.5-pro", "seedance-2-mini", "seedance-2.0", "seedance-2.0-fast", "seedance-v1-pro", "seedance-v1-pro-fast"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"seedance-1.5-pro": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9"}},
@@ -806,11 +806,6 @@ var generatedContract = map[string]generatedContractAction{
 				"reference_audio_urls": {MaxItems: 3},
 				"reference_image_urls": {MaxItems: 9},
 				"reference_video_urls": {MaxItems: 3},
-			},
-			"seedance-v1-lite": {
-				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "9:21"}},
-				"duration_seconds":  {Enum: []any{5, 10}},
-				"output_resolution": {Enum: []any{"480p", "720p", "1080p"}},
 			},
 			"seedance-v1-pro": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9"}},

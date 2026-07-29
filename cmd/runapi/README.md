@@ -46,7 +46,7 @@ Install the RunAPI CLI on this machine and wire it into this agent runtime:
 3. Install the CLI skill into this runtime with `runapi agent install-skill --target <claude|codex|gemini|openclaw|hermes>`.
 4. Confirm it works by running `runapi version` and `runapi auth status`.
 
-Docs: https://runapi.ai/docs#runapi-cli
+Docs: https://runapi.ai/docs/resources/cli
 ```
 
 Precompiled archives are published for macOS, Linux, and Windows on amd64 and
@@ -231,7 +231,7 @@ The CLI exits with non-zero status codes you can switch on in scripts:
 
 ## Links
 
-- Documentation: <https://runapi.ai/docs#runapi-cli>
+- Documentation: <https://runapi.ai/docs/resources/cli>
 - Model catalog: <https://runapi.ai/models>
 - Install script source: <https://runapi.ai/cli/install.sh>
 - Release manifest: <https://runapi.ai/cli/latest.json>
