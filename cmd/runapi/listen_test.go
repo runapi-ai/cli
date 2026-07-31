@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -448,6 +449,259 @@ func TestForwardEventTreatsNon2xxAsError(t *testing.T) {
 	}
 }
 
+func TestForwardEventDoesNotFollowRedirects(t *testing.T) {
+	for _, status := range []int{http.StatusFound, http.StatusTemporaryRedirect} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			var redirectedRequests atomic.Int32
+			redirectTarget := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				redirectedRequests.Add(1)
+				w.WriteHeader(http.StatusNoContent)
+			}))
+			defer redirectTarget.Close()
+
+			forwardTarget := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Location", redirectTarget.URL)
+				w.WriteHeader(status)
+			}))
+			defer forwardTarget.Close()
+
+			code, err := forwardEvent(context.Background(), forwardTarget.Client(), forwardTarget.URL, listenEvent{SignedBody: `{"id":"task_1"}`})
+			if err == nil {
+				t.Fatal("expected redirect response to return an error")
+			}
+			if code != status {
+				t.Fatalf("expected status %d, got %d", status, code)
+			}
+			if got := redirectedRequests.Load(); got != 0 {
+				t.Fatalf("expected no redirected requests, got %d", got)
+			}
+		})
+	}
+}
+
+const (
+	listenSessionFixture = `{
+		"session_token":"session_123",
+		"listen_secret":"secret_123",
+		"callback_api_key":{"id":"token_project","name":"Project key","masked_token":"runapi_abcd"}
+	}`
+	listenEventFixture = `{"events":[{"id":42,"signed_body":"{\"id\":\"task_123\",\"status\":\"completed\"}","headers":{}}]}`
+)
+
+type listenCommandRoute func(http.ResponseWriter, *http.Request) bool
+
+type listenCommandHarness struct {
+	t      *testing.T
+	server *httptest.Server
+}
+
+func newListenCommandHarness(t *testing.T, route listenCommandRoute) *listenCommandHarness {
+	t.Helper()
+	isolateConfig(t)
+
+	harness := &listenCommandHarness{t: t}
+	harness.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_sessions":
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(listenSessionFixture))
+			return
+		case r.Method == http.MethodDelete && r.URL.Path == "/api/v1/cli/listen_sessions/session_123":
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		if route(w, r) {
+			return
+		}
+		t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(harness.server.Close)
+	if err := saveConfig(configFile{APIKey: "cli-credential", BaseURL: harness.server.URL}); err != nil {
+		t.Fatal(err)
+	}
+
+	return harness
+}
+
+func (h *listenCommandHarness) run(ctx context.Context, forwardURL string) (string, error) {
+	h.t.Helper()
+
+	var stderr bytes.Buffer
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &stderr
+	c.httpClient = h.server.Client()
+	c.projectDir = projectRootFixture(h.t, "callback_api_key_id = \"token_project\"\n")
+	cmd := c.command()
+	cmd.SetContext(ctx)
+	args := []string{"listen"}
+	if forwardURL != "" {
+		args = append(args, forwardURL)
+	}
+	cmd.SetArgs(args)
+
+	err := cmd.Execute()
+	return stderr.String(), err
+}
+
+func TestListenAcknowledgesBeforeForwardingRegardlessOfLocalHTTPStatus(t *testing.T) {
+	tests := []struct {
+		name   string
+		status int
+	}{
+		{name: "success", status: http.StatusNoContent},
+		{name: "conflict", status: http.StatusConflict},
+		{name: "server error", status: http.StatusInternalServerError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			var acknowledged atomic.Bool
+			var forwardCount atomic.Int32
+			var pollCount atomic.Int32
+			harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
+				switch {
+				case r.Method == http.MethodGet && r.URL.Path == "/api/v1/cli/listen_events":
+					if pollCount.Add(1) == 1 {
+						_, _ = w.Write([]byte(listenEventFixture))
+						return true
+					}
+					if got := r.URL.Query().Get("last_id"); got != "42" {
+						t.Errorf("expected cursor to advance after forwarding result, got last_id=%q", got)
+					}
+					_, _ = w.Write([]byte(`{"events":[]}`))
+					time.AfterFunc(10*time.Millisecond, cancel)
+					return true
+				case r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_events/42/ack":
+					acknowledged.Store(true)
+					w.WriteHeader(http.StatusNoContent)
+					return true
+				case r.Method == http.MethodPost && r.URL.Path == "/local":
+					if !acknowledged.Load() {
+						t.Error("expected event to be acknowledged before local forwarding")
+					}
+					forwardCount.Add(1)
+					w.WriteHeader(tt.status)
+					if tt.status >= 400 {
+						_, _ = w.Write([]byte("local failure"))
+					}
+					return true
+				}
+				return false
+			})
+
+			stderr, err := harness.run(ctx, harness.server.URL+"/local")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := forwardCount.Load(); got != 1 {
+				t.Fatalf("expected one local forwarding attempt, got %d", got)
+			}
+			if !acknowledged.Load() {
+				t.Fatal("expected event to be acknowledged")
+			}
+			if !strings.Contains(stderr, fmt.Sprintf(" %d", tt.status)) {
+				t.Fatalf("expected local HTTP status in output, got %q", stderr)
+			}
+		})
+	}
+}
+
+func TestListenAcknowledgesBeforeReportingLocalTransportError(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	forwardTarget := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	forwardURL := forwardTarget.URL
+	forwardTarget.Close()
+	var ackCount atomic.Int32
+	var pollCount atomic.Int32
+	harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/cli/listen_events":
+			if pollCount.Add(1) == 1 {
+				_, _ = w.Write([]byte(listenEventFixture))
+				return true
+			}
+			if got := r.URL.Query().Get("last_id"); got != "42" {
+				t.Errorf("expected cursor to advance after transport error, got last_id=%q", got)
+			}
+			_, _ = w.Write([]byte(`{"events":[]}`))
+			time.AfterFunc(10*time.Millisecond, cancel)
+			return true
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_events/42/ack":
+			ackCount.Add(1)
+			w.WriteHeader(http.StatusNoContent)
+			return true
+		}
+		return false
+	})
+
+	stderr, err := harness.run(ctx, forwardURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ackCount.Load(); got != 1 {
+		t.Fatalf("expected one acknowledgement, got %d", got)
+	}
+	if !strings.Contains(stderr, "error:") {
+		t.Fatalf("expected transport error in output, got %q", stderr)
+	}
+}
+
+func TestListenDoesNotForwardUntilAckSucceeds(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+	defer cancel()
+	var ackCount atomic.Int32
+	var forwardCount atomic.Int32
+	harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/cli/listen_events":
+			if ackCount.Load() < 2 {
+				if got := r.URL.Query().Get("last_id"); got != "0" {
+					t.Errorf("expected failed ACK to retain cursor, got last_id=%q", got)
+				}
+				_, _ = w.Write([]byte(listenEventFixture))
+				return true
+			}
+			if got := r.URL.Query().Get("last_id"); got != "42" {
+				t.Errorf("expected successful ACK to advance cursor, got last_id=%q", got)
+			}
+			_, _ = w.Write([]byte(`{"events":[]}`))
+			time.AfterFunc(10*time.Millisecond, cancel)
+			return true
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_events/42/ack":
+			if ackCount.Add(1) == 1 {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = w.Write([]byte(`{"error":"temporary ACK failure","code":"internal_error"}`))
+				return true
+			}
+			w.WriteHeader(http.StatusNoContent)
+			return true
+		case r.Method == http.MethodPost && r.URL.Path == "/local":
+			if ackCount.Load() < 2 {
+				t.Error("forwarded event before acknowledgement succeeded")
+			}
+			forwardCount.Add(1)
+			w.WriteHeader(http.StatusNoContent)
+			return true
+		}
+		return false
+	})
+
+	if _, err := harness.run(ctx, harness.server.URL+"/local"); err != nil {
+		t.Fatal(err)
+	}
+	if got := ackCount.Load(); got != 2 {
+		t.Fatalf("expected ACK retry, got %d attempts", got)
+	}
+	if got := forwardCount.Load(); got != 1 {
+		t.Fatalf("expected one forwarding attempt after ACK success, got %d", got)
+	}
+}
+
 func TestNormalizeForwardURLDefaultsLocalhostToHTTP(t *testing.T) {
 	got, err := normalizeForwardURL("localhost:3000/inbound_webhooks/runapi")
 	if err != nil {
@@ -542,55 +796,32 @@ func TestListenStopsWhenCredentialAccessIsRevoked(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			isolateConfig(t)
 			var pollCount atomic.Int32
 			var ackCount atomic.Int32
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
+			harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
 				switch {
-				case r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_sessions":
-					w.WriteHeader(http.StatusCreated)
-					_, _ = w.Write([]byte(`{
-						"session_token":"session_123",
-						"listen_secret":"secret_123",
-						"callback_api_key":{"id":"token_project","name":"Project key","masked_token":"runapi_abcd"}
-					}`))
 				case r.Method == http.MethodGet && r.URL.Path == "/api/v1/cli/listen_events":
 					pollCount.Add(1)
 					if tt.revokeOnAck {
-						_, _ = w.Write([]byte(`{"events":[{"id":42,"signed_body":"{\"id\":\"task_123\",\"status\":\"completed\"}","headers":{}}]}`))
-						return
+						_, _ = w.Write([]byte(listenEventFixture))
+						return true
 					}
 					w.WriteHeader(tt.status)
 					_, _ = w.Write([]byte(`{"error":"Listener access revoked","code":"cli_listen_required"}`))
+					return true
 				case r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_events/42/ack":
 					ackCount.Add(1)
 					w.WriteHeader(tt.status)
 					_, _ = w.Write([]byte(`{"error":"Listener access revoked","code":"cli_listen_required"}`))
-				case r.Method == http.MethodDelete && r.URL.Path == "/api/v1/cli/listen_sessions/session_123":
-					w.WriteHeader(http.StatusNoContent)
-				default:
-					t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
-					w.WriteHeader(http.StatusNotFound)
+					return true
 				}
-			}))
-			defer server.Close()
-			if err := saveConfig(configFile{APIKey: "cli-credential", BaseURL: server.URL}); err != nil {
-				t.Fatal(err)
-			}
+				return false
+			})
 
 			ctx, cancel := context.WithTimeout(t.Context(), 200*time.Millisecond)
 			defer cancel()
-			c := newCLI()
-			c.stdout = &bytes.Buffer{}
-			c.stderr = &bytes.Buffer{}
-			c.httpClient = server.Client()
-			c.projectDir = projectRootFixture(t, "callback_api_key_id = \"token_project\"\n")
-			cmd := c.command()
-			cmd.SetContext(ctx)
-			cmd.SetArgs([]string{"listen"})
 
-			if err := cmd.Execute(); err == nil {
+			if _, err := harness.run(ctx, ""); err == nil {
 				t.Fatal("expected revoked listener access to stop the command")
 			}
 			if got := pollCount.Load(); got != 1 {

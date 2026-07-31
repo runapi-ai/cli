@@ -160,6 +160,8 @@ runapi listen localhost:3000/webhooks/runapi
 
 Only tasks created with the selected API key are copied to that listener. Tasks created with another key stay isolated, including keys owned by the same Account member. A committed `.runapi.toml` is reusable by the same member on another machine; another member is prompted to select a key they own.
 
+After receiving a valid listener event, the CLI acknowledges it before attempting the local HTTP request. Each event is forwarded locally once: non-2xx responses and connection errors are reported on stderr, but they do not make the listener replay the event. This local debugging behavior does not change delivery retries for a Task's `callback_url`.
+
 Selection precedence is `--callback-api-key-id` (one invocation only), then project `.runapi.toml`, then the TTY selector. The selector writes the config only after the server validates the session. The config has one allowed field:
 
 ```toml

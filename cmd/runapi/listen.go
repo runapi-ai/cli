@@ -172,19 +172,6 @@ func (c *cli) listenCommand() *cobra.Command {
 					_ = json.Unmarshal([]byte(ev.SignedBody), &m)
 					taskID, _ := m["id"].(string)
 					status, _ := m["status"].(string)
-					if forwardTo != "" {
-						code, fwdErr := forwardEvent(ctx, hc, forwardTo, ev)
-						if fwdErr != nil {
-							fmt.Fprintf(c.stderr, "[%d] task=%s status=%s → %s error: %v\n", ev.ID, taskID, status, forwardTo, fwdErr)
-							retryEvent = true
-							break
-						} else {
-							fmt.Fprintf(c.stderr, "[%d] task=%s status=%s → %s %d\n", ev.ID, taskID, status, forwardTo, code)
-						}
-					} else {
-						fmt.Fprintf(c.stderr, "[%d] task=%s status=%s\n", ev.ID, taskID, status)
-					}
-					fmt.Fprintln(c.stdout, ev.SignedBody)
 					if err := ackEvent(ctx, hc, baseURL, apiKey, sessionToken, ev.ID); err != nil {
 						if isTerminalListenerError(err) {
 							return err
@@ -211,6 +198,21 @@ func (c *cli) listenCommand() *cobra.Command {
 						break
 					}
 					lastID = ev.ID
+					if forwardTo != "" {
+						code, fwdErr := forwardEvent(ctx, hc, forwardTo, ev)
+						if fwdErr != nil {
+							if code != 0 {
+								fmt.Fprintf(c.stderr, "[%d] task=%s status=%s → %s %d error: %v\n", ev.ID, taskID, status, forwardTo, code, fwdErr)
+							} else {
+								fmt.Fprintf(c.stderr, "[%d] task=%s status=%s → %s error: %v\n", ev.ID, taskID, status, forwardTo, fwdErr)
+							}
+						} else {
+							fmt.Fprintf(c.stderr, "[%d] task=%s status=%s → %s %d\n", ev.ID, taskID, status, forwardTo, code)
+						}
+					} else {
+						fmt.Fprintf(c.stderr, "[%d] task=%s status=%s\n", ev.ID, taskID, status)
+					}
+					fmt.Fprintln(c.stdout, ev.SignedBody)
 				}
 				if retryEvent {
 					if !waitForContext(ctx, time.Second) {
@@ -550,7 +552,11 @@ func forwardEvent(ctx context.Context, hc *http.Client, targetURL string, ev lis
 		req.Header.Set(k, v)
 	}
 
-	resp, err := hc.Do(req)
+	forwardingClient := *hc
+	forwardingClient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	resp, err := forwardingClient.Do(req)
 	if err != nil {
 		return 0, err
 	}

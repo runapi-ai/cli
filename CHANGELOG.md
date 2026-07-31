@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.8.5](https://github.com/runapi-ai/cli/releases/tag/v0.8.5) - 2026-07-31
+
+### Removed
+- Remove seedance-v1-lite from Seedance CLI contract metadata.
+  Migration: Use seedance-v1-pro or another supported Seedance model.
+
+### Fixed
+- Acknowledge each valid Local Callback Listener event before forwarding so local HTTP failures do not replay or block later events.
+
+
 ## [v0.8.4](https://github.com/runapi-ai/cli/releases/tag/v0.8.4) - 2026-07-29
 
 ### Removed

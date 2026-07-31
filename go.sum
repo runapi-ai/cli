@@ -69,8 +69,8 @@ github.com/runapi-ai/runway-aleph-sdk/go v0.2.8 h1:n4dd1fSRe8BLS6uI6z+ZD0Y/bISON
 github.com/runapi-ai/runway-aleph-sdk/go v0.2.8/go.mod h1:9PopBtmho0CG5llMteZ9z1O77foTBgsZlz3ei4/biu4=
 github.com/runapi-ai/runway-sdk/go v0.2.9 h1:V5G9FtV2wZIMoncNgzVUvE1bjH2TS1WXjVnioDmL3Ts=
 github.com/runapi-ai/runway-sdk/go v0.2.9/go.mod h1:BlA2UJ6xqeqrtRbnSwlzVq5mkY9oPgBPzeKP7IXDLpc=
-github.com/runapi-ai/seedance-sdk/go v0.2.13 h1:E+CNrTt/zxHXlg4OWKhUSJ5BMehRGbH19J6gAKJkQmw=
-github.com/runapi-ai/seedance-sdk/go v0.2.13/go.mod h1:KJsiJvHYeJj869+R4MBPaDgceRvm3RfvbQzJsDgOjmY=
+github.com/runapi-ai/seedance-sdk/go v0.2.12 h1:5PMV0qZD/r2zT6WPIJm4Q6Ij+hBwhZ5WSmZrhzv1uuo=
+github.com/runapi-ai/seedance-sdk/go v0.2.12/go.mod h1:8NNko9GSWDKvhtHvy7AOVj/d2DopZh1gjkEma40h3kQ=
 github.com/runapi-ai/seedream-sdk/go v0.2.11 h1:AObU6ztROFX1OKrTrBVwtqSUXfPzqBcP1vNF+ozaH3g=
 github.com/runapi-ai/seedream-sdk/go v0.2.11/go.mod h1:mx+eXKkLhwWRy+EJVOym/Vv8WxjuGktujf6sbRt34uw=
 github.com/runapi-ai/suno-sdk/go v0.3.2 h1:vtuq8sZNMubwlBDqTod/XDhIjj0a5kvPzyVq6Elr2TA=
