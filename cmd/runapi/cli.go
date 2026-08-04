@@ -33,6 +33,7 @@ import (
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
+	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
@@ -184,6 +185,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("gpt-4o-image"))
 	root.AddCommand(c.serviceCommand("grok-imagine"))
 	root.AddCommand(c.serviceCommand("topaz"))
+	root.AddCommand(c.serviceCommand("pixverse"))
 	root.AddCommand(c.getCommand())
 	root.AddCommand(c.waitCommand())
 	root.AddCommand(c.listenCommand())
@@ -1338,6 +1340,7 @@ var allSpecs = []actionSpec{
 	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineEditImageSpec(),
 	newGrokImagineExtendSpec(), newGrokImagineUpscaleSpec(),
 	newTopazUpscaleImageSpec(), newTopazUpscaleVideoSpec(),
+	newPixVerseTextToVideoSpec(), newPixVerseImageToVideoSpec(), newPixVerseEditVideoSpec(), newPixVerseTransitionVideoSpec(), newPixVerseExtendVideoSpec(),
 }
 
 func newSunoTextToMusicSpec() actionSpec {
@@ -2247,6 +2250,56 @@ func newHappyHorseEditVideoSpec() actionSpec {
 		return client.HappyHorse.EditVideo.Run(ctx, params.(happyhorse.EditVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.HappyHorse.EditVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newPixVerseTextToVideoSpec() actionSpec {
+	return actionSpec{service: "pixverse", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[pixverse.TextToVideoParams](), decode: decodeInto[pixverse.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.PixVerse.TextToVideo.Create(ctx, params.(pixverse.TextToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.PixVerse.TextToVideo.Run(ctx, params.(pixverse.TextToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.PixVerse.TextToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newPixVerseImageToVideoSpec() actionSpec {
+	return actionSpec{service: "pixverse", action: "image-to-video", isAsync: true, inputFields: inputFieldsFor[pixverse.ImageToVideoParams](), decode: decodeInto[pixverse.ImageToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.PixVerse.ImageToVideo.Create(ctx, params.(pixverse.ImageToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.PixVerse.ImageToVideo.Run(ctx, params.(pixverse.ImageToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.PixVerse.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newPixVerseEditVideoSpec() actionSpec {
+	return actionSpec{service: "pixverse", action: "edit-video", isAsync: true, inputFields: inputFieldsFor[pixverse.EditVideoParams](), decode: decodeInto[pixverse.EditVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.PixVerse.EditVideo.Create(ctx, params.(pixverse.EditVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.PixVerse.EditVideo.Run(ctx, params.(pixverse.EditVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.PixVerse.EditVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newPixVerseTransitionVideoSpec() actionSpec {
+	return actionSpec{service: "pixverse", action: "transition-video", isAsync: true, inputFields: inputFieldsFor[pixverse.TransitionVideoParams](), decode: decodeInto[pixverse.TransitionVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.PixVerse.TransitionVideo.Create(ctx, params.(pixverse.TransitionVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.PixVerse.TransitionVideo.Run(ctx, params.(pixverse.TransitionVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.PixVerse.TransitionVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newPixVerseExtendVideoSpec() actionSpec {
+	return actionSpec{service: "pixverse", action: "extend-video", isAsync: true, inputFields: inputFieldsFor[pixverse.ExtendVideoParams](), decode: decodeInto[pixverse.ExtendVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.PixVerse.ExtendVideo.Create(ctx, params.(pixverse.ExtendVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.PixVerse.ExtendVideo.Run(ctx, params.(pixverse.ExtendVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.PixVerse.ExtendVideo.Get(ctx, id, opts...)
 	}}
 }
 

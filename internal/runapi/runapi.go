@@ -28,6 +28,7 @@ import (
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
+	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
@@ -128,6 +129,7 @@ type Client struct {
 	// HappyHorse generates video from text, images, or character prompts, and
 	// edits existing video with HappyHorse models.
 	HappyHorse *happyhorse.Client
+	PixVerse *pixverse.Client
 	// GptImage generates and edits images with GPT Image 1.5 models.
 	GptImage *gptimage.Client
 	// GptImage2 generates and edits images with GPT Image 2 models.
@@ -196,6 +198,7 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		Hailuo:            hailuo.NewClientWithHTTP(httpClient),
 		VolcengineLipSync: volcenginelipsync.NewClientWithHTTP(httpClient),
 		HappyHorse:        happyhorse.NewClientWithHTTP(httpClient),
+		PixVerse:          pixverse.NewClientWithHTTP(httpClient),
 		GptImage:          gptimage.NewClientWithHTTP(httpClient),
 		GptImage2:         gptimage2.NewClientWithHTTP(httpClient),
 		Gpt4oImage:        gpt4oimage.NewClientWithHTTP(httpClient),

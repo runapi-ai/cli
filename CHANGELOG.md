@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.8.6](https://github.com/runapi-ai/cli/releases/tag/v0.8.6) - 2026-08-04
+
+### Added
+- Add PixVerse commands for text-to-video, image-to-video, reference-guided video, transitions, and video extension.
+
+### Changed
+- Support more concurrent local listeners with lower idle polling frequency and immediate event draining.
+
+### Fixed
+- Honor the server's Retry-After delay when retrying local listener requests.
+
+
 ## [v0.8.5](https://github.com/runapi-ai/cli/releases/tag/v0.8.5) - 2026-07-31
 
 ### Removed

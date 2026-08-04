@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,6 +23,15 @@ var (
 	errCallbackAPIKeyUnusable = errors.New("callback API key is no longer usable")
 	errListenSecretChanged    = errors.New("listen signing secret changed")
 )
+
+const (
+	listenerEmptyPollInterval    = 15 * time.Second
+	listenerMaxEmptyPollInterval = 30 * time.Second
+	listenerPollJitterFraction   = 0.10
+)
+
+var randomListenerPollJitter = rand.Float64
+var waitForListenerContext = waitForContext
 
 type listenSecretResponse struct {
 	ListenSecret   string         `json:"listen_secret"`
@@ -131,6 +141,7 @@ func (c *cli) listenCommand() *cobra.Command {
 
 			var lastID int64
 			backoff := time.Second
+			consecutiveEmptyPolls := 0
 			for ctx.Err() == nil {
 				resp, err := pollEvents(ctx, hc, baseURL, apiKey, sessionToken, lastID)
 				if err != nil {
@@ -146,8 +157,9 @@ func (c *cli) listenCommand() *cobra.Command {
 							if !retriable {
 								return recreateErr
 							}
-							fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", recreateErr, backoff)
-							if !waitForContext(ctx, backoff) {
+							retryWait := listenerRetryWait(recreateErr, listenerWaitDuration(backoff))
+							fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", recreateErr, retryWait)
+							if !waitForListenerContext(ctx, retryWait) {
 								return nil
 							}
 							backoff = nextBackoff(backoff)
@@ -158,8 +170,9 @@ func (c *cli) listenCommand() *cobra.Command {
 						backoff = time.Second
 						continue
 					}
-					fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", err, backoff)
-					if !waitForContext(ctx, backoff) {
+					retryWait := listenerRetryWait(err, listenerWaitDuration(backoff))
+					fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", err, retryWait)
+					if !waitForListenerContext(ctx, retryWait) {
 						return nil
 					}
 					backoff = nextBackoff(backoff)
@@ -167,6 +180,7 @@ func (c *cli) listenCommand() *cobra.Command {
 				}
 				backoff = time.Second
 				retryEvent := false
+				retryEventWait := time.Second
 				for _, ev := range resp.Events {
 					var m map[string]interface{}
 					_ = json.Unmarshal([]byte(ev.SignedBody), &m)
@@ -185,7 +199,8 @@ func (c *cli) listenCommand() *cobra.Command {
 								if !retriable {
 									return recreateErr
 								}
-								fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", recreateErr, backoff)
+								retryEventWait = listenerRetryWait(recreateErr, listenerWaitDuration(backoff))
+								fmt.Fprintf(c.stderr, "[error] %v, retrying in %v...\n", recreateErr, retryEventWait)
 							} else {
 								sessionToken = newToken
 								lastID = 0
@@ -193,6 +208,7 @@ func (c *cli) listenCommand() *cobra.Command {
 							}
 						} else {
 							fmt.Fprintf(c.stderr, "[%d] ack error: %v\n", ev.ID, err)
+							retryEventWait = listenerRetryWait(err, listenerWaitDuration(time.Second))
 						}
 						retryEvent = true
 						break
@@ -215,15 +231,21 @@ func (c *cli) listenCommand() *cobra.Command {
 					fmt.Fprintln(c.stdout, ev.SignedBody)
 				}
 				if retryEvent {
-					if !waitForContext(ctx, time.Second) {
+					consecutiveEmptyPolls = 0
+					if !waitForListenerContext(ctx, retryEventWait) {
 						return nil
 					}
 					continue
 				}
 				if len(resp.Events) == 0 {
-					if !waitForContext(ctx, time.Second) {
+					consecutiveEmptyPolls++
+					if !waitForListenerContext(ctx, listenerPollWait(consecutiveEmptyPolls)) {
 						return nil
 					}
+				} else {
+					// A non-empty response is drained immediately on the next
+					// request, so event delivery never inherits idle backoff.
+					consecutiveEmptyPolls = 0
 				}
 			}
 			return nil
@@ -246,6 +268,27 @@ func waitForContext(ctx context.Context, duration time.Duration) bool {
 	case <-timer.C:
 		return true
 	}
+}
+
+func listenerPollWait(consecutiveEmptyPolls int) time.Duration {
+	base := listenerEmptyPollInterval
+	if consecutiveEmptyPolls > 1 {
+		base = listenerMaxEmptyPollInterval
+	}
+	return listenerWaitDuration(base)
+}
+
+func listenerWaitDuration(base time.Duration) time.Duration {
+	jitter := (randomListenerPollJitter()*2 - 1) * listenerPollJitterFraction
+	return time.Duration(float64(base) * (1 + jitter))
+}
+
+func listenerRetryWait(err error, fallback time.Duration) time.Duration {
+	apiErr, ok := errors.AsType[*core.Error](err)
+	if ok && core.IsRateLimit(apiErr) && apiErr.RetryAfter > 0 {
+		return apiErr.RetryAfter
+	}
+	return fallback
 }
 
 func isListenerAccessRevoked(err error) bool {

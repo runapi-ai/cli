@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -709,6 +710,179 @@ func TestNormalizeForwardURLDefaultsLocalhostToHTTP(t *testing.T) {
 	}
 	if got != "http://localhost:3000/inbound_webhooks/runapi" {
 		t.Fatalf("expected http localhost URL, got %q", got)
+	}
+}
+
+func TestListenerPollWaitUsesJitteredIdleBackoff(t *testing.T) {
+	original := randomListenerPollJitter
+	t.Cleanup(func() { randomListenerPollJitter = original })
+
+	for _, tt := range []struct {
+		name        string
+		random      float64
+		consecutive int
+		want        time.Duration
+	}{
+		{name: "first idle poll lower bound", random: 0, consecutive: 1, want: 13*time.Second + 500*time.Millisecond},
+		{name: "first idle poll upper bound", random: 1, consecutive: 1, want: 16*time.Second + 500*time.Millisecond},
+		{name: "backoff lower bound", random: 0, consecutive: 2, want: 27 * time.Second},
+		{name: "backoff upper bound", random: 1, consecutive: 2, want: 33 * time.Second},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			randomListenerPollJitter = func() float64 { return tt.random }
+			if got := listenerPollWait(tt.consecutive); got != tt.want {
+				t.Fatalf("listenerPollWait(%d) = %v, want %v", tt.consecutive, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestListenPollLoopUsesIdleBackoffAndEventDrainSchedule(t *testing.T) {
+	originalWait := waitForListenerContext
+	originalJitter := randomListenerPollJitter
+	t.Cleanup(func() {
+		waitForListenerContext = originalWait
+		randomListenerPollJitter = originalJitter
+	})
+	randomListenerPollJitter = func() float64 { return 0.5 }
+
+	var waits []time.Duration
+	waitForListenerContext = func(_ context.Context, duration time.Duration) bool {
+		waits = append(waits, duration)
+		return len(waits) < 2
+	}
+	var pollCount atomic.Int32
+	harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
+		if r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_events/42/ack" {
+			w.WriteHeader(http.StatusNoContent)
+			return true
+		}
+		if r.Method != http.MethodGet || r.URL.Path != "/api/v1/cli/listen_events" {
+			return false
+		}
+		pollCount.Add(1)
+		_, _ = w.Write([]byte(`{"events":[]}`))
+		return true
+	})
+
+	if _, err := harness.run(t.Context(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := pollCount.Load(), int32(2); got != want {
+		t.Fatalf("expected %d idle polls, got %d", want, got)
+	}
+	if got, want := waits, []time.Duration{15 * time.Second, 30 * time.Second}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("expected idle waits %v, got %v", want, got)
+	}
+}
+
+func TestListenPollLoopDrainsAvailableEventsWithoutIdleWait(t *testing.T) {
+	originalWait := waitForListenerContext
+	originalJitter := randomListenerPollJitter
+	t.Cleanup(func() {
+		waitForListenerContext = originalWait
+		randomListenerPollJitter = originalJitter
+	})
+	randomListenerPollJitter = func() float64 { return 0.5 }
+	var waits []time.Duration
+	waitForListenerContext = func(_ context.Context, duration time.Duration) bool {
+		waits = append(waits, duration)
+		return false
+	}
+	var pollCount atomic.Int32
+	harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
+		if r.Method == http.MethodPost && r.URL.Path == "/api/v1/cli/listen_events/42/ack" {
+			w.WriteHeader(http.StatusNoContent)
+			return true
+		}
+		if r.Method != http.MethodGet || r.URL.Path != "/api/v1/cli/listen_events" {
+			return false
+		}
+		if pollCount.Add(1) == 1 {
+			_, _ = w.Write([]byte(listenEventFixture))
+		} else {
+			_, _ = w.Write([]byte(`{"events":[]}`))
+		}
+		return true
+	})
+
+	if _, err := harness.run(t.Context(), ""); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := pollCount.Load(), int32(2); got != want {
+		t.Fatalf("expected event drain poll followed by idle poll, got %d polls", got)
+	}
+	if got, want := waits, []time.Duration{15 * time.Second}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("expected only the post-drain idle wait %v, got %v", want, got)
+	}
+}
+
+func TestListenPollLoopKeepsErrorBackoffSeparateFromIdleBackoff(t *testing.T) {
+	originalWait := waitForListenerContext
+	originalJitter := randomListenerPollJitter
+	t.Cleanup(func() {
+		waitForListenerContext = originalWait
+		randomListenerPollJitter = originalJitter
+	})
+	randomListenerPollJitter = func() float64 { return 0.5 }
+	var waits []time.Duration
+	waitForListenerContext = func(_ context.Context, duration time.Duration) bool {
+		waits = append(waits, duration)
+		return true
+	}
+	var pollCount atomic.Int32
+	harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/v1/cli/listen_events" {
+			return false
+		}
+		if pollCount.Add(1) < 3 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(`{"error":"temporary","code":"temporary"}`))
+			return true
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"revoked","code":"cli_listen_required"}`))
+		return true
+	})
+
+	if _, err := harness.run(t.Context(), ""); err == nil {
+		t.Fatal("expected terminal listener error")
+	}
+	if got, want := waits, []time.Duration{time.Second, 2 * time.Second}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("expected error backoff %v, got %v", want, got)
+	}
+}
+
+func TestListenPollLoopHonorsServerRetryAfter(t *testing.T) {
+	originalWait := waitForListenerContext
+	t.Cleanup(func() { waitForListenerContext = originalWait })
+
+	var waits []time.Duration
+	waitForListenerContext = func(_ context.Context, duration time.Duration) bool {
+		waits = append(waits, duration)
+		return true
+	}
+	var pollCount atomic.Int32
+	harness := newListenCommandHarness(t, func(w http.ResponseWriter, r *http.Request) bool {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/v1/cli/listen_events" {
+			return false
+		}
+		if pollCount.Add(1) == 1 {
+			w.Header().Set("Retry-After", "60")
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte(`{"error":"poll budget exceeded","code":"too_many_listener_polls"}`))
+			return true
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"revoked","code":"cli_listen_required"}`))
+		return true
+	})
+
+	if _, err := harness.run(t.Context(), ""); err == nil {
+		t.Fatal("expected terminal listener error")
+	}
+	if got, want := waits, []time.Duration{60 * time.Second}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("expected server retry delay %v, got %v", want, got)
 	}
 }
 

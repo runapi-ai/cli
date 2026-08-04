@@ -667,6 +667,49 @@ var generatedContract = map[string]generatedContractAction{
 			"tts-1-hd": {},
 		},
 	},
+	"pixverse/edit-video": {
+		Models: []string{"pixverse-v6"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"pixverse-v6": {
+				"aspect_ratio":         {Enum: []any{"16:9", "4:3", "1:1", "3:4", "9:16", "2:3", "3:2", "21:9"}},
+				"output_resolution":    {Enum: []any{"360p", "540p", "720p", "1080p"}},
+				"reference_image_urls": {MinItems: 1, MaxItems: 7},
+			},
+		},
+	},
+	"pixverse/extend-video": {
+		Models: []string{"pixverse-v6"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"pixverse-v6": {
+				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
+			},
+		},
+	},
+	"pixverse/image-to-video": {
+		Models: []string{"pixverse-v6"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"pixverse-v6": {
+				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
+			},
+		},
+	},
+	"pixverse/text-to-video": {
+		Models: []string{"pixverse-v6"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"pixverse-v6": {
+				"aspect_ratio":      {Enum: []any{"16:9", "4:3", "1:1", "3:4", "9:16", "2:3", "3:2", "21:9"}},
+				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
+			},
+		},
+	},
+	"pixverse/transition-video": {
+		Models: []string{"pixverse-v6"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"pixverse-v6": {
+				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
+			},
+		},
+	},
 	"producer/text-to-music": {
 		Models: []string{"fuzz-0.8", "fuzz-1.0", "fuzz-1.0-pro", "fuzz-1.1", "fuzz-1.1-pro", "fuzz-2.0", "fuzz-2.0-pro", "fuzz-2.0-raw"},
 		FieldsByModel: map[string]map[string]generatedContractField{

@@ -160,6 +160,8 @@ runapi listen localhost:3000/webhooks/runapi
 
 Only tasks created with the selected API key are copied to that listener. Tasks created with another key stay isolated, including keys owned by the same Account member. A committed `.runapi.toml` is reusable by the same member on another machine; another member is prompted to select a key they own.
 
+Each Account can run up to 100 active listeners per Callback Subscription Key and 1,000 in total. When a limit is reached, stop an idle listener or wait and retry; the response identifies which limit is full. The CLI honors the server's `Retry-After` delay when present. Idle listeners check for events about every 15 to 30 seconds. Events are normally found within about 15 seconds and are read immediately when available.
+
 After receiving a valid listener event, the CLI acknowledges it before attempting the local HTTP request. Each event is forwarded locally once: non-2xx responses and connection errors are reported on stderr, but they do not make the listener replay the event. This local debugging behavior does not change delivery retries for a Task's `callback_url`.
 
 Selection precedence is `--callback-api-key-id` (one invocation only), then project `.runapi.toml`, then the TTY selector. The selector writes the config only after the server validates the session. The config has one allowed field:

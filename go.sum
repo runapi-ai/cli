@@ -11,8 +11,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/manifoldco/promptui v0.9.0 h1:3V4HzJk1TtXW1MTZMP7mdlwbBpIinw3HztaIlYthEiA=
 github.com/manifoldco/promptui v0.9.0/go.mod h1:ka04sppxSGFAtxX0qhlYQjISsg9mR4GWtQEhdbn6Pgg=
-github.com/runapi-ai/core-sdk/go v0.2.16 h1:m/bl5Da/Y/y/9+sAmeWEgppgfoW7/x6F31ZxqaHNJfw=
-github.com/runapi-ai/core-sdk/go v0.2.16/go.mod h1:e5uC8RF6BNkAj1WkOi+nD71mZL+cir+Ia97XUQj+5N0=
+github.com/runapi-ai/core-sdk/go v0.2.17 h1:m7oNLuIQf9/9zhScdhYASaaunU0qoyC0Fenn2wWc2Mc=
+github.com/runapi-ai/core-sdk/go v0.2.17/go.mod h1:e5uC8RF6BNkAj1WkOi+nD71mZL+cir+Ia97XUQj+5N0=
 github.com/runapi-ai/elevenlabs-sdk/go v0.2.10 h1:3ycwcMXVbYgCspLQArrq7x973UshNVDwv0M+FZUmkqE=
 github.com/runapi-ai/elevenlabs-sdk/go v0.2.10/go.mod h1:scpxwHRCh0voEwqs0EVDdnz932HjG/+oPjyFPqjX8fY=
 github.com/runapi-ai/fish-audio-sdk/go v0.1.3 h1:E2GfvVBo9FqmSTatsgQRSHZPxioHUNRo5FCzFGP7+Kc=
@@ -25,8 +25,8 @@ github.com/runapi-ai/flux-sdk/go v0.1.1 h1:M/d+WC5qsfrfGmu+gE1Wj1N6HPXv17TnULyqE
 github.com/runapi-ai/flux-sdk/go v0.1.1/go.mod h1:+nRsgLMHvh/5QfNRfsk4oRbbkYGSMndqI1/5K3Pl0hA=
 github.com/runapi-ai/gemini-omni-sdk/go v0.3.3 h1:5eh2DaxpgMX9s6qx9LZVnbhkWQz2t48b+npHm+IFouA=
 github.com/runapi-ai/gemini-omni-sdk/go v0.3.3/go.mod h1:I9kv6CdxnDUbdpgvPkXnn180c22LrDqG8X3cMzTfEWs=
-github.com/runapi-ai/gemini-tts-sdk/go v0.1.2 h1:BATprQqJCyhajHW2o4aBTS+n9Kp4oygsW4AdEY48Xgg=
-github.com/runapi-ai/gemini-tts-sdk/go v0.1.2/go.mod h1:/z2n9MldCEWEr8+YY6CRkLn7NhgJ0EoiCSpJ9ckHtVA=
+github.com/runapi-ai/gemini-tts-sdk/go v0.1.3 h1:dgchht+smSdmMwkuYUPreffo9Ze2Mcz+wKIJIIdRbvk=
+github.com/runapi-ai/gemini-tts-sdk/go v0.1.3/go.mod h1:hpCDY0mEnN7klAL0jhVospY7/up6Kbny+wiRqQyTLpM=
 github.com/runapi-ai/gpt-4o-image-sdk/go v0.2.9 h1:Qa6cdg+dI8kud7otzrrEO0JXuaNHo7jsJ3wAQO43o4o=
 github.com/runapi-ai/gpt-4o-image-sdk/go v0.2.9/go.mod h1:05C5vlU6/jHLihH2+GK1RmKTgtEvTHCU+sN8/I9c2uA=
 github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8 h1:60s9OpopPWowGXLD6YoPj9iAHoaQdteDsC2lBe7eX0M=
@@ -57,6 +57,8 @@ github.com/runapi-ai/omnihuman-sdk/go v0.2.10 h1:H97qJO1A278s4jY2GnqcKptIZjivDyb
 github.com/runapi-ai/omnihuman-sdk/go v0.2.10/go.mod h1:fbVzVEemqBw4jhLwPg6UJN1mo1/ApxvjcvbkNrkh57s=
 github.com/runapi-ai/openai-tts-sdk/go v0.1.2 h1:U0cwZNg4/CabsRx4EZVW+mMyrIHGTtcuxrxiq/M73oM=
 github.com/runapi-ai/openai-tts-sdk/go v0.1.2/go.mod h1:QxRizAGVAgMVV4ZHKRYIrUV1wAhOj7wbuvx9hUE0YOA=
+github.com/runapi-ai/pixverse-sdk/go v0.1.1 h1:1aO5eSh+rrAvgkNl+dT9eYP/SvAQt4o2zMaHI5fncco=
+github.com/runapi-ai/pixverse-sdk/go v0.1.1/go.mod h1:wlLVY4KKNgUSJ0Mizkxakb513JqsGRRRWhOSMgXYXVU=
 github.com/runapi-ai/producer-sdk/go v0.2.1 h1:tSE9YVj0tAjFZ9U2mi/TjchVSHTYDwMz/ai4UYrKjkg=
 github.com/runapi-ai/producer-sdk/go v0.2.1/go.mod h1:yKZhNZGB1FxjzTKqZUzaWXJ/myn1SA9JV3GZPnMBIyw=
 github.com/runapi-ai/qwen-2-sdk/go v0.2.9 h1:NyMJMSZ56S6iPzoOP1t9GvAP3BxM6II001tRZ9PYkhg=
@@ -69,8 +71,8 @@ github.com/runapi-ai/runway-aleph-sdk/go v0.2.8 h1:n4dd1fSRe8BLS6uI6z+ZD0Y/bISON
 github.com/runapi-ai/runway-aleph-sdk/go v0.2.8/go.mod h1:9PopBtmho0CG5llMteZ9z1O77foTBgsZlz3ei4/biu4=
 github.com/runapi-ai/runway-sdk/go v0.2.9 h1:V5G9FtV2wZIMoncNgzVUvE1bjH2TS1WXjVnioDmL3Ts=
 github.com/runapi-ai/runway-sdk/go v0.2.9/go.mod h1:BlA2UJ6xqeqrtRbnSwlzVq5mkY9oPgBPzeKP7IXDLpc=
-github.com/runapi-ai/seedance-sdk/go v0.2.12 h1:5PMV0qZD/r2zT6WPIJm4Q6Ij+hBwhZ5WSmZrhzv1uuo=
-github.com/runapi-ai/seedance-sdk/go v0.2.12/go.mod h1:8NNko9GSWDKvhtHvy7AOVj/d2DopZh1gjkEma40h3kQ=
+github.com/runapi-ai/seedance-sdk/go v0.2.13 h1:E+CNrTt/zxHXlg4OWKhUSJ5BMehRGbH19J6gAKJkQmw=
+github.com/runapi-ai/seedance-sdk/go v0.2.13/go.mod h1:KJsiJvHYeJj869+R4MBPaDgceRvm3RfvbQzJsDgOjmY=
 github.com/runapi-ai/seedream-sdk/go v0.2.11 h1:AObU6ztROFX1OKrTrBVwtqSUXfPzqBcP1vNF+ozaH3g=
 github.com/runapi-ai/seedream-sdk/go v0.2.11/go.mod h1:mx+eXKkLhwWRy+EJVOym/Vv8WxjuGktujf6sbRt34uw=
 github.com/runapi-ai/suno-sdk/go v0.3.2 h1:vtuq8sZNMubwlBDqTod/XDhIjj0a5kvPzyVq6Elr2TA=
