@@ -689,6 +689,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"pixverse-v6"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"pixverse-v6": {
+				"enable_audio":      {Enum: []any{true, false}},
 				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
 			},
 		},
@@ -698,6 +699,7 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"pixverse-v6": {
 				"aspect_ratio":      {Enum: []any{"16:9", "4:3", "1:1", "3:4", "9:16", "2:3", "3:2", "21:9"}},
+				"enable_audio":      {Enum: []any{true, false}},
 				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
 			},
 		},
@@ -927,6 +929,16 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
+	"suno/add-samples": {
+		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-plus", "suno-v5", "suno-v5.5"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"suno-v4":        {},
+			"suno-v4.5":      {},
+			"suno-v4.5-plus": {},
+			"suno-v5":        {},
+			"suno-v5.5":      {},
+		},
+	},
 	"suno/add-vocals": {
 		Models: []string{"suno-v4.5-plus", "suno-v5"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -1117,6 +1129,16 @@ var generatedContract = map[string]generatedContractAction{
 			"_": {},
 		},
 	},
+	"suno/remaster-audio": {
+		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-plus", "suno-v5", "suno-v5.5"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"suno-v4":        {},
+			"suno-v4.5":      {},
+			"suno-v4.5-plus": {},
+			"suno-v5":        {},
+			"suno-v5.5":      {},
+		},
+	},
 	"suno/replace-section": {
 		Models: []string{},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -1132,6 +1154,16 @@ var generatedContract = map[string]generatedContractAction{
 				"stem_name": {Enum: []any{"Lead Vocal", "Drum Kit", "Kick", "Snare", "Risers", "Bass", "Backing Vocals", "Piano", "Electric Guitar", "Percussion", "String Section", "Synth", "Acoustic Guitar", "Sound Effects", "Synth Pad", "Synth Bass", "Guitar", "Brass Section", "Organ", "Electronic Drum Kit", "Lead Electric Guitar", "Synth Keys", "Rhythm Electric Guitar", "Electric Piano", "Upright Bass", "Keyboards", "Distorted Electric Guitar", "Synth Strings", "Synth Lead", "Woodwinds", "Rhythm Acoustic Guitar", "Flute", "Harp", "Tambourine", "Trumpet", "Arpeggiator", "Accordion", "Fiddle", "Pedal Steel Guitar", "Synth Voice", "Violin", "Digital Piano", "Synth Brass", "Mandolin", "Choir", "Banjo", "Bells", "Clarinet", "Tenor Saxophone", "Trombone", "Shaker", "French Horn", "Glockenspiel", "Electric Bass", "Cello", "Timpani", "Harmonica", "Marimba", "Vibraphone", "Lap Steel Guitar", "Saxophone", "Orchestra", "Horns", "Cymbals", "Hand Clap", "Oboe", "Celesta", "Congas", "Drone", "Alto Saxophone", "Double Bass", "Ukulele", "Harpsichord", "Baritone Saxophone", "Xylophone", "Tuba", "Bass Guitar", "Whistle", "Lead Guitar", "Rhodes", "808", "Bongos", "Bassoon", "Cowbell", "Viola", "Sitar", "Steel Drums", "Piccolo", "Theremin", "Bagpipes", "Hi-Hat", "Music Box", "Melodica", "Tabla", "Koto", "Djembe", "Taiko", "Didgeridoo"}},
 				"type":      {Enum: []any{"separate_vocal", "split_stem", "split_stem_advanced"}},
 			},
+		},
+	},
+	"suno/stitch-audio": {
+		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-plus", "suno-v5", "suno-v5.5"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"suno-v4":        {},
+			"suno-v4.5":      {},
+			"suno-v4.5-plus": {},
+			"suno-v5":        {},
+			"suno-v5.5":      {},
 		},
 	},
 	"suno/text-to-music": {

@@ -33,7 +33,6 @@ import (
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
-	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
@@ -43,6 +42,7 @@ import (
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
 	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
 	"github.com/runapi-ai/openai-tts-sdk/go/openaitts"
+	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
 	"github.com/runapi-ai/qwen-image-sdk/go/qwenimage"
@@ -1306,6 +1306,7 @@ func describeAction(spec actionSpec) string {
 
 var allSpecs = []actionSpec{
 	newSunoTextToMusicSpec(), newSunoExtendMusicSpec(), newSunoGenerateArtworkSpec(), newSunoCoverAudioSpec(),
+	newSunoStitchAudioSpec(), newSunoRemasterAudioSpec(), newSunoAddSamplesSpec(),
 	newSunoAddInstrumentalSpec(), newSunoAddVocalsSpec(), newSunoSeparateAudioStemsSpec(), newSunoGenerateMidiSpec(), newSunoConvertAudioSpec(),
 	newSunoVisualizeMusicSpec(), newSunoGenerateLyricsSpec(), newSunoBlendLyricsSpec(), newSunoGetTimestampedLyricsSpec(), newSunoReplaceSectionSpec(), newSunoCreateMashupSpec(),
 	newSunoTextToSoundSpec(), newSunoVoiceToValidationPhraseSpec(), newSunoRegenerateValidationPhraseSpec(), newSunoGenerateVoiceSpec(), newSunoCheckVoiceSpec(),
@@ -1370,6 +1371,36 @@ func newSunoExtendMusicSpec() actionSpec {
 		return client.Suno.ExtendMusic.Run(ctx, params.(suno.ExtendMusicParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Suno.ExtendMusic.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoStitchAudioSpec() actionSpec {
+	return actionSpec{service: "suno", action: "stitch-audio", isAsync: true, inputFields: inputFieldsFor[suno.StitchAudioParams](), decode: decodeInto[suno.StitchAudioParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.StitchAudio.Create(ctx, params.(suno.StitchAudioParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.StitchAudio.Run(ctx, params.(suno.StitchAudioParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.StitchAudio.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoRemasterAudioSpec() actionSpec {
+	return actionSpec{service: "suno", action: "remaster-audio", isAsync: true, inputFields: inputFieldsFor[suno.RemasterAudioParams](), decode: decodeInto[suno.RemasterAudioParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.RemasterAudio.Create(ctx, params.(suno.RemasterAudioParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.RemasterAudio.Run(ctx, params.(suno.RemasterAudioParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.RemasterAudio.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoAddSamplesSpec() actionSpec {
+	return actionSpec{service: "suno", action: "add-samples", isAsync: true, inputFields: inputFieldsFor[suno.AddSamplesParams](), decode: decodeInto[suno.AddSamplesParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.AddSamples.Create(ctx, params.(suno.AddSamplesParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.AddSamples.Run(ctx, params.(suno.AddSamplesParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.AddSamples.Get(ctx, id, opts...)
 	}}
 }
 

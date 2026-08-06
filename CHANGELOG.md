@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.8.7](https://github.com/runapi-ai/cli/releases/tag/v0.8.7) - 2026-08-06
+
+### Added
+- Add CLI commands for stitching audio, remastering audio, and adding samples from a selected time range.
+
+### Fixed
+- Show the optional PixVerse enable_audio field for text-to-video and image-to-video requests.
+
+
 ## [v0.8.6](https://github.com/runapi-ai/cli/releases/tag/v0.8.6) - 2026-08-04
 
 ### Added
