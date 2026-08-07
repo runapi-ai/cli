@@ -39,12 +39,15 @@ import (
 	"github.com/runapi-ai/kling-sdk/go/kling"
 	"github.com/runapi-ai/luma-sdk/go/luma"
 	"github.com/runapi-ai/midjourney-sdk/go/midjourney"
+	"github.com/runapi-ai/minimax-h3-sdk/go/minimaxh3"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
 	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
+	"github.com/runapi-ai/openai-transcription-sdk/go/openaitranscription"
 	"github.com/runapi-ai/openai-tts-sdk/go/openaitts"
 	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
+	"github.com/runapi-ai/qwen-3-sdk/go/qwen3"
 	"github.com/runapi-ai/qwen-image-sdk/go/qwenimage"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
@@ -164,9 +167,11 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("flux"))
 	root.AddCommand(c.serviceCommand("gemini-omni"))
 	root.AddCommand(c.serviceCommand("openai-tts"))
+	root.AddCommand(c.serviceCommand("openai-transcription"))
 	root.AddCommand(c.serviceCommand("fish-audio"))
 	root.AddCommand(c.serviceCommand("gemini-tts"))
 	root.AddCommand(c.serviceCommand("qwen-2"))
+	root.AddCommand(c.serviceCommand("qwen-3"))
 	root.AddCommand(c.serviceCommand("qwen-image"))
 	root.AddCommand(c.serviceCommand("recraft"))
 	root.AddCommand(c.serviceCommand("z-image"))
@@ -178,6 +183,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("luma"))
 	root.AddCommand(c.serviceCommand("midjourney"))
 	root.AddCommand(c.serviceCommand("hailuo"))
+	root.AddCommand(c.serviceCommand("minimax-h3"))
 	root.AddCommand(c.serviceCommand("volcengine-lip-sync"))
 	root.AddCommand(c.serviceCommand("happyhorse"))
 	root.AddCommand(c.serviceCommand("gpt-image"))
@@ -401,12 +407,12 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 				return err
 			}
 
-			if !spec.isAsync {
+				if !spec.isAsync {
 				response, err := spec.run(ctx, client, params, callOpts)
 				if err != nil {
 					return err
 				}
-				return c.writeJSON(response)
+					return c.writeSynchronousResponse(response)
 			}
 
 			if c.async {
@@ -828,6 +834,15 @@ func (c *cli) writeJSON(value any) error {
 	encoder := json.NewEncoder(c.stdout)
 	encoder.SetEscapeHTML(false)
 	return encoder.Encode(value)
+}
+
+func (c *cli) writeSynchronousResponse(value any) error {
+	if raw, ok := value.(json.RawMessage); ok && !json.Valid(raw) {
+		_, err := c.stdout.Write(raw)
+		return err
+	}
+
+	return c.writeJSON(value)
 }
 
 func (c *cli) printError(err error) {
@@ -1320,9 +1335,10 @@ var allSpecs = []actionSpec{
 	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(), newKlingExtendVideoSpec(),
 	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(), newFluxTextToImageSpec(), newFluxRemixImageSpec(),
 	newGeminiOmniCreateAudioSpec(), newGeminiOmniCreateCharacterSpec(), newGeminiOmniTextToVideoSpec(),
-	newOpenAITTSTextToSpeechSpec(), newFishAudioTextToSpeechSpec(),
+	newOpenAITTSTextToSpeechSpec(), newOpenAITranscriptionSpeechToTextSpec(), newFishAudioTextToSpeechSpec(),
 	newGeminiTTSTextToSpeechSpec(),
 	newQwen2TextToImageSpec(), newQwen2EditSpec(),
+	newQwen3TextToImageSpec(), newQwen3EditImageSpec(),
 	newQwenImageTextToImageSpec(), newQwenImageRemixImageSpec(), newQwenImageEditSpec(),
 	newRecraftUpscaleSpec(), newRecraftBackgroundRemovalSpec(), newZImageTextToImageSpec(),
 	newIdeogramV3TextToImageSpec(), newIdeogramV3EditImageSpec(), newIdeogramV3RemixImageSpec(), newIdeogramV3ReframeImageSpec(),
@@ -1335,6 +1351,7 @@ var allSpecs = []actionSpec{
 	newMidjourneyTextToImageSpec(), newMidjourneyEditImageSpec(), newMidjourneyImageToVideoSpec(), newMidjourneyExtendVideoSpec(),
 	newMidjourneyImageToPromptSpec(), newMidjourneyShortenPromptSpec(), newMidjourneyGetSeedSpec(),
 	newHailuoTextToVideoSpec(), newHailuoImageToVideoSpec(),
+	newMiniMaxH3TextToVideoSpec(), newMiniMaxH3ImageToVideoSpec(),
 	newVolcengineLipSyncVideoSpec(),
 	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
 	newGptImageTextToImageSpec(), newGptImageEditImageSpec(), newGptImage2TextToImageSpec(), newGptImage2EditImageSpec(), newGpt4oImageTextToImageSpec(),
@@ -1812,6 +1829,12 @@ func newOpenAITTSTextToSpeechSpec() actionSpec {
 	}}
 }
 
+func newOpenAITranscriptionSpeechToTextSpec() actionSpec {
+	return actionSpec{service: "openai-transcription", action: "speech-to-text", isAsync: false, inputFields: inputFieldsFor[openaitranscription.SpeechToTextParams](), decode: decodeInto[openaitranscription.SpeechToTextParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.OpenAITranscription.SpeechToText.Run(ctx, params.(openaitranscription.SpeechToTextParams), opts...)
+	}}
+}
+
 func newFishAudioTextToSpeechSpec() actionSpec {
 	return actionSpec{service: "fish-audio", action: "text-to-speech", isAsync: false, inputFields: inputFieldsFor[fishaudio.TextToSpeechParams](), decode: decodeInto[fishaudio.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.FishAudio.TextToSpeech.Run(ctx, params.(fishaudio.TextToSpeechParams), opts...)
@@ -1850,6 +1873,26 @@ func newQwen2EditSpec() actionSpec {
 		return client.Qwen2.EditImage.Run(ctx, params.(qwen2.EditImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Qwen2.EditImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newQwen3TextToImageSpec() actionSpec {
+	return actionSpec{service: "qwen-3", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[qwen3.TextToImageParams](), decode: decodeInto[qwen3.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Qwen3.TextToImage.Create(ctx, params.(qwen3.TextToImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Qwen3.TextToImage.Run(ctx, params.(qwen3.TextToImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Qwen3.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newQwen3EditImageSpec() actionSpec {
+	return actionSpec{service: "qwen-3", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[qwen3.EditImageParams](), decode: decodeInto[qwen3.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Qwen3.EditImage.Create(ctx, params.(qwen3.EditImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Qwen3.EditImage.Run(ctx, params.(qwen3.EditImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Qwen3.EditImage.Get(ctx, id, opts...)
 	}}
 }
 
@@ -2241,6 +2284,26 @@ func newHailuoImageToVideoSpec() actionSpec {
 		return client.Hailuo.ImageToVideo.Run(ctx, params.(hailuo.ImageToVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Hailuo.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newMiniMaxH3TextToVideoSpec() actionSpec {
+	return actionSpec{service: "minimax-h3", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[minimaxh3.TextToVideoParams](), decode: decodeInto[minimaxh3.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.MiniMaxH3.TextToVideo.Create(ctx, params.(minimaxh3.TextToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.MiniMaxH3.TextToVideo.Run(ctx, params.(minimaxh3.TextToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.MiniMaxH3.TextToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newMiniMaxH3ImageToVideoSpec() actionSpec {
+	return actionSpec{service: "minimax-h3", action: "image-to-video", isAsync: true, inputFields: inputFieldsFor[minimaxh3.ImageToVideoParams](), decode: decodeInto[minimaxh3.ImageToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.MiniMaxH3.ImageToVideo.Create(ctx, params.(minimaxh3.ImageToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.MiniMaxH3.ImageToVideo.Run(ctx, params.(minimaxh3.ImageToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.MiniMaxH3.ImageToVideo.Get(ctx, id, opts...)
 	}}
 }
 

@@ -2,9 +2,23 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
+
+func TestSynchronousRawTextIsWrittenWithoutJSONEncoding(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+
+	if err := c.writeSynchronousResponse(json.RawMessage("WEBVTT\n\n00:00.000 --> 00:01.000\nHello\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := c.stdout.(*bytes.Buffer).String(); got != "WEBVTT\n\n00:00.000 --> 00:01.000\nHello\n" {
+		t.Fatalf("expected exact raw response, got %q", got)
+	}
+}
 
 func helpHasField(output, field string) bool {
 	for _, line := range strings.Split(output, "\n") {
@@ -133,8 +147,26 @@ func TestTTSServiceCommandsAreRegistered(t *testing.T) {
 		if !helpHasField(output, "model") || !helpHasField(output, "text") {
 			t.Fatalf("expected %s text-to-speech help to include model and text, got:\n%s", service, output)
 		}
-		if service == "fish-audio" && !helpHasField(output, "references") {
-			t.Fatalf("expected Fish Audio help to include references, got:\n%s", output)
+		if service == "fish-audio" && (!helpHasField(output, "references") || !helpHasField(output, "output_format") || !helpHasField(output, "sample_rate_hz") || !helpHasField(output, "bitrate_kbps")) {
+			t.Fatalf("expected Fish Audio help to include references and output controls, got:\n%s", output)
+		}
+	}
+}
+
+func TestOpenAITranscriptionCommandIsRegistered(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+	cmd := c.command()
+	cmd.SetArgs([]string{"openai-transcription", "speech-to-text", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	for _, field := range []string{"file", "model", "languages", "keywords", "response_format", "timestamp_granularities"} {
+		if !helpHasField(output, field) {
+			t.Fatalf("expected OpenAI transcription help to include %s, got:\n%s", field, output)
 		}
 	}
 }
@@ -205,9 +237,15 @@ func TestWanServiceCommandUsesCanonicalMediaFields(t *testing.T) {
 		forbidden []string
 	}{
 		{
+			name:      "text-to-video",
+			args:      []string{"wan", "text-to-video", "--help"},
+			expected:  []string{"multi_shots"},
+			forbidden: []string{},
+		},
+		{
 			name:      "image-to-video",
 			args:      []string{"wan", "image-to-video", "--help"},
-			expected:  []string{"first_frame_image_url", "last_frame_image_url", "source_video_url", "background_audio_url"},
+			expected:  []string{"first_frame_image_url", "last_frame_image_url", "source_video_url", "background_audio_url", "multi_shots"},
 			forbidden: []string{"image_url", "image_urls", "first_frame_url", "last_frame_url", "first_clip_url", "audio_url"},
 		},
 		{
@@ -231,7 +269,7 @@ func TestWanServiceCommandUsesCanonicalMediaFields(t *testing.T) {
 		{
 			name:      "edit-video",
 			args:      []string{"wan", "edit-video", "--help"},
-			expected:  []string{"source_video_url", "source_video_urls", "reference_image_url"},
+			expected:  []string{"source_video_url", "source_video_urls", "reference_image_url", "multi_shots"},
 			forbidden: []string{"reference_image"},
 		},
 	}

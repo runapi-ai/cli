@@ -37,10 +37,23 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"fish-audio/text-to-speech": {
-		Models: []string{"s1", "s2-pro"},
+		Models: []string{"s1", "s2-pro", "s2.1-pro"},
 		FieldsByModel: map[string]map[string]generatedContractField{
-			"s1":     {},
-			"s2-pro": {},
+			"s1": {
+				"bitrate_kbps":   {Enum: []any{64, 128, 192}},
+				"output_format":  {Enum: []any{"mp3", "wav"}},
+				"sample_rate_hz": {Enum: []any{8000, 16000, 24000, 32000, 44100}},
+			},
+			"s2-pro": {
+				"bitrate_kbps":   {Enum: []any{64, 128, 192}},
+				"output_format":  {Enum: []any{"mp3", "wav"}},
+				"sample_rate_hz": {Enum: []any{8000, 16000, 24000, 32000, 44100}},
+			},
+			"s2.1-pro": {
+				"bitrate_kbps":   {Enum: []any{64, 128, 192}},
+				"output_format":  {Enum: []any{"mp3", "wav"}},
+				"sample_rate_hz": {Enum: []any{8000, 16000, 24000, 32000, 44100}},
+			},
 		},
 	},
 	"flux-2/remix-image": {
@@ -241,8 +254,9 @@ var generatedContract = map[string]generatedContractAction{
 				"output_resolution": {Enum: []any{"480p", "720p"}},
 			},
 			"grok-imagine-video-1.5-preview": {
-				"aspect_ratio":      {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3", "auto"}},
-				"output_resolution": {Enum: []any{"480p", "720p"}},
+				"aspect_ratio":         {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3", "auto"}},
+				"output_resolution":    {Enum: []any{"480p", "720p", "1080p"}},
+				"reference_image_urls": {MaxItems: 6},
 			},
 		},
 	},
@@ -267,8 +281,9 @@ var generatedContract = map[string]generatedContractAction{
 				"output_resolution": {Enum: []any{"480p", "720p"}},
 			},
 			"grok-imagine-video-1.5-preview": {
-				"aspect_ratio":      {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3", "auto"}},
-				"output_resolution": {Enum: []any{"480p", "720p"}},
+				"aspect_ratio":         {Enum: []any{"1:1", "16:9", "9:16", "3:2", "2:3", "auto"}},
+				"output_resolution":    {Enum: []any{"480p", "720p", "1080p"}},
+				"reference_image_urls": {MaxItems: 7},
 			},
 		},
 	},
@@ -603,6 +618,28 @@ var generatedContract = map[string]generatedContractAction{
 			"midjourney-v8.1": {},
 		},
 	},
+	"minimax-h3/image-to-video": {
+		Models: []string{"minimax-h3"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"minimax-h3": {
+				"duration_seconds":  {Enum: []any{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+				"output_resolution": {Enum: []any{"768p", "2k"}},
+			},
+		},
+	},
+	"minimax-h3/text-to-video": {
+		Models: []string{"minimax-h3"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"minimax-h3": {
+				"aspect_ratio":         {Enum: []any{"adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"}},
+				"duration_seconds":     {Enum: []any{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+				"output_resolution":    {Enum: []any{"768p", "2k"}},
+				"reference_audio_urls": {MaxItems: 3},
+				"reference_image_urls": {MaxItems: 9},
+				"reference_video_urls": {MaxItems: 3},
+			},
+		},
+	},
 	"nano-banana/edit-image": {
 		Models: []string{"nano-banana-2-lite", "nano-banana-edit"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -660,6 +697,20 @@ var generatedContract = map[string]generatedContractAction{
 			"omnihuman-1.5-subject-detection": {},
 		},
 	},
+	"openai-transcription/speech-to-text": {
+		Models: []string{"gpt-transcribe", "whisper-1"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"gpt-transcribe": {
+				"model":           {Enum: []any{"gpt-transcribe"}},
+				"response_format": {Enum: []any{"json", "text"}},
+			},
+			"whisper-1": {
+				"model":                   {Enum: []any{"whisper-1"}},
+				"response_format":         {Enum: []any{"json", "text", "srt", "verbose_json", "vtt"}},
+				"timestamp_granularities": {MaxItems: 2},
+			},
+		},
+	},
 	"openai-tts/text-to-speech": {
 		Models: []string{"tts-1", "tts-1-hd"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -672,6 +723,7 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"pixverse-v6": {
 				"aspect_ratio":         {Enum: []any{"16:9", "4:3", "1:1", "3:4", "9:16", "2:3", "3:2", "21:9"}},
+				"enable_audio":         {Enum: []any{true, false}},
 				"output_resolution":    {Enum: []any{"360p", "540p", "720p", "1080p"}},
 				"reference_image_urls": {MinItems: 1, MaxItems: 7},
 			},
@@ -681,6 +733,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"pixverse-v6"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"pixverse-v6": {
+				"enable_audio":      {Enum: []any{true, false}},
 				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
 			},
 		},
@@ -708,6 +761,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"pixverse-v6"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"pixverse-v6": {
+				"enable_audio":      {Enum: []any{true, false}},
 				"output_resolution": {Enum: []any{"360p", "540p", "720p", "1080p"}},
 			},
 		},
@@ -756,6 +810,38 @@ var generatedContract = map[string]generatedContractAction{
 			"qwen-2-text-to-image": {
 				"aspect_ratio":  {Enum: []any{"1:1", "3:4", "4:3", "9:16", "16:9"}},
 				"output_format": {Enum: []any{"png", "jpeg"}},
+			},
+		},
+	},
+	"qwen-3/edit-image": {
+		Models: []string{"qwen-3-edit-image", "qwen-3-pro-edit-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"qwen-3-edit-image": {
+				"aspect_ratio":      {Enum: []any{"1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "21:9"}},
+				"output_format":     {Enum: []any{"png", "jpeg"}},
+				"output_resolution": {Enum: []any{"1k", "2k"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 3},
+			},
+			"qwen-3-pro-edit-image": {
+				"aspect_ratio":      {Enum: []any{"1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "21:9"}},
+				"output_format":     {Enum: []any{"png", "jpeg"}},
+				"output_resolution": {Enum: []any{"1k", "2k"}},
+				"source_image_urls": {MinItems: 1, MaxItems: 3},
+			},
+		},
+	},
+	"qwen-3/text-to-image": {
+		Models: []string{"qwen-3-pro-text-to-image", "qwen-3-text-to-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"qwen-3-pro-text-to-image": {
+				"aspect_ratio":      {Enum: []any{"1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "21:9"}},
+				"output_format":     {Enum: []any{"png", "jpeg"}},
+				"output_resolution": {Enum: []any{"1k", "2k"}},
+			},
+			"qwen-3-text-to-image": {
+				"aspect_ratio":      {Enum: []any{"1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "21:9"}},
+				"output_format":     {Enum: []any{"png", "jpeg"}},
+				"output_resolution": {Enum: []any{"1k", "2k"}},
 			},
 		},
 	},

@@ -28,18 +28,21 @@ import (
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
-	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
 	"github.com/runapi-ai/kling-sdk/go/kling"
 	"github.com/runapi-ai/luma-sdk/go/luma"
 	"github.com/runapi-ai/midjourney-sdk/go/midjourney"
+	"github.com/runapi-ai/minimax-h3-sdk/go/minimaxh3"
 	"github.com/runapi-ai/nano-banana-sdk/go/nanobanana"
 	"github.com/runapi-ai/omnihuman-sdk/go/omnihuman"
+	"github.com/runapi-ai/openai-transcription-sdk/go/openaitranscription"
 	"github.com/runapi-ai/openai-tts-sdk/go/openaitts"
+	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
+	"github.com/runapi-ai/qwen-3-sdk/go/qwen3"
 	"github.com/runapi-ai/qwen-image-sdk/go/qwenimage"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
 	"github.com/runapi-ai/runway-aleph-sdk/go/runwayaleph"
@@ -94,12 +97,15 @@ type Client struct {
 	GeminiOmni *geminiomni.Client
 	// OpenAITTS generates speech with OpenAI TTS models.
 	OpenAITTS *openaitts.Client
+	// OpenAITranscription transcribes uploaded audio with OpenAI-compatible models.
+	OpenAITranscription *openaitranscription.Client
 	// FishAudio generates speech with Fish Audio models.
 	FishAudio *fishaudio.Client
 	// GeminiTTS generates multi-speaker speech from ordered dialogue turns.
 	GeminiTTS *geminitts.Client
 	// Qwen2 generates, remixes, and edits images with Qwen 2 models.
 	Qwen2 *qwen2.Client
+	Qwen3 *qwen3.Client
 	// QwenImage generates, remixes, and edits images with Qwen Image models.
 	QwenImage *qwenimage.Client
 	// Recraft upscales images and removes backgrounds using Recraft models.
@@ -124,12 +130,14 @@ type Client struct {
 	Midjourney *midjourney.Client
 	// Hailuo generates video from text or images with Hailuo models.
 	Hailuo *hailuo.Client
+	// MiniMaxH3 generates video from text, reference media, or first and last frames.
+	MiniMaxH3 *minimaxh3.Client
 	// VolcengineLipSync drives source video lip movement from audio.
 	VolcengineLipSync *volcenginelipsync.Client
 	// HappyHorse generates video from text, images, or character prompts, and
 	// edits existing video with HappyHorse models.
 	HappyHorse *happyhorse.Client
-	PixVerse *pixverse.Client
+	PixVerse   *pixverse.Client
 	// GptImage generates and edits images with GPT Image 1.5 models.
 	GptImage *gptimage.Client
 	// GptImage2 generates and edits images with GPT Image 2 models.
@@ -165,45 +173,48 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 // NewClientWithHTTP creates an aggregate client with a pre-configured HTTP transport.
 func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 	return &Client{
-		http:              httpClient,
-		Base:              base.New(httpClient),
-		Suno:              suno.NewClientWithHTTP(httpClient),
-		Producer:          producer.NewClientWithHTTP(httpClient),
-		Veo31:             veo31.NewClientWithHTTP(httpClient),
-		NanoBanana:        nanobanana.NewClientWithHTTP(httpClient),
-		Imagen4:           imagen4.NewClientWithHTTP(httpClient),
-		Seedance:          seedance.NewClientWithHTTP(httpClient),
-		Seedream:          seedream.NewClientWithHTTP(httpClient),
-		Runway:            runway.NewClientWithHTTP(httpClient),
-		RunwayAleph:       runwayaleph.NewClientWithHTTP(httpClient),
-		Kling:             kling.NewClientWithHTTP(httpClient),
-		FluxKontext:       fluxkontext.NewClientWithHTTP(httpClient),
-		Flux2:             flux2.NewClientWithHTTP(httpClient),
-		Flux:              flux.NewClientWithHTTP(httpClient),
-		GeminiOmni:        geminiomni.NewClientWithHTTP(httpClient),
-		OpenAITTS:         openaitts.NewClientWithHTTP(httpClient),
-		FishAudio:         fishaudio.NewClientWithHTTP(httpClient),
-		GeminiTTS:         geminitts.NewClientWithHTTP(httpClient),
-		Qwen2:             qwen2.NewClientWithHTTP(httpClient),
-		QwenImage:         qwenimage.NewClientWithHTTP(httpClient),
-		Recraft:           recraft.NewClientWithHTTP(httpClient),
-		ZImage:            zimage.NewClientWithHTTP(httpClient),
-		IdeogramV3:        ideogramv3.NewClientWithHTTP(httpClient),
-		Elevenlabs:        elevenlabs.NewClientWithHTTP(httpClient),
-		InfiniteTalk:      infinitetalk.NewClientWithHTTP(httpClient),
-		OmniHuman:         omnihuman.NewClientWithHTTP(httpClient),
-		Wan:               wan.NewClientWithHTTP(httpClient),
-		Luma:              luma.NewClientWithHTTP(httpClient),
-		Midjourney:        midjourney.NewClientWithHTTP(httpClient),
-		Hailuo:            hailuo.NewClientWithHTTP(httpClient),
-		VolcengineLipSync: volcenginelipsync.NewClientWithHTTP(httpClient),
-		HappyHorse:        happyhorse.NewClientWithHTTP(httpClient),
-		PixVerse:          pixverse.NewClientWithHTTP(httpClient),
-		GptImage:          gptimage.NewClientWithHTTP(httpClient),
-		GptImage2:         gptimage2.NewClientWithHTTP(httpClient),
-		Gpt4oImage:        gpt4oimage.NewClientWithHTTP(httpClient),
-		GrokImagine:       grokimagine.NewClientWithHTTP(httpClient),
-		Topaz:             topaz.NewClientWithHTTP(httpClient),
+		http:                httpClient,
+		Base:                base.New(httpClient),
+		Suno:                suno.NewClientWithHTTP(httpClient),
+		Producer:            producer.NewClientWithHTTP(httpClient),
+		Veo31:               veo31.NewClientWithHTTP(httpClient),
+		NanoBanana:          nanobanana.NewClientWithHTTP(httpClient),
+		Imagen4:             imagen4.NewClientWithHTTP(httpClient),
+		Seedance:            seedance.NewClientWithHTTP(httpClient),
+		Seedream:            seedream.NewClientWithHTTP(httpClient),
+		Runway:              runway.NewClientWithHTTP(httpClient),
+		RunwayAleph:         runwayaleph.NewClientWithHTTP(httpClient),
+		Kling:               kling.NewClientWithHTTP(httpClient),
+		FluxKontext:         fluxkontext.NewClientWithHTTP(httpClient),
+		Flux2:               flux2.NewClientWithHTTP(httpClient),
+		Flux:                flux.NewClientWithHTTP(httpClient),
+		GeminiOmni:          geminiomni.NewClientWithHTTP(httpClient),
+		OpenAITTS:           openaitts.NewClientWithHTTP(httpClient),
+		OpenAITranscription: openaitranscription.NewClientWithHTTP(httpClient),
+		FishAudio:           fishaudio.NewClientWithHTTP(httpClient),
+		GeminiTTS:           geminitts.NewClientWithHTTP(httpClient),
+		Qwen2:               qwen2.NewClientWithHTTP(httpClient),
+		Qwen3:               qwen3.NewClientWithHTTP(httpClient),
+		QwenImage:           qwenimage.NewClientWithHTTP(httpClient),
+		Recraft:             recraft.NewClientWithHTTP(httpClient),
+		ZImage:              zimage.NewClientWithHTTP(httpClient),
+		IdeogramV3:          ideogramv3.NewClientWithHTTP(httpClient),
+		Elevenlabs:          elevenlabs.NewClientWithHTTP(httpClient),
+		InfiniteTalk:        infinitetalk.NewClientWithHTTP(httpClient),
+		OmniHuman:           omnihuman.NewClientWithHTTP(httpClient),
+		Wan:                 wan.NewClientWithHTTP(httpClient),
+		Luma:                luma.NewClientWithHTTP(httpClient),
+		Midjourney:          midjourney.NewClientWithHTTP(httpClient),
+		Hailuo:              hailuo.NewClientWithHTTP(httpClient),
+		MiniMaxH3:           minimaxh3.NewClientWithHTTP(httpClient),
+		VolcengineLipSync:   volcenginelipsync.NewClientWithHTTP(httpClient),
+		HappyHorse:          happyhorse.NewClientWithHTTP(httpClient),
+		PixVerse:            pixverse.NewClientWithHTTP(httpClient),
+		GptImage:            gptimage.NewClientWithHTTP(httpClient),
+		GptImage2:           gptimage2.NewClientWithHTTP(httpClient),
+		Gpt4oImage:          gpt4oimage.NewClientWithHTTP(httpClient),
+		GrokImagine:         grokimagine.NewClientWithHTTP(httpClient),
+		Topaz:               topaz.NewClientWithHTTP(httpClient),
 	}
 }
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.9.0](https://github.com/runapi-ai/cli/releases/tag/v0.9.0) - 2026-08-07
+
+### Added
+- Add audio transcription commands with multipart inputs and JSON, text, and subtitle output preservation.
+- Add text-to-video and image-to-video commands for MiniMax H3.
+- Add Qwen 3 text-to-image and image editing commands with generated contract help.
+- Add s2.1-pro and MP3 or WAV output fields to Fish Audio text-to-speech help.
+
+### Changed
+- Update Grok Imagine Preview resolution and reference image constraints.
+
+
 ## [v0.8.7](https://github.com/runapi-ai/cli/releases/tag/v0.8.7) - 2026-08-06
 
 ### Added
