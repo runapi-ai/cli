@@ -27,7 +27,7 @@ require (
 	github.com/runapi-ai/midjourney-sdk/go v0.3.1
 	github.com/runapi-ai/minimax-h3-sdk/go v0.1.0
 	github.com/runapi-ai/nano-banana-sdk/go v0.2.12
-	github.com/runapi-ai/omnihuman-sdk/go v0.2.10
+	github.com/runapi-ai/omnihuman-sdk/go v0.2.11
 	github.com/runapi-ai/openai-transcription-sdk/go v0.1.0
 	github.com/runapi-ai/openai-tts-sdk/go v0.1.2
 	github.com/runapi-ai/pixverse-sdk/go v0.1.2
@@ -39,8 +39,8 @@ require (
 	github.com/runapi-ai/runway-aleph-sdk/go v0.2.8
 	github.com/runapi-ai/runway-sdk/go v0.2.9
 	github.com/runapi-ai/seedance-sdk/go v0.2.13
-	github.com/runapi-ai/seedream-sdk/go v0.2.11
-	github.com/runapi-ai/suno-sdk/go v0.3.4
+	github.com/runapi-ai/seedream-sdk/go v0.2.12
+	github.com/runapi-ai/suno-sdk/go v0.4.0
 	github.com/runapi-ai/topaz-sdk/go v0.2.9
 	github.com/runapi-ai/veo-3.1-sdk/go v0.2.11
 	github.com/runapi-ai/volcengine-lip-sync-sdk/go v0.2.10
@@ -56,4 +56,4 @@ require (
 	golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b // indirect
 )
 
-retract [v0.0.0, v0.8.3] // Upgrade to v0.8.4 or later to continue using RunAPI.
+retract [v0.0.0, v0.9.0] // Upgrade to v0.10.0 or later to continue using RunAPI.

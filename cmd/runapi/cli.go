@@ -407,12 +407,12 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 				return err
 			}
 
-				if !spec.isAsync {
+			if !spec.isAsync {
 				response, err := spec.run(ctx, client, params, callOpts)
 				if err != nil {
 					return err
 				}
-					return c.writeSynchronousResponse(response)
+				return c.writeSynchronousResponse(response)
 			}
 
 			if c.async {
@@ -1321,7 +1321,7 @@ func describeAction(spec actionSpec) string {
 
 var allSpecs = []actionSpec{
 	newSunoTextToMusicSpec(), newSunoExtendMusicSpec(), newSunoGenerateArtworkSpec(), newSunoCoverAudioSpec(),
-	newSunoStitchAudioSpec(), newSunoRemasterAudioSpec(), newSunoAddSamplesSpec(),
+	newSunoStitchAudioSpec(), newSunoRemasterAudioSpec(), newSunoAddSamplesSpec(), newSunoInspireMusicSpec(),
 	newSunoAddInstrumentalSpec(), newSunoAddVocalsSpec(), newSunoSeparateAudioStemsSpec(), newSunoGenerateMidiSpec(), newSunoConvertAudioSpec(),
 	newSunoVisualizeMusicSpec(), newSunoGenerateLyricsSpec(), newSunoBlendLyricsSpec(), newSunoGetTimestampedLyricsSpec(), newSunoReplaceSectionSpec(), newSunoCreateMashupSpec(),
 	newSunoTextToSoundSpec(), newSunoVoiceToValidationPhraseSpec(), newSunoRegenerateValidationPhraseSpec(), newSunoGenerateVoiceSpec(), newSunoCheckVoiceSpec(),
@@ -1418,6 +1418,16 @@ func newSunoAddSamplesSpec() actionSpec {
 		return client.Suno.AddSamples.Run(ctx, params.(suno.AddSamplesParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Suno.AddSamples.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoInspireMusicSpec() actionSpec {
+	return actionSpec{service: "suno", action: "inspire-music", isAsync: true, inputFields: inputFieldsFor[suno.InspireMusicParams](), decode: decodeInto[suno.InspireMusicParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.InspireMusic.Create(ctx, params.(suno.InspireMusicParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.InspireMusic.Run(ctx, params.(suno.InspireMusicParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.InspireMusic.Get(ctx, id, opts...)
 	}}
 }
 

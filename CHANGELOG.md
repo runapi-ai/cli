@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.10.0](https://github.com/runapi-ai/cli/releases/tag/v0.10.0) - 2026-08-10
+
+### Breaking
+- Document the 300-character prompt limit for OmniHuman audio-to-video requests.
+  Migration: Upgrade the CLI and keep OmniHuman audio-to-video prompts at 300 characters or fewer.
+
+### Added
+- Add create, poll, and task lookup commands for Suno music inspiration.
+
+### Changed
+- Update Seedream 5 Lite output quality constraints in generated CLI help.
+
+
 ## [v0.9.0](https://github.com/runapi-ai/cli/releases/tag/v0.9.0) - 2026-08-07
 
 ### Added

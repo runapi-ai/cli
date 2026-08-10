@@ -960,7 +960,7 @@ var generatedContract = map[string]generatedContractAction{
 			"seedream-5-lite-edit": {
 				"aspect_ratio":      {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
 				"output_format":     {Enum: []any{"png", "jpeg"}},
-				"output_quality":    {Enum: []any{"basic", "high"}},
+				"output_quality":    {Enum: []any{"basic", "high", "ultra"}},
 				"source_image_urls": {MinItems: 1, MaxItems: 14},
 			},
 			"seedream-5-pro-edit": {
@@ -987,7 +987,7 @@ var generatedContract = map[string]generatedContractAction{
 			"seedream-5-lite-text-to-image": {
 				"aspect_ratio":   {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
 				"output_format":  {Enum: []any{"png", "jpeg"}},
-				"output_quality": {Enum: []any{"basic", "high"}},
+				"output_quality": {Enum: []any{"basic", "high", "ultra"}},
 			},
 			"seedream-5-pro-text-to-image": {
 				"aspect_ratio":   {Enum: []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}},
@@ -1207,6 +1207,26 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"_": {},
+		},
+	},
+	"suno/inspire-music": {
+		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-plus", "suno-v5", "suno-v5.5"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"suno-v4": {
+				"audio_urls": {MinItems: 1, MaxItems: 4},
+			},
+			"suno-v4.5": {
+				"audio_urls": {MinItems: 1, MaxItems: 4},
+			},
+			"suno-v4.5-plus": {
+				"audio_urls": {MinItems: 1, MaxItems: 4},
+			},
+			"suno-v5": {
+				"audio_urls": {MinItems: 1, MaxItems: 4},
+			},
+			"suno-v5.5": {
+				"audio_urls": {MinItems: 1, MaxItems: 4},
+			},
 		},
 	},
 	"suno/regenerate-validation-phrase": {
