@@ -119,6 +119,11 @@ func newCLI() *cli {
 
 func (c *cli) run(args []string) int {
 	cmd := c.command()
+	if removedFilesUploadHelp(cmd, args) {
+		err := core.NewError(core.ErrValidation, "runapi files upload does not exist; use runapi files create --help", 422, "", nil, nil)
+		c.printError(err)
+		return exitCode(err)
+	}
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
 		c.printError(err)
@@ -127,11 +132,45 @@ func (c *cli) run(args []string) int {
 	return 0
 }
 
+func removedFilesUploadHelp(root *cobra.Command, args []string) bool {
+	hasHelp := false
+	commandArgs := []string{}
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			break
+		}
+		if arg == "--help" || arg == "-h" {
+			hasHelp = true
+			continue
+		}
+		if strings.HasPrefix(arg, "--") {
+			name, _, hasInlineValue := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
+			flag := root.PersistentFlags().Lookup(name)
+			if flag == nil {
+				return false
+			}
+			if !hasInlineValue && flag.NoOptDefVal == "" && i+1 < len(args) {
+				i++
+			}
+			continue
+		}
+		if strings.HasPrefix(arg, "-") {
+			return false
+		}
+		commandArgs = append(commandArgs, arg)
+		if len(commandArgs) == 2 && (commandArgs[0] != "files" || commandArgs[1] != "upload") {
+			return false
+		}
+	}
+	return hasHelp && len(commandArgs) == 2 && commandArgs[0] == "files" && commandArgs[1] == "upload"
+}
+
 func (c *cli) command() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "runapi",
 		Short:         "RunAPI command-line client for typed SDK-backed API calls",
-		Long:          "RunAPI CLI is Agent first: a JSON-first command-line client for account, Suno, Veo 3.1, and Nano Banana operations. It reads credentials from flags, environment variables, or config, writes data to stdout, and logs progress to stderr.",
+		Long:          "RunAPI CLI is Agent first: a JSON-first command-line client for typed SDK-backed RunAPI operations. It reads credentials from flags, environment variables, or config, writes data to stdout, and logs progress to stderr.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
@@ -1026,15 +1065,12 @@ func composeInputFields(spec actionSpec) string {
 	return appendGeneratedContractHelp(spec.inputFields, spec.service, spec.action)
 }
 
-type generatedContractField struct {
-	Enum     []any
-	MinItems int
-	MaxItems int
-}
+type generatedContractField map[string]any
 
 type generatedContractAction struct {
 	Models        []string
 	FieldsByModel map[string]map[string]generatedContractField
+	Rules         []map[string]any
 }
 
 func appendGeneratedContractHelp(inputFields, service, action string) string {
@@ -1058,7 +1094,14 @@ func appendGeneratedContractHelp(inputFields, service, action string) string {
 		}
 		lines[i] = appendHelpSentence(line, sentence)
 	}
-	return strings.Join(lines, "\n")
+	sections := []string{strings.Join(lines, "\n")}
+	if nested := generatedContractNestedHelp(contract); nested != "" {
+		sections = append(sections, nested)
+	}
+	if rules := generatedContractRulesHelp(contract); rules != "" {
+		sections = append(sections, rules)
+	}
+	return strings.Join(sections, "\n\n")
 }
 
 func generatedContractHelpSentenceFor(contract generatedContractAction, field string) string {
@@ -1099,10 +1142,12 @@ func generatedContractItemCountHelpSentenceFor(contract generatedContractAction,
 	counts := map[string]generatedContractItemCount{}
 	for _, model := range models {
 		fieldContract, ok := contract.FieldsByModel[model][field]
-		if !ok || (fieldContract.MinItems == 0 && fieldContract.MaxItems == 0) {
+		minItems := generatedContractInt(fieldContract, "min_items")
+		maxItems := generatedContractInt(fieldContract, "max_items")
+		if !ok || (minItems == 0 && maxItems == 0) {
 			continue
 		}
-		counts[model] = generatedContractItemCount{min: fieldContract.MinItems, max: fieldContract.MaxItems}
+		counts[model] = generatedContractItemCount{min: minItems, max: maxItems}
 	}
 	if len(counts) == 0 {
 		return ""
@@ -1144,11 +1189,203 @@ func generatedContractValuesByModelFor(contract generatedContractAction, field s
 	valuesByModel := map[string][]string{}
 	for _, model := range generatedContractFieldModelKeys(contract) {
 		fields := contract.FieldsByModel[model]
-		if fieldContract, ok := fields[field]; ok && len(fieldContract.Enum) > 0 {
-			valuesByModel[model] = generatedContractEnumStrings(fieldContract.Enum)
+		if fieldContract, ok := fields[field]; ok {
+			values := generatedContractArray(fieldContract, "enum")
+			if len(values) > 0 {
+				valuesByModel[model] = generatedContractEnumStrings(values)
+			}
 		}
 	}
 	return valuesByModel
+}
+
+func generatedContractNestedHelp(contract generatedContractAction) string {
+	type group struct {
+		models []string
+		field  generatedContractField
+	}
+	models := generatedContractFieldModelKeys(contract)
+	groupsByPath := map[string]map[string]*group{}
+	for _, model := range models {
+		for fieldName, field := range contract.FieldsByModel[model] {
+			nested := map[string]generatedContractField{}
+			collectGeneratedContractNestedFields(fieldName, field, nested)
+			for path, nestedField := range nested {
+				encoded, _ := json.Marshal(nestedField)
+				signature := string(encoded)
+				if groupsByPath[path] == nil {
+					groupsByPath[path] = map[string]*group{}
+				}
+				if groupsByPath[path][signature] == nil {
+					groupsByPath[path][signature] = &group{field: nestedField}
+				}
+				groupsByPath[path][signature].models = append(groupsByPath[path][signature].models, model)
+			}
+		}
+	}
+	if len(groupsByPath) == 0 {
+		return ""
+	}
+
+	paths := make([]string, 0, len(groupsByPath))
+	for path := range groupsByPath {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	lines := []string{"Nested input fields (JSON):"}
+	for _, path := range paths {
+		signatures := make([]string, 0, len(groupsByPath[path]))
+		for signature := range groupsByPath[path] {
+			signatures = append(signatures, signature)
+		}
+		sort.Strings(signatures)
+		for _, signature := range signatures {
+			entry := groupsByPath[path][signature]
+			line := fmt.Sprintf("  %-32s %s", path, generatedContractFieldHelp(entry.field))
+			if len(entry.models) != len(models) {
+				line += fmt.Sprintf(" Models: %s.", strings.Join(entry.models, ", "))
+			}
+			lines = append(lines, line)
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func collectGeneratedContractNestedFields(path string, field generatedContractField, result map[string]generatedContractField) {
+	if properties := generatedContractMap(field, "properties"); len(properties) > 0 {
+		collectGeneratedContractProperties(path+".", properties, result)
+	}
+	items := generatedContractMap(field, "items")
+	if properties := generatedContractMap(items, "properties"); len(properties) > 0 {
+		collectGeneratedContractProperties(path+"[].", properties, result)
+	}
+}
+
+func collectGeneratedContractProperties(prefix string, properties map[string]any, result map[string]generatedContractField) {
+	for name, raw := range properties {
+		field, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		path := prefix + name
+		result[path] = generatedContractField(field)
+		collectGeneratedContractNestedFields(path, generatedContractField(field), result)
+	}
+}
+
+func generatedContractFieldHelp(field generatedContractField) string {
+	parts := []string{generatedContractString(field, "type")}
+	if generatedContractBool(field, "required") {
+		parts = append(parts, "required;")
+	} else {
+		parts = append(parts, "optional;")
+	}
+	if description := generatedContractString(field, "description"); description != "" {
+		parts = append(parts, strings.TrimSuffix(description, ".")+".")
+	}
+	if values := generatedContractArray(field, "enum"); len(values) > 0 {
+		parts = append(parts, fmt.Sprintf("Accepted values: %s.", strings.Join(generatedContractEnumStrings(values), ", ")))
+	}
+	return strings.Join(parts, " ")
+}
+
+func generatedContractRulesHelp(contract generatedContractAction) string {
+	if len(contract.Rules) == 0 {
+		return ""
+	}
+	lines := []string{"Input rules:"}
+	for _, rule := range contract.Rules {
+		conditions := generatedContractMap(rule, "when")
+		conditionNames := make([]string, 0, len(conditions))
+		for name := range conditions {
+			conditionNames = append(conditionNames, name)
+		}
+		sort.Strings(conditionNames)
+		formattedConditions := make([]string, 0, len(conditionNames))
+		for _, name := range conditionNames {
+			formattedConditions = append(formattedConditions, formatGeneratedContractCondition(name, conditions[name]))
+		}
+
+		actions := []string{}
+		if fields := generatedContractStrings(rule, "required"); len(fields) > 0 {
+			actions = append(actions, "require "+strings.Join(fields, ", "))
+		}
+		if fields := generatedContractStrings(rule, "required_any"); len(fields) > 0 {
+			actions = append(actions, "require one of "+strings.Join(fields, ", "))
+		}
+		if fields := generatedContractStrings(rule, "forbidden"); len(fields) > 0 {
+			actions = append(actions, "forbid "+strings.Join(fields, ", "))
+		}
+		if narrowed := generatedContractMap(rule, "enum"); len(narrowed) > 0 {
+			names := make([]string, 0, len(narrowed))
+			for name := range narrowed {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, name := range names {
+				values, _ := narrowed[name].([]any)
+				actions = append(actions, fmt.Sprintf("limit %s to %s", name, strings.Join(generatedContractEnumStrings(values), ", ")))
+			}
+		}
+		prefix := "Always"
+		if len(formattedConditions) > 0 {
+			prefix = "When " + strings.Join(formattedConditions, " and ")
+		}
+		lines = append(lines, fmt.Sprintf("  %s: %s.", prefix, strings.Join(actions, "; ")))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func formatGeneratedContractCondition(name string, value any) string {
+	if condition, ok := value.(map[string]any); ok {
+		if present, exists := condition["present"].(bool); exists {
+			if present {
+				return name + " is present"
+			}
+			return name + " is absent"
+		}
+	}
+	return fmt.Sprintf("%s=%v", name, value)
+}
+
+func generatedContractString(values map[string]any, key string) string {
+	value, _ := values[key].(string)
+	return value
+}
+
+func generatedContractBool(values map[string]any, key string) bool {
+	value, _ := values[key].(bool)
+	return value
+}
+
+func generatedContractInt(values map[string]any, key string) int {
+	switch value := values[key].(type) {
+	case int:
+		return value
+	case float64:
+		return int(value)
+	default:
+		return 0
+	}
+}
+
+func generatedContractArray(values map[string]any, key string) []any {
+	value, _ := values[key].([]any)
+	return value
+}
+
+func generatedContractStrings(values map[string]any, key string) []string {
+	items := generatedContractArray(values, key)
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		result = append(result, fmt.Sprint(item))
+	}
+	return result
+}
+
+func generatedContractMap(values map[string]any, key string) map[string]any {
+	value, _ := values[key].(map[string]any)
+	return value
 }
 
 func generatedContractEnumStrings(values []any) []string {
@@ -1330,7 +1567,7 @@ var allSpecs = []actionSpec{
 	newVeo31TextToVideoSpec(), newVeo31ExtendVideoSpec(), newVeo31UpscaleVideoSpec(),
 	newNanoBananaTextToImageSpec(), newNanoBananaEditImageSpec(), newImagen4TextToImageSpec(), newImagen4RemixImageSpec(),
 	newSeedanceTextToVideoSpec(),
-	newSeedreamTextToImageSpec(), newSeedreamEditImageSpec(),
+	newSeedreamTextToImageSpec(), newSeedreamEditImageSpec(), newSeedreamDecomposeLayersSpec(),
 	newRunwayTextToVideoSpec(), newRunwayExtendVideoSpec(), newRunwayAlephEditVideoSpec(),
 	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(), newKlingExtendVideoSpec(),
 	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(), newFluxTextToImageSpec(), newFluxRemixImageSpec(),
@@ -1732,6 +1969,15 @@ func newSeedreamEditImageSpec() actionSpec {
 		return client.Seedream.EditImage.Run(ctx, params.(seedream.EditImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Seedream.EditImage.Get(ctx, id, opts...)
+	}}
+}
+func newSeedreamDecomposeLayersSpec() actionSpec {
+	return actionSpec{service: "seedream", action: "decompose-layers", isAsync: true, inputFields: inputFieldsFor[seedream.DecomposeLayersParams](), decode: decodeInto[seedream.DecomposeLayersParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Seedream.DecomposeLayers.Create(ctx, params.(seedream.DecomposeLayersParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Seedream.DecomposeLayers.Run(ctx, params.(seedream.DecomposeLayersParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Seedream.DecomposeLayers.Get(ctx, id, opts...)
 	}}
 }
 func newKlingTextToVideoSpec() actionSpec {

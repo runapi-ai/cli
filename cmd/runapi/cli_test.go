@@ -6,12 +6,57 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	runapi "github.com/runapi-ai/cli/internal/runapi"
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/runapi-ai/core-sdk/go/option"
 )
+
+func TestRootHelpIsCapabilityNeutral(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if strings.Contains(output, "Suno, Veo 3.1, and Nano Banana operations") {
+		t.Fatalf("expected capability-neutral root help, got:\n%s", output)
+	}
+	if !strings.Contains(output, "typed SDK-backed RunAPI operations") {
+		t.Fatalf("expected neutral CLI scope description, got:\n%s", output)
+	}
+}
+
+func TestFilesUploadHelpRejectsRemovedCommand(t *testing.T) {
+	for _, args := range [][]string{
+		{"files", "upload", "--help"},
+		{"files", "--api-key", "test-key", "upload", "--help"},
+		{"files", "--api-key=test-key", "upload", "-h"},
+		{"files", "--quiet", "upload", "--help"},
+	} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			c := newCLI()
+			c.stdout = &bytes.Buffer{}
+			c.stderr = &bytes.Buffer{}
+
+			if code := c.run(args); code == 0 {
+				t.Fatal("expected removed files upload command help to return nonzero")
+			}
+
+			output := c.stderr.(*bytes.Buffer).String()
+			if !strings.Contains(output, "runapi files create") {
+				t.Fatalf("expected canonical files create guidance, got:\n%s", output)
+			}
+		})
+	}
+}
 
 // isolateConfig points RUNAPI_CONFIG_DIR at a fresh temp dir
 // so configFilePath() returns a path inside it, fully isolated

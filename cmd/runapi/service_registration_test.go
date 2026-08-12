@@ -380,8 +380,8 @@ func TestGeneratedContractHelpIncludesArrayItemCounts(t *testing.T) {
 	common := generatedContractAction{
 		Models: []string{"m-a", "m-b"},
 		FieldsByModel: map[string]map[string]generatedContractField{
-			"m-a": {"reference_image_urls": {MinItems: 1, MaxItems: 3}},
-			"m-b": {"reference_image_urls": {MinItems: 1, MaxItems: 3}},
+			"m-a": {"reference_image_urls": {"min_items": 1, "max_items": 3}},
+			"m-b": {"reference_image_urls": {"min_items": 1, "max_items": 3}},
 		},
 	}
 	if got := generatedContractHelpSentenceFor(common, "reference_image_urls"); got != "Item count: 1-3." {
@@ -390,10 +390,104 @@ func TestGeneratedContractHelpIncludesArrayItemCounts(t *testing.T) {
 
 	divergent := common
 	divergent.FieldsByModel["m-a"] = map[string]generatedContractField{
-		"reference_image_urls": {MinItems: 1, MaxItems: 2},
+		"reference_image_urls": {"min_items": 1, "max_items": 2},
 	}
 	if got := generatedContractHelpSentenceFor(divergent, "reference_image_urls"); got != "Item count by model: m-a: 1-2; m-b: 1-3." {
 		t.Fatalf("got %q", got)
+	}
+}
+
+func TestGeneratedContractHelpIncludesConditionalRules(t *testing.T) {
+	cases := []struct {
+		args []string
+		want []string
+	}{
+		{
+			args: []string{"runway", "text-to-video", "--help"},
+			want: []string{
+				"When first_frame_image_url is absent: require aspect_ratio.",
+				"When first_frame_image_url is present: forbid aspect_ratio.",
+			},
+		},
+		{
+			args: []string{"suno", "text-to-music", "--help"},
+			want: []string{
+				"When vocal_mode=auto_lyrics: require prompt; forbid lyrics, style, title, negative_tags, vocal_gender, duration_seconds.",
+				"When model=suno-v5: forbid duration_seconds.",
+			},
+		},
+		{
+			args: []string{"kling", "text-to-video", "--help"},
+			want: []string{
+				"When model=kling-v3-turbo-text-to-video: forbid enable_sound",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(strings.Join(tc.args[:2], "/"), func(t *testing.T) {
+			c := newCLI()
+			c.stdout = &bytes.Buffer{}
+			c.stderr = &bytes.Buffer{}
+
+			cmd := c.command()
+			cmd.SetArgs(tc.args)
+			if err := cmd.Execute(); err != nil {
+				t.Fatal(err)
+			}
+
+			output := c.stdout.(*bytes.Buffer).String()
+			for _, want := range tc.want {
+				if !strings.Contains(output, want) {
+					t.Fatalf("expected help to contain %q, got:\n%s", want, output)
+				}
+			}
+		})
+	}
+}
+
+func TestGeneratedContractHelpIncludesUnconditionalRules(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"minimax-h3", "image-to-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !strings.Contains(output, "Always: require one of first_frame_image_url, last_frame_image_url.") {
+		t.Fatalf("expected unconditional rule help, got:\n%s", output)
+	}
+	if strings.Contains(output, "When :") {
+		t.Fatalf("expected no empty conditional clause, got:\n%s", output)
+	}
+}
+
+func TestGeminiTTSHelpIncludesNestedItemFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"gemini-tts", "text-to-speech", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	for _, want := range []string{
+		"speakers[].speaker_id",
+		"speakers[].voice_name",
+		"Accepted values: Achernar, Achird",
+		"dialogue_turns[].speaker_id",
+		"dialogue_turns[].text",
+	} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("expected Gemini TTS help to contain %q, got:\n%s", want, output)
+		}
 	}
 }
 
@@ -793,6 +887,7 @@ func TestDynamicImageActionsAreRegistered(t *testing.T) {
 		{service: "flux", action: "remix-image", fields: []string{"source_image_url", "Accepted values: flux-dev, flux-pro."}},
 		{service: "imagen-4", action: "remix-image", fields: []string{"source_image_urls", "Accepted values: imagen-4-pro-remix-image."}},
 		{service: "seedream", action: "edit-image", fields: []string{"source_image_urls", "Accepted values: seedream-4.5-edit, seedream-5-lite-edit, seedream-5-pro-edit, seedream-v4-edit."}},
+		{service: "seedream", action: "decompose-layers", fields: []string{"image_url", "Accepted values: seedream-5-pro-layer-decomposition."}},
 	}
 
 	for _, tc := range cases {

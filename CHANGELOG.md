@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.10.1](https://github.com/runapi-ai/cli/releases/tag/v0.10.1) - 2026-08-12
+
+### Added
+- Add the `seedream decompose-layers` command with generated request validation.
+- Add Seedance 2.5 model selection, request fields, and validation to the Seedance command.
+
+### Fixed
+- Show conditional model rules and nested input object fields from the generated Input Contract, reject the removed files upload command with canonical guidance, and keep root help capability-neutral.
+
+
 ## [v0.10.0](https://github.com/runapi-ai/cli/releases/tag/v0.10.0) - 2026-08-10
 
 ### Breaking
