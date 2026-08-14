@@ -90,7 +90,7 @@ func (c *cli) agentInstallSkillCommand() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&o.target, "target", "", "Built-in target: "+strings.Join(supportedTargetNames(), ", "))
 	cmd.Flags().StringVar(&o.targetDir, "target-dir", "", "Custom install directory (overrides --target). The skill is placed in <dir>/cli.")
-	cmd.Flags().StringVar(&o.version, "version", "", "Skill tag to install (e.g. v0.1.0). Default: latest stable skill tag.")
+	cmd.Flags().StringVar(&o.version, "version", "", "Skill tag to install. Default: latest stable skill tag.")
 	cmd.Flags().StringVar(&o.source, "source", defaultSkillSourceRepo, "Source GitHub repo")
 	cmd.Flags().BoolVar(&o.force, "force", false, "Overwrite an existing skill directory")
 	return cmd

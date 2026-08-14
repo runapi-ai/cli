@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.10.2](https://github.com/runapi-ai/cli/releases/tag/v0.10.2) - 2026-08-14
+
+### Fixed
+- Describe replace-section windows as requiring at least 10 seconds without a 60-second maximum.
+- Accept enable_safety_checker for Hailuo 02 Pro image-to-video and Wan 2.7 video edit requests.
+- Remove guidance that directs users to install a deleted CLI release and render pinned installation examples from the current release version.
+
+
 ## [v0.10.1](https://github.com/runapi-ai/cli/releases/tag/v0.10.1) - 2026-08-12
 
 ### Added
