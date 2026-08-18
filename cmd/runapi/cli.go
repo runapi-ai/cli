@@ -20,6 +20,7 @@ import (
 	"github.com/runapi-ai/core-sdk/go/files"
 	"github.com/runapi-ai/core-sdk/go/option"
 	"github.com/runapi-ai/core-sdk/go/pricing"
+	"github.com/runapi-ai/core-sdk/go/uploads"
 	"github.com/runapi-ai/elevenlabs-sdk/go/elevenlabs"
 	"github.com/runapi-ai/fish-audio-sdk/go/fishaudio"
 	"github.com/runapi-ai/flux-2-sdk/go/flux2"
@@ -189,6 +190,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.versionCommand())
 	root.AddCommand(c.accountCommand())
 	root.AddCommand(c.filesCommand())
+	root.AddCommand(c.uploadsCommand())
 	root.AddCommand(c.pricingCommand())
 	root.AddCommand(c.apiKeysCommand())
 	root.AddCommand(c.serviceCommand("suno"))
@@ -346,7 +348,172 @@ func (c *cli) filesCommand() *cobra.Command {
 	create.Flags().StringVar(&fileName, "file-name", "", "Optional file name.")
 	create.Flags().BoolVar(&urlOnly, "url-only", false, "Print only the uploaded file URL.")
 	filesCmd.AddCommand(create)
+
+	var protocolPurpose, protocolFileName string
+	createFile := &cobra.Command{Use: "create-file <path>", Short: "Create a File resource", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Files.CreateFile(ctx, files.ProtocolCreateParams{
+			File: args[0], FileName: protocolFileName, Purpose: protocolPurpose,
+		}, callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+	createFile.Flags().StringVar(&protocolFileName, "file-name", "", "Optional file name.")
+	createFile.Flags().StringVar(&protocolPurpose, "purpose", "user_data", "File purpose.")
+
+	var after, order, listPurpose string
+	var limit int
+	list := &cobra.Command{Use: "list", Short: "List File resources", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Files.List(ctx, files.ListParams{After: after, Limit: limit, Order: order, Purpose: listPurpose}, callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+	list.Flags().StringVar(&after, "after", "", "Return Files after this File id.")
+	list.Flags().IntVar(&limit, "limit", 0, "Maximum number of Files to return.")
+	list.Flags().StringVar(&order, "order", "", "Sort order: asc or desc.")
+	list.Flags().StringVar(&listPurpose, "purpose", "", "Filter by File purpose.")
+
+	retrieve := &cobra.Command{Use: "retrieve <file-id>", Short: "Retrieve File metadata", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Files.Retrieve(ctx, args[0], callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+
+	var outputPath string
+	content := &cobra.Command{Use: "content <file-id>", Short: "Download File content", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		body, err := client.Files.Content(ctx, args[0], callOpts...)
+		if err != nil {
+			return err
+		}
+		if outputPath == "-" {
+			_, err = c.stdout.Write(body)
+			return err
+		}
+		return os.WriteFile(outputPath, body, 0o600)
+	}}
+	content.Flags().StringVarP(&outputPath, "output", "o", "", "Required destination path, or - for stdout.")
+	_ = content.MarkFlagRequired("output")
+
+	deleteFile := &cobra.Command{Use: "delete <file-id>", Short: "Delete a File resource", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Files.DeleteFile(ctx, args[0], callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+
+	filesCmd.AddCommand(createFile, list, retrieve, content, deleteFile)
 	return filesCmd
+}
+
+func (c *cli) uploadsCommand() *cobra.Command {
+	uploadsCmd := &cobra.Command{Use: "uploads", Short: "Multipart Upload lifecycle operations", Args: cobra.NoArgs}
+
+	var bytes int64
+	var filename, mimeType, purpose string
+	create := &cobra.Command{Use: "create", Short: "Create an Upload", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Uploads.Create(ctx, uploads.CreateParams{
+			Bytes: bytes, Filename: filename, MIMEType: mimeType, Purpose: purpose,
+		}, callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+	create.Flags().Int64Var(&bytes, "bytes", 0, "Final Upload byte size.")
+	create.Flags().StringVar(&filename, "filename", "", "Final file name.")
+	create.Flags().StringVar(&mimeType, "mime-type", "", "Final file MIME type.")
+	create.Flags().StringVar(&purpose, "purpose", "user_data", "Upload purpose.")
+	_ = create.MarkFlagRequired("bytes")
+	_ = create.MarkFlagRequired("filename")
+	_ = create.MarkFlagRequired("mime-type")
+
+	var partFileName, partContentType string
+	addPart := &cobra.Command{Use: "add-part <upload-id> <path>", Short: "Add a Part to an Upload", Args: cobra.ExactArgs(2), RunE: func(cmd *cobra.Command, args []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Uploads.AddPart(ctx, args[0], uploads.AddPartParams{
+			File: args[1], FileName: partFileName, ContentType: partContentType,
+		}, callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+	addPart.Flags().StringVar(&partFileName, "file-name", "", "Optional Part file name.")
+	addPart.Flags().StringVar(&partContentType, "content-type", "", "Optional Part MIME type.")
+
+	var partIDs []string
+	complete := &cobra.Command{Use: "complete <upload-id>", Short: "Complete an Upload", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		if len(partIDs) == 0 {
+			return core.NewError(core.ErrValidation, "at least one --part-id is required", 422, "", nil, nil)
+		}
+		response, err := client.Uploads.Complete(ctx, args[0], partIDs, callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+	complete.Flags().StringSliceVar(&partIDs, "part-id", nil, "Part id in composition order; repeat as needed.")
+
+	cancelUpload := &cobra.Command{Use: "cancel <upload-id>", Short: "Cancel an Upload", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		client, callOpts, ctx, cancel, err := c.clientForCommand(cmd)
+		if err != nil {
+			return err
+		}
+		defer cancel()
+		response, err := client.Uploads.Cancel(ctx, args[0], callOpts...)
+		if err != nil {
+			return err
+		}
+		return c.writeJSON(response)
+	}}
+
+	uploadsCmd.AddCommand(create, addPart, complete, cancelUpload)
+	return uploadsCmd
 }
 
 func (c *cli) versionCommand() *cobra.Command {
@@ -1573,6 +1740,7 @@ var allSpecs = []actionSpec{
 	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(), newFluxTextToImageSpec(), newFluxRemixImageSpec(),
 	newGeminiOmniCreateAudioSpec(), newGeminiOmniCreateCharacterSpec(), newGeminiOmniTextToVideoSpec(),
 	newOpenAITTSTextToSpeechSpec(), newOpenAITranscriptionSpeechToTextSpec(), newFishAudioTextToSpeechSpec(),
+	newFishAudioCreateVoiceSpec(), newFishAudioListVoicesSpec(), newFishAudioGetVoiceSpec(),
 	newGeminiTTSTextToSpeechSpec(),
 	newQwen2TextToImageSpec(), newQwen2EditSpec(),
 	newQwen3TextToImageSpec(), newQwen3EditImageSpec(),
@@ -2094,6 +2262,24 @@ func newOpenAITranscriptionSpeechToTextSpec() actionSpec {
 func newFishAudioTextToSpeechSpec() actionSpec {
 	return actionSpec{service: "fish-audio", action: "text-to-speech", isAsync: false, inputFields: inputFieldsFor[fishaudio.TextToSpeechParams](), decode: decodeInto[fishaudio.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.FishAudio.TextToSpeech.Run(ctx, params.(fishaudio.TextToSpeechParams), opts...)
+	}}
+}
+
+func newFishAudioCreateVoiceSpec() actionSpec {
+	return actionSpec{service: "fish-audio", action: "create-voice", isAsync: false, inputFields: inputFieldsFor[fishaudio.CreateVoiceParams](), decode: decodeInto[fishaudio.CreateVoiceParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.FishAudio.CreateVoice.Run(ctx, params.(fishaudio.CreateVoiceParams), opts...)
+	}}
+}
+
+func newFishAudioListVoicesSpec() actionSpec {
+	return actionSpec{service: "fish-audio", action: "list-voices", isAsync: false, inputFields: inputFieldsFor[fishaudio.ListVoicesParams](), decode: decodeInto[fishaudio.ListVoicesParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.FishAudio.ListVoices.Run(ctx, params.(fishaudio.ListVoicesParams), opts...)
+	}}
+}
+
+func newFishAudioGetVoiceSpec() actionSpec {
+	return actionSpec{service: "fish-audio", action: "get-voice", isAsync: false, inputFields: inputFieldsFor[fishaudio.GetVoiceParams](), decode: decodeInto[fishaudio.GetVoiceParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.FishAudio.GetVoice.Run(ctx, params.(fishaudio.GetVoiceParams), opts...)
 	}}
 }
 

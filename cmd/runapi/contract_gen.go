@@ -80,6 +80,32 @@ var generatedContract = map[string]generatedContractAction{
 		},
 		Rules: []map[string]any{map[string]any{"required": []any{"voice"}, "when": map[string]any{"model": "text-to-speech-multilingual-v2"}}},
 	},
+	"fish-audio/create-voice": {
+		Models: []string{},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"_": {
+				"name":             generatedContractField{"required": true, "type": "string"},
+				"source_audio_url": generatedContractField{"required": true, "type": "string"},
+			},
+		},
+	},
+	"fish-audio/get-voice": {
+		Models: []string{},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"_": {
+				"voice_id": generatedContractField{"required": true, "type": "string"},
+			},
+		},
+	},
+	"fish-audio/list-voices": {
+		Models: []string{},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"_": {
+				"page_number": generatedContractField{"default": 1, "min": 1, "type": "integer"},
+				"page_size":   generatedContractField{"default": 10, "max": 100, "min": 1, "type": "integer"},
+			},
+		},
+	},
 	"fish-audio/text-to-speech": {
 		Models: []string{"s1", "s2-pro", "s2.1-pro"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -90,6 +116,7 @@ var generatedContract = map[string]generatedContractAction{
 				"references":     generatedContractField{"description": "Inline reference audio samples for this request.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Base64-encoded raw audio bytes.", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript of the reference audio.", "required": true, "type": "string"}}, "type": "object"}, "type": "array"},
 				"sample_rate_hz": generatedContractField{"default": 44100, "description": "Output sample rate. MP3 supports 32000 and 44100 Hz; WAV supports every listed value.", "enum": []any{8000, 16000, 24000, 32000, 44100}, "type": "integer"},
 				"text":           generatedContractField{"required": true, "type": "string"},
+				"voice_id":       generatedContractField{"type": "string"},
 			},
 			"s2-pro": {
 				"bitrate_kbps":   generatedContractField{"default": 128, "description": "MP3 bitrate. Not accepted for WAV output.", "enum": []any{64, 128, 192}, "type": "integer"},
@@ -98,6 +125,7 @@ var generatedContract = map[string]generatedContractAction{
 				"references":     generatedContractField{"description": "Inline reference audio samples for this request.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Base64-encoded raw audio bytes.", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript of the reference audio.", "required": true, "type": "string"}}, "type": "object"}, "type": "array"},
 				"sample_rate_hz": generatedContractField{"default": 44100, "description": "Output sample rate. MP3 supports 32000 and 44100 Hz; WAV supports every listed value.", "enum": []any{8000, 16000, 24000, 32000, 44100}, "type": "integer"},
 				"text":           generatedContractField{"required": true, "type": "string"},
+				"voice_id":       generatedContractField{"type": "string"},
 			},
 			"s2.1-pro": {
 				"bitrate_kbps":   generatedContractField{"default": 128, "description": "MP3 bitrate. Not accepted for WAV output.", "enum": []any{64, 128, 192}, "type": "integer"},
@@ -106,6 +134,7 @@ var generatedContract = map[string]generatedContractAction{
 				"references":     generatedContractField{"description": "Inline reference audio samples for this request.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Base64-encoded raw audio bytes.", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript of the reference audio.", "required": true, "type": "string"}}, "type": "object"}, "type": "array"},
 				"sample_rate_hz": generatedContractField{"default": 44100, "description": "Output sample rate. MP3 supports 32000 and 44100 Hz; WAV supports every listed value.", "enum": []any{8000, 16000, 24000, 32000, 44100}, "type": "integer"},
 				"text":           generatedContractField{"required": true, "type": "string"},
+				"voice_id":       generatedContractField{"type": "string"},
 			},
 		},
 		Rules: []map[string]any{map[string]any{"forbidden": []any{"bitrate_kbps"}, "when": map[string]any{"output_format": "wav"}}, map[string]any{"enum": map[string]any{"sample_rate_hz": []any{32000, 44100}}, "when": map[string]any{"output_format": "mp3"}}, map[string]any{"enum": map[string]any{"sample_rate_hz": []any{32000, 44100}}, "when": map[string]any{"output_format": map[string]any{"present": false}}}},
@@ -2632,7 +2661,7 @@ var generatedContract = map[string]generatedContractAction{
 				"negative_tags":        generatedContractField{"description": "Styles to avoid.", "type": "string"},
 				"persona_id":           generatedContractField{"description": "Persona ID.", "type": "string"},
 				"persona_type":         generatedContractField{"description": "Persona type.", "enum": []any{"style", "voice"}, "type": "string"},
-				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "type": "string"},
+				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "length": true, "max": 3000, "type": "string"},
 				"style":                generatedContractField{"description": "Music style.", "type": "string"},
 				"style_weight":         generatedContractField{"description": "Style adherence weight (0-1).", "type": "number"},
 				"title":                generatedContractField{"description": "Music title.", "type": "string"},
@@ -2650,7 +2679,7 @@ var generatedContract = map[string]generatedContractAction{
 				"negative_tags":        generatedContractField{"description": "Styles to avoid.", "type": "string"},
 				"persona_id":           generatedContractField{"description": "Persona ID.", "type": "string"},
 				"persona_type":         generatedContractField{"description": "Persona type.", "enum": []any{"style", "voice"}, "type": "string"},
-				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "type": "string"},
+				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "length": true, "max": 3000, "type": "string"},
 				"style":                generatedContractField{"description": "Music style.", "type": "string"},
 				"style_weight":         generatedContractField{"description": "Style adherence weight (0-1).", "type": "number"},
 				"title":                generatedContractField{"description": "Music title.", "type": "string"},
@@ -2668,7 +2697,7 @@ var generatedContract = map[string]generatedContractAction{
 				"negative_tags":        generatedContractField{"description": "Styles to avoid.", "type": "string"},
 				"persona_id":           generatedContractField{"description": "Persona ID.", "type": "string"},
 				"persona_type":         generatedContractField{"description": "Persona type.", "enum": []any{"style", "voice"}, "type": "string"},
-				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "type": "string"},
+				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "length": true, "max": 3000, "type": "string"},
 				"style":                generatedContractField{"description": "Music style.", "type": "string"},
 				"style_weight":         generatedContractField{"description": "Style adherence weight (0-1).", "type": "number"},
 				"title":                generatedContractField{"description": "Music title.", "type": "string"},
@@ -2686,7 +2715,7 @@ var generatedContract = map[string]generatedContractAction{
 				"negative_tags":        generatedContractField{"description": "Styles to avoid.", "type": "string"},
 				"persona_id":           generatedContractField{"description": "Persona ID.", "type": "string"},
 				"persona_type":         generatedContractField{"description": "Persona type.", "enum": []any{"style", "voice"}, "type": "string"},
-				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "type": "string"},
+				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "length": true, "max": 3000, "type": "string"},
 				"style":                generatedContractField{"description": "Music style.", "type": "string"},
 				"style_weight":         generatedContractField{"description": "Style adherence weight (0-1).", "type": "number"},
 				"title":                generatedContractField{"description": "Music title.", "type": "string"},
@@ -2704,7 +2733,7 @@ var generatedContract = map[string]generatedContractAction{
 				"negative_tags":        generatedContractField{"description": "Styles to avoid.", "type": "string"},
 				"persona_id":           generatedContractField{"description": "Persona ID.", "type": "string"},
 				"persona_type":         generatedContractField{"description": "Persona type.", "enum": []any{"style", "voice"}, "type": "string"},
-				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "type": "string"},
+				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "length": true, "max": 3000, "type": "string"},
 				"style":                generatedContractField{"description": "Music style.", "type": "string"},
 				"style_weight":         generatedContractField{"description": "Style adherence weight (0-1).", "type": "number"},
 				"title":                generatedContractField{"description": "Music title.", "type": "string"},
@@ -2722,7 +2751,7 @@ var generatedContract = map[string]generatedContractAction{
 				"negative_tags":        generatedContractField{"description": "Styles to avoid.", "type": "string"},
 				"persona_id":           generatedContractField{"description": "Persona ID.", "type": "string"},
 				"persona_type":         generatedContractField{"description": "Persona type.", "enum": []any{"style", "voice"}, "type": "string"},
-				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "type": "string"},
+				"prompt":               generatedContractField{"description": "Song brief for automatic lyrics.", "length": true, "max": 3000, "type": "string"},
 				"style":                generatedContractField{"description": "Music style.", "type": "string"},
 				"style_weight":         generatedContractField{"description": "Style adherence weight (0-1).", "type": "number"},
 				"title":                generatedContractField{"description": "Music title.", "type": "string"},

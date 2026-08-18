@@ -61,7 +61,7 @@ that will crash at runtime.
 
 ```bash
 # Pin to a specific tag
-curl -fsSL https://runapi.ai/cli/install.sh | sh -s -- --version v0.10.2
+curl -fsSL https://runapi.ai/cli/install.sh | sh -s -- --version v0.11.0
 
 # Install somewhere else
 curl -fsSL https://runapi.ai/cli/install.sh | sh -s -- --dir ~/.local/bin
@@ -115,7 +115,28 @@ runapi gpt-image edit-image --input \
   '{"model":"gpt-image-1.5","prompt":"remove the background","source_image_urls":["./image.png"],"aspect_ratio":"1:1","quality":"medium"}'
 ```
 
-Use `runapi files create` when you need a temporary URL to reuse, or when the source is a remote URL or Base64 data.
+Use `runapi files create` when you need a temporary URL to reuse, or when the source is a remote URL or Base64 data. This temporary upload command remains available unchanged.
+
+Use the persistent File lifecycle when you need a stable File ID and exact content download:
+
+```bash
+runapi files create-file ./knowledge.pdf
+runapi files list --order desc
+runapi files retrieve file_123
+runapi files content file_123 --output ./knowledge-copy.pdf
+runapi files delete file_123
+```
+
+Multipart Uploads let you send Parts before composing the final File:
+
+```bash
+runapi uploads create --bytes 1048576 --filename archive.bin --mime-type application/octet-stream
+runapi uploads add-part upload_123 ./archive.part-01
+runapi uploads complete upload_123 --part-id part_123
+runapi uploads cancel upload_123
+```
+
+See https://runapi.ai/docs/resources/files for the complete Files and Uploads lifecycle.
 
 `runapi` writes JSON to stdout and progress lines to stderr, so it composes naturally with `jq` and any pipeline:
 

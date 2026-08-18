@@ -5,9 +5,9 @@ go 1.26
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/manifoldco/promptui v0.9.0
-	github.com/runapi-ai/core-sdk/go v0.2.20
+	github.com/runapi-ai/core-sdk/go v0.3.0
 	github.com/runapi-ai/elevenlabs-sdk/go v0.2.10
-	github.com/runapi-ai/fish-audio-sdk/go v0.2.0
+	github.com/runapi-ai/fish-audio-sdk/go v0.3.0
 	github.com/runapi-ai/flux-2-sdk/go v0.3.0
 	github.com/runapi-ai/flux-kontext-sdk/go v0.2.8
 	github.com/runapi-ai/flux-sdk/go v0.1.1
@@ -17,7 +17,7 @@ require (
 	github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8
 	github.com/runapi-ai/gpt-image-sdk/go v0.2.8
 	github.com/runapi-ai/grok-imagine-sdk/go v0.2.13
-	github.com/runapi-ai/hailuo-sdk/go v0.2.9
+	github.com/runapi-ai/hailuo-sdk/go v0.2.10
 	github.com/runapi-ai/happyhorse-sdk/go v0.2.9
 	github.com/runapi-ai/ideogram-v3-sdk/go v0.2.9
 	github.com/runapi-ai/imagen-4-sdk/go v0.2.10
@@ -40,11 +40,11 @@ require (
 	github.com/runapi-ai/runway-sdk/go v0.2.10
 	github.com/runapi-ai/seedance-sdk/go v0.2.14
 	github.com/runapi-ai/seedream-sdk/go v0.2.13
-	github.com/runapi-ai/suno-sdk/go v0.4.0
+	github.com/runapi-ai/suno-sdk/go v0.4.2
 	github.com/runapi-ai/topaz-sdk/go v0.2.9
 	github.com/runapi-ai/veo-3.1-sdk/go v0.2.11
 	github.com/runapi-ai/volcengine-lip-sync-sdk/go v0.2.10
-	github.com/runapi-ai/wan-sdk/go v0.2.13
+	github.com/runapi-ai/wan-sdk/go v0.2.14
 	github.com/runapi-ai/z-image-sdk/go v0.2.8
 	github.com/spf13/cobra v1.8.1
 )

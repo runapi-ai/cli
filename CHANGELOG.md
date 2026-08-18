@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.11.0](https://github.com/runapi-ai/cli/releases/tag/v0.11.0) - 2026-08-18
+
+### Added
+- Add create-voice, list-voices, and get-voice commands with generated help and validation metadata.
+- Accept reusable voice IDs in Fish Audio text-to-speech commands.
+- Create, list, retrieve, download, and delete persistent Files, and compose Files from multipart Uploads while preserving the temporary files create command.
+
+### Fixed
+- Reject Suno text-to-music auto_lyrics prompts longer than 3000 characters before creating a task.
+
+
 ## [v0.10.2](https://github.com/runapi-ai/cli/releases/tag/v0.10.2) - 2026-08-14
 
 ### Fixed

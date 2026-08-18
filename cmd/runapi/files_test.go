@@ -153,3 +153,62 @@ func TestFilesCreateDoesNotExposeContentTypeOverride(t *testing.T) {
 		t.Fatalf("expected unknown flag error, got %s", c.stdout.(*bytes.Buffer).String())
 	}
 }
+
+func TestProtocolFilesCommandsAreAdditive(t *testing.T) {
+	isolateConfig(t)
+	t.Setenv("RUNAPI_API_KEY", "test-key")
+	var calls []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls = append(calls, r.Method+" "+r.URL.RequestURI())
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == "POST" && r.URL.Path == "/v1/files":
+			if err := r.ParseMultipartForm(1 << 20); err != nil {
+				t.Fatal(err)
+			}
+			if r.FormValue("purpose") != "user_data" {
+				t.Fatalf("unexpected purpose: %q", r.FormValue("purpose"))
+			}
+			_, _ = w.Write([]byte(`{"id":"file_123","object":"file","bytes":3,"created_at":1,"filename":"input.bin","purpose":"user_data"}`))
+		case r.Method == "GET" && r.URL.Path == "/v1/files":
+			_, _ = w.Write([]byte(`{"object":"list","data":[],"has_more":false}`))
+		case r.Method == "GET" && strings.HasSuffix(r.URL.Path, "/content"):
+			w.Header().Set("Content-Type", "application/octet-stream")
+			_, _ = w.Write([]byte{0, 255, 1})
+		case r.Method == "DELETE":
+			_, _ = w.Write([]byte(`{"id":"file_123","object":"file","deleted":true}`))
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.RequestURI())
+		}
+	}))
+	defer server.Close()
+	input := filepath.Join(t.TempDir(), "input.bin")
+	if err := os.WriteFile(input, []byte("abc"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	output := filepath.Join(t.TempDir(), "output.bin")
+
+	commands := [][]string{
+		{"--base-url", server.URL, "files", "create-file", input},
+		{"--base-url", server.URL, "files", "list", "--limit", "1", "--order", "asc"},
+		{"--base-url", server.URL, "files", "content", "file_123", "--output", output},
+		{"--base-url", server.URL, "files", "delete", "file_123"},
+	}
+	for _, args := range commands {
+		c := newCLI()
+		c.stdout, c.stderr = &bytes.Buffer{}, &bytes.Buffer{}
+		if code := c.run(args); code != 0 {
+			t.Fatalf("command %v failed with %d: %s", args, code, c.stdout.(*bytes.Buffer).String())
+		}
+	}
+	content, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(content, []byte{0, 255, 1}) {
+		t.Fatalf("unexpected downloaded bytes: %v", content)
+	}
+	if calls[1] != "GET /v1/files?limit=1&order=asc" {
+		t.Fatalf("unexpected list request: %s", calls[1])
+	}
+}

@@ -171,6 +171,37 @@ func TestOpenAITranscriptionCommandIsRegistered(t *testing.T) {
 	}
 }
 
+func TestFishAudioVoiceCommandsAreRegistered(t *testing.T) {
+	cases := []struct {
+		action string
+		fields []string
+	}{
+		{action: "create-voice", fields: []string{"name", "source_audio_url"}},
+		{action: "list-voices", fields: []string{"page_number", "page_size"}},
+		{action: "get-voice", fields: []string{"voice_id"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.action, func(t *testing.T) {
+			c := newCLI()
+			c.stdout = &bytes.Buffer{}
+			c.stderr = &bytes.Buffer{}
+			cmd := c.command()
+			cmd.SetArgs([]string{"fish-audio", tc.action, "--help"})
+			if err := cmd.Execute(); err != nil {
+				t.Fatal(err)
+			}
+
+			output := c.stdout.(*bytes.Buffer).String()
+			for _, field := range tc.fields {
+				if !helpHasField(output, field) {
+					t.Fatalf("expected Fish Audio %s help to include %s, got:\n%s", tc.action, field, output)
+				}
+			}
+		})
+	}
+}
+
 func TestHappyHorseServiceCommandIsRegistered(t *testing.T) {
 	c := newCLI()
 	c.stdout = &bytes.Buffer{}
