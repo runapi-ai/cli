@@ -33,8 +33,8 @@ github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8 h1:60s9OpopPWowGXLD6YoPj9iAHoaQdt
 github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8/go.mod h1:AiOZKoRzQcJL7TJW+cuPzxsqVnbuv64DGFWjtCnYu48=
 github.com/runapi-ai/gpt-image-sdk/go v0.2.8 h1:zXt67IfuvxhAIZP1UI4/ypxce7cDJwf5Kx8sqRM2IKQ=
 github.com/runapi-ai/gpt-image-sdk/go v0.2.8/go.mod h1:FTBS0Rb0ZQ/vYJWBYwR262TsH/gGnf13yaEx9r1/MDw=
-github.com/runapi-ai/grok-imagine-sdk/go v0.2.13 h1:pXaoQlRTbfgwnyzJdt1McIdO0umjeIDDUFcZubRTg3A=
-github.com/runapi-ai/grok-imagine-sdk/go v0.2.13/go.mod h1:uDnuTwKP9N8QK4blmky82vlNc010A+TRzwKRIv601L8=
+github.com/runapi-ai/grok-imagine-sdk/go v0.2.14 h1:QC+Os/MlsaG9hrte3+8yduDy8tR4JuuES0COPNKIpiw=
+github.com/runapi-ai/grok-imagine-sdk/go v0.2.14/go.mod h1:mst+4Rqyhspbac20cZUc0stH4eWFT2kCUt5K/9JS9r8=
 github.com/runapi-ai/hailuo-sdk/go v0.2.10 h1:LoFpqs1CzwpRURtMWgG5hZY1HbSbNTlU2sPw24FPZV4=
 github.com/runapi-ai/hailuo-sdk/go v0.2.10/go.mod h1:YIJg7CsXioNIpuHtSEpMrEd6Tt+dadVqixLRblOopgA=
 github.com/runapi-ai/happyhorse-sdk/go v0.2.9 h1:ENrHufyanIbgO6WvCL542S7xex0SQY9j7R2CkUJT0fI=
@@ -45,8 +45,8 @@ github.com/runapi-ai/imagen-4-sdk/go v0.2.10 h1:f4xNLvyjDVNtdpq3Wn7RSFmNmTSdEaC4
 github.com/runapi-ai/imagen-4-sdk/go v0.2.10/go.mod h1:zjo9bXCYVN7J58MJHzszbwCFKIjd4PHa7nPmox6Xy8Q=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.8 h1:Ly31a1CgzP/68ngLISnpApBCK25LXqUp3UCpW0JFy2g=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.8/go.mod h1:b36S2DQAB+6ucf7cTgCKENlfFAeUtXqgzuHVdwOPv8g=
-github.com/runapi-ai/kling-sdk/go v0.2.13 h1:uVvjoUUI3qVjWqTYIRDuygydzg8NPZUVzK1f+bICHa8=
-github.com/runapi-ai/kling-sdk/go v0.2.13/go.mod h1:wA0LKtwcJc5LP+WmhS8v8tggmjvhTrgHEl6XeqVf5JY=
+github.com/runapi-ai/kling-sdk/go v0.3.0 h1:e7W2xMlfbPBDTNBWgbAn76pAJxH/vIjP2C4iJRs2ME8=
+github.com/runapi-ai/kling-sdk/go v0.3.0/go.mod h1:y0TsvhUVQEK1eY66xDhDukS89YAS+gVtzJFi7fNQYtc=
 github.com/runapi-ai/luma-sdk/go v0.2.8 h1:qhiZN1TFm6qyjvt2iU/9ANEh/R36jfvofvPbwhjKYHk=
 github.com/runapi-ai/luma-sdk/go v0.2.8/go.mod h1:GHdgTmZHQ3F4ZYo3BVNLYz/cnne8mG5Ypp55tPjsFFQ=
 github.com/runapi-ai/midjourney-sdk/go v0.3.1 h1:QqliHuO9h9JNiFatKnSuRT/OIVWl1DNoMv+JgpCUshk=
@@ -77,8 +77,8 @@ github.com/runapi-ai/runway-aleph-sdk/go v0.2.8 h1:n4dd1fSRe8BLS6uI6z+ZD0Y/bISON
 github.com/runapi-ai/runway-aleph-sdk/go v0.2.8/go.mod h1:9PopBtmho0CG5llMteZ9z1O77foTBgsZlz3ei4/biu4=
 github.com/runapi-ai/runway-sdk/go v0.2.10 h1:6bH8ZPyocWo31FNfrDGcN0WKkT1OZQD+F05FacdGPp8=
 github.com/runapi-ai/runway-sdk/go v0.2.10/go.mod h1:OoKGdNZPCdPULpDlv+5BGAmMX+cVa2CVzYurZ/5NLoI=
-github.com/runapi-ai/seedance-sdk/go v0.2.14 h1:vZM7TGkf/ok9y6k+EHtwfKwPUYj3k7XNzgkCQTiksQE=
-github.com/runapi-ai/seedance-sdk/go v0.2.14/go.mod h1:rbc2/6/KuKNKZQjWg1l0Tknj4yJ4h6oEIFB2apdfyNk=
+github.com/runapi-ai/seedance-sdk/go v0.3.0 h1:Rg9tmBrVtyxpQaNs14d1/bWvkgCs+qVVa0V3pmx9R60=
+github.com/runapi-ai/seedance-sdk/go v0.3.0/go.mod h1:3wujEcxljzzWzJgt+sOoe/I28AmpLy0kmY6ytrLsZLA=
 github.com/runapi-ai/seedream-sdk/go v0.2.13 h1:o1598unmtq7DpmD15oJdu0sZmpuCyzPFZpFIqn1o9E8=
 github.com/runapi-ai/seedream-sdk/go v0.2.13/go.mod h1:z+WOKaAiQew1L6omUxrpNgnHIvUBcyOqLOuzhsEHesM=
 github.com/runapi-ai/suno-sdk/go v0.4.2 h1:PFES4dEyqW54NTPVTaJeGD8AL1T1aAOZ61pRmZ7hjdo=

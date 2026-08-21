@@ -1736,7 +1736,7 @@ var allSpecs = []actionSpec{
 	newSeedanceTextToVideoSpec(),
 	newSeedreamTextToImageSpec(), newSeedreamEditImageSpec(), newSeedreamDecomposeLayersSpec(),
 	newRunwayTextToVideoSpec(), newRunwayExtendVideoSpec(), newRunwayAlephEditVideoSpec(),
-	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(), newKlingExtendVideoSpec(),
+	newKlingTextToVideoSpec(), newKlingAvatarSpec(), newKlingImageToVideoSpec(), newKlingMotionControlSpec(), newKlingExtendVideoSpec(), newKlingEditVideoSpec(),
 	newFluxKontextTextToImageSpec(), newFlux2TextToImageSpec(), newFlux2RemixImageSpec(), newFluxTextToImageSpec(), newFluxRemixImageSpec(),
 	newGeminiOmniCreateAudioSpec(), newGeminiOmniCreateCharacterSpec(), newGeminiOmniTextToVideoSpec(),
 	newOpenAITTSTextToSpeechSpec(), newOpenAITranscriptionSpeechToTextSpec(), newFishAudioTextToSpeechSpec(),
@@ -1760,7 +1760,7 @@ var allSpecs = []actionSpec{
 	newVolcengineLipSyncVideoSpec(),
 	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
 	newGptImageTextToImageSpec(), newGptImageEditImageSpec(), newGptImage2TextToImageSpec(), newGptImage2EditImageSpec(), newGpt4oImageTextToImageSpec(),
-	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineEditImageSpec(),
+	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineSegmentMapSpec(), newGrokImagineEditImageSpec(),
 	newGrokImagineExtendSpec(), newGrokImagineUpscaleSpec(),
 	newTopazUpscaleImageSpec(), newTopazUpscaleVideoSpec(),
 	newPixVerseTextToVideoSpec(), newPixVerseImageToVideoSpec(), newPixVerseEditVideoSpec(), newPixVerseTransitionVideoSpec(), newPixVerseExtendVideoSpec(),
@@ -2191,6 +2191,15 @@ func newKlingExtendVideoSpec() actionSpec {
 		return client.Kling.ExtendVideo.Run(ctx, params.(kling.ExtendVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Kling.ExtendVideo.Get(ctx, id, opts...)
+	}}
+}
+func newKlingEditVideoSpec() actionSpec {
+	return actionSpec{service: "kling", action: "edit-video", isAsync: true, inputFields: inputFieldsFor[kling.EditVideoParams](), decode: decodeInto[kling.EditVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Kling.EditVideo.Create(ctx, params.(kling.EditVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Kling.EditVideo.Run(ctx, params.(kling.EditVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Kling.EditVideo.Get(ctx, id, opts...)
 	}}
 }
 func newFluxKontextTextToImageSpec() actionSpec {
@@ -2866,6 +2875,16 @@ func newGrokImagineTextToImageSpec() actionSpec {
 		return client.GrokImagine.TextToImage.Run(ctx, params.(grokimagine.TextToImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.GrokImagine.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newGrokImagineSegmentMapSpec() actionSpec {
+	return actionSpec{service: "grok-imagine", action: "segment-map", isAsync: true, inputFields: inputFieldsFor[grokimagine.SegmentMapParams](), decode: decodeInto[grokimagine.SegmentMapParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.GrokImagine.SegmentMap.Create(ctx, params.(grokimagine.SegmentMapParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.GrokImagine.SegmentMap.Run(ctx, params.(grokimagine.SegmentMapParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.GrokImagine.SegmentMap.Get(ctx, id, opts...)
 	}}
 }
 

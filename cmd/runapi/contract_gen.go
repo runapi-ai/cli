@@ -421,16 +421,28 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"grok-imagine/edit-image": {
-		Models: []string{"grok-imagine-edit-image"},
+		Models: []string{"grok-imagine-edit-image", "grok-imagine-image-2-0"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"grok-imagine-edit-image": {
 				"callback_url":          generatedContractField{"description": "Webhook URL for terminal Task delivery.", "type": "string"},
 				"enable_safety_checker": generatedContractField{"description": "Enable content safety checks.", "type": "boolean"},
+				"mask_indices":          generatedContractField{"description": "Not accepted by this model.", "type": "array"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"prompt":                generatedContractField{"description": "Optional image editing instruction.", "type": "string"},
 				"source_image_url":      generatedContractField{"description": "Public source image URL.", "required": true, "type": "string"},
+				"source_task_id":        generatedContractField{"description": "Not accepted by this model.", "type": "string"},
+			},
+			"grok-imagine-image-2-0": {
+				"callback_url":          generatedContractField{"description": "Webhook URL for terminal Task delivery.", "type": "string"},
+				"enable_safety_checker": generatedContractField{"description": "Not accepted by this model.", "type": "boolean"},
+				"mask_indices":          generatedContractField{"description": "Optional segment indexes to edit.", "items": map[string]any{"min": 1, "type": "integer"}, "min_items": 1, "type": "array"},
+				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"prompt":                generatedContractField{"description": "Image editing prompt.", "required": true, "type": "string"},
+				"source_image_url":      generatedContractField{"description": "Not accepted by this model.", "type": "string"},
+				"source_task_id":        generatedContractField{"description": "Completed Image 2.0 segment-map Task ID.", "required": true, "type": "string"},
 			},
 		},
+		Rules: []map[string]any{map[string]any{"forbidden": []any{"source_task_id", "mask_indices"}, "when": map[string]any{"model": "grok-imagine-edit-image"}}, map[string]any{"forbidden": []any{"source_image_url", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-image-2-0"}}},
 	},
 	"grok-imagine/extend": {
 		Models: []string{},
@@ -492,9 +504,27 @@ var generatedContract = map[string]generatedContractAction{
 		},
 		Rules: []map[string]any{map[string]any{"forbidden": []any{"reference_image_urls"}, "when": map[string]any{"model": "grok-imagine-image-to-video"}}, map[string]any{"forbidden": []any{"source_task_id", "index", "motion_style", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-video-1.5-fast"}}, map[string]any{"forbidden": []any{"source_task_id", "index", "motion_style", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-video-1.5-preview"}}},
 	},
-	"grok-imagine/text-to-image": {
-		Models: []string{"grok-imagine-text-to-image"},
+	"grok-imagine/segment-map": {
+		Models: []string{"grok-imagine-image-2-0"},
 		FieldsByModel: map[string]map[string]generatedContractField{
+			"grok-imagine-image-2-0": {
+				"callback_url":   generatedContractField{"description": "Webhook URL for terminal Task delivery.", "type": "string"},
+				"model":          generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"source_task_id": generatedContractField{"description": "Completed Image 2.0 text-to-image Task ID.", "required": true, "type": "string"},
+			},
+		},
+	},
+	"grok-imagine/text-to-image": {
+		Models: []string{"grok-imagine-image-2-0", "grok-imagine-text-to-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"grok-imagine-image-2-0": {
+				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"1:1", "2:3", "3:2", "16:9", "9:16"}, "required": true, "type": "string"},
+				"callback_url":          generatedContractField{"description": "Webhook URL for terminal Task delivery.", "type": "string"},
+				"enable_pro":            generatedContractField{"description": "Not accepted by this model.", "type": "boolean"},
+				"enable_safety_checker": generatedContractField{"description": "Not accepted by this model.", "type": "boolean"},
+				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"prompt":                generatedContractField{"description": "Image generation prompt.", "required": true, "type": "string"},
+			},
 			"grok-imagine-text-to-image": {
 				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"2:3", "3:2", "1:1", "16:9", "9:16"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for terminal Task delivery.", "type": "string"},
@@ -504,6 +534,7 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":                generatedContractField{"description": "Image generation prompt.", "length": true, "max": 5000, "required": true, "type": "string"},
 			},
 		},
+		Rules: []map[string]any{map[string]any{"forbidden": []any{"enable_safety_checker", "enable_pro"}, "when": map[string]any{"model": "grok-imagine-image-2-0"}}},
 	},
 	"grok-imagine/text-to-video": {
 		Models: []string{"grok-imagine-text-to-video", "grok-imagine-video-1.5-fast", "grok-imagine-video-1.5-preview"},
@@ -912,6 +943,36 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
+	"kling/edit-video": {
+		Models: []string{"kling-v3-omni-edit", "kling-v3-omni-reference"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"kling-v3-omni-edit": {
+				"aspect_ratio":         generatedContractField{"description": "Output aspect ratio; source-only requests require auto.", "enum": []any{"auto", "16:9", "9:16", "1:1"}, "type": "string"},
+				"callback_url":         generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
+				"duration_seconds":     generatedContractField{"default": 5, "description": "Output duration in seconds.", "enum": []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
+				"enable_sound":         generatedContractField{"default": false, "description": "Enable synchronized sound generation.", "type": "boolean"},
+				"model":                generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"output_resolution":    generatedContractField{"default": "720p", "description": "Output resolution.", "enum": []any{"720p", "1080p", "4k"}, "type": "string"},
+				"prompt":               generatedContractField{"description": "Video description.", "length": true, "max": 2500, "min": 1, "required": true, "type": "string"},
+				"reference_image_urls": generatedContractField{"description": "Ordered reference image URLs.", "items": map[string]any{"type": "string"}, "max_items": 4, "min_items": 1, "type": "array"},
+				"source_task_id":       generatedContractField{"description": "Completed compatible task ID; cannot be combined with source_video_url.", "type": "string"},
+				"source_video_url":     generatedContractField{"description": "Public source video URL; cannot be combined with source_task_id.", "type": "string"},
+			},
+			"kling-v3-omni-reference": {
+				"aspect_ratio":         generatedContractField{"description": "Output aspect ratio; source-only requests require auto.", "enum": []any{"auto", "16:9", "9:16", "1:1"}, "type": "string"},
+				"callback_url":         generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
+				"duration_seconds":     generatedContractField{"default": 5, "description": "Output duration in seconds.", "enum": []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
+				"enable_sound":         generatedContractField{"default": false, "description": "Enable synchronized sound generation; source-video requests require false.", "type": "boolean"},
+				"model":                generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"output_resolution":    generatedContractField{"default": "720p", "description": "Output resolution.", "enum": []any{"720p", "1080p", "4k"}, "type": "string"},
+				"prompt":               generatedContractField{"description": "Video description.", "length": true, "max": 2500, "min": 1, "required": true, "type": "string"},
+				"reference_image_urls": generatedContractField{"description": "Ordered reference image URLs.", "items": map[string]any{"type": "string"}, "max_items": 4, "min_items": 1, "type": "array"},
+				"source_task_id":       generatedContractField{"description": "Completed compatible task ID; cannot be combined with source_video_url.", "type": "string"},
+				"source_video_url":     generatedContractField{"description": "Public source video URL; cannot be combined with source_task_id.", "type": "string"},
+			},
+		},
+		Rules: []map[string]any{map[string]any{"required_any": []any{"source_video_url", "source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-edit", "source_task_id": map[string]any{"present": false}, "source_video_url": map[string]any{"present": false}}}, map[string]any{"forbidden": []any{"source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-edit", "source_video_url": map[string]any{"present": true}}}, map[string]any{"forbidden": []any{"source_video_url"}, "when": map[string]any{"model": "kling-v3-omni-edit", "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": false}, "source_video_url": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": false}, "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": true}, "source_video_url": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": true}, "source_task_id": map[string]any{"present": true}}}, map[string]any{"required_any": []any{"source_video_url", "source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-reference", "source_task_id": map[string]any{"present": false}, "source_video_url": map[string]any{"present": false}}}, map[string]any{"forbidden": []any{"source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-reference", "source_video_url": map[string]any{"present": true}}}, map[string]any{"forbidden": []any{"source_video_url"}, "when": map[string]any{"model": "kling-v3-omni-reference", "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": false}, "source_video_url": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": false}, "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": true}, "source_video_url": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": true}, "source_task_id": map[string]any{"present": true}}}},
+	},
 	"kling/extend-video": {
 		Models: []string{"kling-v2.5-turbo-image-to-video-pro", "kling-v2.5-turbo-text-to-video-pro"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -1050,7 +1111,7 @@ var generatedContract = map[string]generatedContractAction{
 		Rules: []map[string]any{map[string]any{"forbidden": []any{"background_source"}, "when": map[string]any{"model": "kling-v2.6"}}},
 	},
 	"kling/text-to-video": {
-		Models: []string{"kling-3.0", "kling-o1", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-turbo-text-to-video"},
+		Models: []string{"kling-3.0", "kling-o1", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-omni-reference", "kling-v3-turbo-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
 				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
@@ -1118,6 +1179,16 @@ var generatedContract = map[string]generatedContractAction{
 				"model":             generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"output_resolution": generatedContractField{"default": "720p", "description": "Output resolution.", "enum": []any{"720p", "1080p", "4k"}, "type": "string"},
 				"prompt":            generatedContractField{"description": "Video description.", "length": true, "max": 2500, "min": 1, "required": true, "type": "string"},
+			},
+			"kling-v3-omni-reference": {
+				"aspect_ratio":         generatedContractField{"description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "required": true, "type": "string"},
+				"callback_url":         generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
+				"duration_seconds":     generatedContractField{"default": 5, "description": "Output duration in seconds.", "enum": []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
+				"enable_sound":         generatedContractField{"default": false, "description": "Enable synchronized sound generation.", "type": "boolean"},
+				"model":                generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"output_resolution":    generatedContractField{"default": "720p", "description": "Output resolution.", "enum": []any{"720p", "1080p", "4k"}, "type": "string"},
+				"prompt":               generatedContractField{"description": "Video description.", "length": true, "max": 2500, "min": 1, "required": true, "type": "string"},
+				"reference_image_urls": generatedContractField{"description": "Ordered reference image URLs.", "items": map[string]any{"type": "string"}, "max_items": 7, "min_items": 1, "required": true, "type": "array"},
 			},
 			"kling-v3-turbo-text-to-video": {
 				"aspect_ratio":      generatedContractField{"default": "16:9", "description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
@@ -1799,7 +1870,7 @@ var generatedContract = map[string]generatedContractAction{
 				"last_frame_image_url":  generatedContractField{"description": "Public last-frame image URL; requires first_frame_image_url.", "type": "string"},
 				"model":                 generatedContractField{"description": "RunAPI model identifier.", "required": true, "type": "string"},
 				"output_format":         generatedContractField{"default": "mp4", "description": "Output video container format.", "enum": []any{"mp4", "mov"}, "type": "string"},
-				"output_resolution":     generatedContractField{"default": "720p", "description": "Output video resolution.", "enum": []any{"480p", "720p"}, "type": "string"},
+				"output_resolution":     generatedContractField{"default": "720p", "description": "Output video resolution.", "enum": []any{"480p", "720p", "1080p"}, "type": "string"},
 				"prompt":                generatedContractField{"description": "Video generation prompt.", "length": true, "max": 30000, "min": 3, "required": true, "type": "string"},
 				"reference_audio_urls":  generatedContractField{"description": "Public reference audio URLs; up to 10 audio files.", "items": map[string]any{"type": "string"}, "max_items": 10, "type": "array"},
 				"reference_image_urls":  generatedContractField{"description": "Public reference image URLs; up to 30 images.", "items": map[string]any{"type": "string"}, "max_items": 30, "type": "array"},

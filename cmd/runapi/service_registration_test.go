@@ -384,13 +384,13 @@ func TestKlingTextToVideoHelpUsesCanonicalFields(t *testing.T) {
 	}
 
 	output := c.stdout.(*bytes.Buffer).String()
-	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-o1, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6, kling-v3-omni, kling-v3-turbo-text-to-video.") {
+	if !helpHasField(output, "output_resolution") || !strings.Contains(output, "Accepted values: kling-3.0, kling-o1, kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6, kling-v3-omni, kling-v3-omni-reference, kling-v3-turbo-text-to-video.") {
 		t.Fatalf("expected Kling text-to-video help to include generated model values, got:\n%s", output)
 	}
 	if !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") {
 		t.Fatalf("expected Kling text-to-video help to include frame media fields, got:\n%s", output)
 	}
-	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0, kling-v3-omni, kling-v3-turbo-text-to-video: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-o1: 5; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6: 5, 10.") {
+	if !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "Accepted values by model: kling-3.0, kling-v3-omni, kling-v3-omni-reference, kling-v3-turbo-text-to-video: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15; kling-o1: 5; kling-v2.1-master-text-to-video, kling-v2.5-turbo-text-to-video-pro, kling-v2.6: 5, 10.") {
 		t.Fatalf("expected Kling text-to-video help to include model-specific duration_seconds values, got:\n%s", output)
 	}
 	if strings.Contains(output, "duration_seconds          string     optional; duration in seconds. Accepted values: 5, 10.") {
@@ -399,7 +399,7 @@ func TestKlingTextToVideoHelpUsesCanonicalFields(t *testing.T) {
 	if !helpHasField(output, "mode") || !strings.Contains(output, "Accepted values by model: kling-o1, kling-v2.6: std, pro.") {
 		t.Fatalf("expected Kling text-to-video help to include Kling O1 and 2.6 mode values, got:\n%s", output)
 	}
-	if !strings.Contains(output, "kling-v3-omni: 720p, 1080p, 4k") {
+	if !strings.Contains(output, "kling-v3-omni, kling-v3-omni-reference: 720p, 1080p, 4k") {
 		t.Fatalf("expected Kling text-to-video help to include Kling V3 Omni output resolution values, got:\n%s", output)
 	}
 	if helpHasField(output, "image_urls") {
@@ -582,6 +582,28 @@ func TestKlingMotionControlHelpUsesCanonicalMediaFields(t *testing.T) {
 	}
 	if !strings.Contains(output, "required for kling-v2.6") {
 		t.Fatalf("expected Kling motion-control help to explain v2.6 required fields, got:\n%s", output)
+	}
+}
+
+func TestKlingEditVideoHelpUsesCanonicalFields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"kling", "edit-video", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	for _, field := range []string{"model", "prompt", "reference_image_urls", "source_video_url", "source_task_id"} {
+		if !helpHasField(output, field) {
+			t.Fatalf("expected Kling edit-video help to include %q, got:\n%s", field, output)
+		}
+	}
+	if strings.Contains(output, "reference-to-video") || strings.Contains(output, "transformation") {
+		t.Fatalf("expected Kling edit-video help to use canonical public vocabulary, got:\n%s", output)
 	}
 }
 

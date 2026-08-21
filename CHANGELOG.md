@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.12.0](https://github.com/runapi-ai/cli/releases/tag/v0.12.0) - 2026-08-21
+
+### Added
+- Add the Grok Imagine segment-map command and Image 2.0 request validation metadata.
+- Accept 1080p output resolution for Seedance 2.5 video generation.
+- Add Kling text-to-video and edit-video commands with current contract validation.
+
+
 ## [v0.11.0](https://github.com/runapi-ai/cli/releases/tag/v0.11.0) - 2026-08-18
 
 ### Added
