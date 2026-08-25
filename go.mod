@@ -16,7 +16,7 @@ require (
 	github.com/runapi-ai/gpt-4o-image-sdk/go v0.2.9
 	github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8
 	github.com/runapi-ai/gpt-image-sdk/go v0.2.8
-	github.com/runapi-ai/grok-imagine-sdk/go v0.2.14
+	github.com/runapi-ai/grok-imagine-sdk/go v0.2.15
 	github.com/runapi-ai/hailuo-sdk/go v0.2.10
 	github.com/runapi-ai/happyhorse-sdk/go v0.2.9
 	github.com/runapi-ai/ideogram-v3-sdk/go v0.2.9
@@ -41,7 +41,7 @@ require (
 	github.com/runapi-ai/seedance-sdk/go v0.3.0
 	github.com/runapi-ai/seedream-sdk/go v0.2.13
 	github.com/runapi-ai/suno-sdk/go v0.4.2
-	github.com/runapi-ai/topaz-sdk/go v0.2.9
+	github.com/runapi-ai/topaz-sdk/go v0.2.10
 	github.com/runapi-ai/veo-3.1-sdk/go v0.2.11
 	github.com/runapi-ai/volcengine-lip-sync-sdk/go v0.2.10
 	github.com/runapi-ai/wan-sdk/go v0.2.14
@@ -56,4 +56,4 @@ require (
 	golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b // indirect
 )
 
-retract [v0.0.0, v0.9.0] // Upgrade to v0.10.0 or later to continue using RunAPI.
+retract [v0.0.0, v0.12.0] // Upgrade to v0.12.1 or later to continue using RunAPI.

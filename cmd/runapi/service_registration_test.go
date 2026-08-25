@@ -847,6 +847,30 @@ func TestNanoBananaHelpUsesCanonicalFields(t *testing.T) {
 	}
 }
 
+func TestGrokImagineEditImageHelpUsesDirectImage2Fields(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"grok-imagine", "edit-image", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	for _, expected := range []string{"aspect_ratio", "source_image_url", "source_image_urls"} {
+		if !helpHasField(output, expected) {
+			t.Fatalf("expected Grok Imagine edit-image help to include %q, got:\n%s", expected, output)
+		}
+	}
+	for _, stale := range []string{"source_task_id", "mask_indices"} {
+		if helpHasField(output, stale) {
+			t.Fatalf("expected Grok Imagine edit-image help not to include stale field %q, got:\n%s", stale, output)
+		}
+	}
+}
+
 func TestQwen2HelpUsesCanonicalAspectRatio(t *testing.T) {
 	c := newCLI()
 	c.stdout = &bytes.Buffer{}
