@@ -1,5 +1,28 @@
 # Changelog
 
+## [v0.13.0](https://github.com/runapi-ai/cli/releases/tag/v0.13.0) - 2026-09-04
+
+### Breaking
+- Correct Image 2.0 edit validation to require source_image_urls and aspect_ratio instead of task-based edit fields.
+  Migration: Replace source_task_id and mask_indices with one to five source_image_urls and an aspect_ratio; prompt is optional.
+
+### Added
+- Add the Grok Imagine segment-map command and Image 2.0 request validation metadata.
+- Accept public image_url inputs for Image 2.0 segment-map requests.
+
+### Changed
+- Refresh generated contract metadata for hybrid terminal and 202 Task API responses.
+- Fish Audio speech and voice creation, Midjourney utility actions, OpenAI-compatible transcription, and OpenAI TTS now automatically resume accepted Tasks and print their terminal responses.
+- Add length limits for prompt, lyrics, style, title and range limits for style_weight, weirdness_constraint, audio_weight across Suno endpoints.
+
+### Deprecated
+- Deprecate source_task_id for Image 2.0 segment-map requests.
+  Replacement: Send image_url instead; source_task_id remains accepted for compatibility.
+
+### Fixed
+- Restrict Topaz image upscale commands to the supported 1x, 2x, and 4x factors.
+
+
 ## [v0.12.1](https://github.com/runapi-ai/cli/releases/tag/v0.12.1) - 2026-08-25
 
 ### Breaking

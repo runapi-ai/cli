@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,6 +33,74 @@ func TestRootHelpIsCapabilityNeutral(t *testing.T) {
 	}
 	if !strings.Contains(output, "typed SDK-backed RunAPI operations") {
 		t.Fatalf("expected neutral CLI scope description, got:\n%s", output)
+	}
+}
+
+func TestMidjourneyShortenPromptResumesAcceptedTask(t *testing.T) {
+	isolateConfig(t)
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		switch requests {
+		case 1:
+			if r.Method != http.MethodPost || r.URL.Path != "/api/v1/midjourney/shorten_prompt" || r.Header.Get("Idempotency-Key") == "" {
+				t.Fatalf("unexpected create request: %s %s", r.Method, r.URL.Path)
+			}
+			w.Header().Set("Location", "/api/v1/tasks/tsk_cli_123")
+			w.Header().Set("Retry-After", "0")
+			w.WriteHeader(http.StatusAccepted)
+			_, _ = w.Write([]byte(`{"id":"tsk_cli_123","status":"processing"}`))
+		case 2:
+			w.Header().Set("Retry-After", "0")
+			_, _ = w.Write([]byte(`{"id":"tsk_cli_123","status":"processing"}`))
+		case 3:
+			_, _ = w.Write([]byte(`{"id":"tsk_cli_123","status":"completed","response":{"status":200,"content_type":"application/json","headers":{},"body":{"prompts":["Short prompt"]}}}`))
+		default:
+			t.Fatalf("unexpected request %d", requests)
+		}
+	}))
+	defer server.Close()
+
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+	if code := c.run([]string{"--api-key", "test-key", "--base-url", server.URL, "--poll-interval", "1ms", "midjourney", "shorten-prompt", "--input", `{"prompt":"A detailed prompt"}`}); code != 0 {
+		t.Fatalf("expected success, got %d: %s", code, c.stderr.(*bytes.Buffer).String())
+	}
+	var output struct {
+		Prompts []string `json:"prompts"`
+	}
+	if err := json.Unmarshal(c.stdout.(*bytes.Buffer).Bytes(), &output); err != nil {
+		t.Fatal(err)
+	}
+	if len(output.Prompts) != 1 || output.Prompts[0] != "Short prompt" {
+		t.Fatalf("unexpected terminal output: %s", c.stdout.(*bytes.Buffer).String())
+	}
+}
+
+func TestHybridActionSpecsUseRunLifecycle(t *testing.T) {
+	actions := [][2]string{
+		{"fish-audio", "create-voice"},
+		{"fish-audio", "text-to-speech"},
+		{"midjourney", "get-seed"},
+		{"midjourney", "image-to-prompt"},
+		{"midjourney", "shorten-prompt"},
+		{"openai-transcription", "speech-to-text"},
+		{"openai-tts", "text-to-speech"},
+	}
+	for _, action := range actions {
+		t.Run(strings.Join(action[:], "/"), func(t *testing.T) {
+			spec, err := findActionSpec(action[0], action[1])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !spec.isHybrid || spec.isAsync || spec.run == nil {
+				t.Fatalf("expected hybrid run lifecycle: %#v", spec)
+			}
+			if !strings.Contains(describeAction(spec), "resume an accepted Task") {
+				t.Fatalf("unexpected action description: %q", describeAction(spec))
+			}
+		})
 	}
 }
 

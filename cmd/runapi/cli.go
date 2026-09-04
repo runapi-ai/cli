@@ -97,6 +97,7 @@ type actionSpec struct {
 	service     string
 	action      string
 	isAsync     bool
+	isHybrid    bool
 	inputFields string
 	decode      func([]byte) (any, error)
 	create      func(context.Context, *runapi.Client, any, []option.RequestOption) (*core.TaskCreateResponse, error)
@@ -1717,6 +1718,9 @@ func jsonTypeName(t reflect.Type) string {
 }
 
 func describeAction(spec actionSpec) string {
+	if spec.isHybrid {
+		return fmt.Sprintf("Run the %s %s action and resume an accepted Task until its terminal response", spec.service, spec.action)
+	}
 	if spec.isAsync {
 		return fmt.Sprintf("Run the %s %s action", spec.service, spec.action)
 	}
@@ -2257,25 +2261,25 @@ func newGeminiOmniCreateAudioSpec() actionSpec {
 }
 
 func newOpenAITTSTextToSpeechSpec() actionSpec {
-	return actionSpec{service: "openai-tts", action: "text-to-speech", isAsync: false, inputFields: inputFieldsFor[openaitts.TextToSpeechParams](), decode: decodeInto[openaitts.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "openai-tts", action: "text-to-speech", isHybrid: true, inputFields: inputFieldsFor[openaitts.TextToSpeechParams](), decode: decodeInto[openaitts.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.OpenAITTS.TextToSpeech.Run(ctx, params.(openaitts.TextToSpeechParams), opts...)
 	}}
 }
 
 func newOpenAITranscriptionSpeechToTextSpec() actionSpec {
-	return actionSpec{service: "openai-transcription", action: "speech-to-text", isAsync: false, inputFields: inputFieldsFor[openaitranscription.SpeechToTextParams](), decode: decodeInto[openaitranscription.SpeechToTextParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "openai-transcription", action: "speech-to-text", isHybrid: true, inputFields: inputFieldsFor[openaitranscription.SpeechToTextParams](), decode: decodeInto[openaitranscription.SpeechToTextParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.OpenAITranscription.SpeechToText.Run(ctx, params.(openaitranscription.SpeechToTextParams), opts...)
 	}}
 }
 
 func newFishAudioTextToSpeechSpec() actionSpec {
-	return actionSpec{service: "fish-audio", action: "text-to-speech", isAsync: false, inputFields: inputFieldsFor[fishaudio.TextToSpeechParams](), decode: decodeInto[fishaudio.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "fish-audio", action: "text-to-speech", isHybrid: true, inputFields: inputFieldsFor[fishaudio.TextToSpeechParams](), decode: decodeInto[fishaudio.TextToSpeechParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.FishAudio.TextToSpeech.Run(ctx, params.(fishaudio.TextToSpeechParams), opts...)
 	}}
 }
 
 func newFishAudioCreateVoiceSpec() actionSpec {
-	return actionSpec{service: "fish-audio", action: "create-voice", isAsync: false, inputFields: inputFieldsFor[fishaudio.CreateVoiceParams](), decode: decodeInto[fishaudio.CreateVoiceParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "fish-audio", action: "create-voice", isHybrid: true, inputFields: inputFieldsFor[fishaudio.CreateVoiceParams](), decode: decodeInto[fishaudio.CreateVoiceParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.FishAudio.CreateVoice.Run(ctx, params.(fishaudio.CreateVoiceParams), opts...)
 	}}
 }
@@ -2651,19 +2655,19 @@ func newMidjourneyExtendVideoSpec() actionSpec {
 }
 
 func newMidjourneyImageToPromptSpec() actionSpec {
-	return actionSpec{service: "midjourney", action: "image-to-prompt", isAsync: false, inputFields: inputFieldsFor[midjourney.ImageToPromptParams](), decode: decodeInto[midjourney.ImageToPromptParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "midjourney", action: "image-to-prompt", isHybrid: true, inputFields: inputFieldsFor[midjourney.ImageToPromptParams](), decode: decodeInto[midjourney.ImageToPromptParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.Midjourney.ImageToPrompt.Run(ctx, params.(midjourney.ImageToPromptParams), opts...)
 	}}
 }
 
 func newMidjourneyShortenPromptSpec() actionSpec {
-	return actionSpec{service: "midjourney", action: "shorten-prompt", isAsync: false, inputFields: inputFieldsFor[midjourney.ShortenPromptParams](), decode: decodeInto[midjourney.ShortenPromptParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "midjourney", action: "shorten-prompt", isHybrid: true, inputFields: inputFieldsFor[midjourney.ShortenPromptParams](), decode: decodeInto[midjourney.ShortenPromptParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.Midjourney.ShortenPrompt.Run(ctx, params.(midjourney.ShortenPromptParams), opts...)
 	}}
 }
 
 func newMidjourneyGetSeedSpec() actionSpec {
-	return actionSpec{service: "midjourney", action: "get-seed", isAsync: false, inputFields: inputFieldsFor[midjourney.GetSeedParams](), decode: decodeInto[midjourney.GetSeedParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "midjourney", action: "get-seed", isHybrid: true, inputFields: inputFieldsFor[midjourney.GetSeedParams](), decode: decodeInto[midjourney.GetSeedParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.Midjourney.GetSeed.Run(ctx, params.(midjourney.GetSeedParams), opts...)
 	}}
 }

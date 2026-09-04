@@ -61,7 +61,7 @@ that will crash at runtime.
 
 ```bash
 # Pin to a specific tag
-curl -fsSL https://runapi.ai/cli/install.sh | sh -s -- --version v0.12.1
+curl -fsSL https://runapi.ai/cli/install.sh | sh -s -- --version v0.13.0
 
 # Install somewhere else
 curl -fsSL https://runapi.ai/cli/install.sh | sh -s -- --dir ~/.local/bin
