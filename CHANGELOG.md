@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.13.1](https://github.com/runapi-ai/cli/releases/tag/v0.13.1) - 2026-09-07
+
+### Added
+- Add gemini-omni-flash-1-1 request validation and frame-control help to the Gemini Omni text-to-video command.
+- Accept and describe the optional full-body reference image for Gemini Omni character creation.
+
+### Fixed
+- Add optional prompt input for Suno add samples requests.
+
+
 ## [v0.13.0](https://github.com/runapi-ai/cli/releases/tag/v0.13.0) - 2026-09-04
 
 ### Breaking

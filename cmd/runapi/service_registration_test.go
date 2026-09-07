@@ -69,7 +69,7 @@ func TestGeminiOmniServiceCommandIsRegistered(t *testing.T) {
 	}
 
 	output = c.stdout.(*bytes.Buffer).String()
-	if !strings.Contains(output, "descriptions") || !helpHasField(output, "reference_image_url") || helpHasField(output, "image_urls") {
+	if !strings.Contains(output, "descriptions") || !helpHasField(output, "reference_image_url") || !helpHasField(output, "body_reference_image_url") || helpHasField(output, "image_urls") {
 		t.Fatalf("expected Gemini Omni create-character help to include character fields, got:\n%s", output)
 	}
 
@@ -83,7 +83,7 @@ func TestGeminiOmniServiceCommandIsRegistered(t *testing.T) {
 	}
 
 	output = c.stdout.(*bytes.Buffer).String()
-	if !helpHasField(output, "model") || !strings.Contains(output, "gemini-omni-flash-preview") || !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "character_ids") || !helpHasField(output, "reference_image_urls") || helpHasField(output, "image_urls") {
+	if !helpHasField(output, "model") || !strings.Contains(output, "gemini-omni-flash-1-1") || !strings.Contains(output, "gemini-omni-flash-preview") || !strings.Contains(output, "duration_seconds") || !strings.Contains(output, "character_ids") || !helpHasField(output, "reference_image_urls") || !helpHasField(output, "first_frame_image_url") || !helpHasField(output, "last_frame_image_url") || !strings.Contains(output, "360p") || helpHasField(output, "image_urls") || helpHasField(output, "first_frame_url") || helpHasField(output, "last_frame_url") {
 		t.Fatalf("expected Gemini Omni text-to-video help to include video fields, got:\n%s", output)
 	}
 }
