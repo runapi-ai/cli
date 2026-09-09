@@ -22,11 +22,11 @@ require (
 	github.com/runapi-ai/ideogram-v3-sdk/go v0.2.9
 	github.com/runapi-ai/imagen-4-sdk/go v0.2.10
 	github.com/runapi-ai/infinitetalk-sdk/go v0.2.8
-	github.com/runapi-ai/kling-sdk/go v0.3.2
+	github.com/runapi-ai/kling-sdk/go v0.3.3
 	github.com/runapi-ai/luma-sdk/go v0.2.8
 	github.com/runapi-ai/midjourney-sdk/go v0.4.0
 	github.com/runapi-ai/minimax-h3-sdk/go v0.1.0
-	github.com/runapi-ai/nano-banana-sdk/go v0.2.12
+	github.com/runapi-ai/nano-banana-sdk/go v0.2.13
 	github.com/runapi-ai/omnihuman-sdk/go v0.2.11
 	github.com/runapi-ai/openai-transcription-sdk/go v0.2.0
 	github.com/runapi-ai/openai-tts-sdk/go v0.2.0
@@ -38,7 +38,7 @@ require (
 	github.com/runapi-ai/recraft-sdk/go v0.2.8
 	github.com/runapi-ai/runway-aleph-sdk/go v0.2.8
 	github.com/runapi-ai/runway-sdk/go v0.2.10
-	github.com/runapi-ai/seedance-sdk/go v0.3.0
+	github.com/runapi-ai/seedance-sdk/go v0.3.1
 	github.com/runapi-ai/seedream-sdk/go v0.3.0
 	github.com/runapi-ai/suno-sdk/go v0.4.4
 	github.com/runapi-ai/topaz-sdk/go v0.2.11
