@@ -24,6 +24,7 @@ import (
 	"github.com/runapi-ai/gemini-tts-sdk/go/geminitts"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
+	"github.com/runapi-ai/gpt-image-2.5-sdk/go/gptimage25"
 	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
@@ -142,6 +143,8 @@ type Client struct {
 	GptImage *gptimage.Client
 	// GptImage2 generates and edits images with GPT Image 2 models.
 	GptImage2 *gptimage2.Client
+	// GptImage25 generates and edits images with GPT Image 2.5 models.
+	GptImage25 *gptimage25.Client
 	// Gpt4oImage generates images with GPT-4o Image models.
 	Gpt4oImage *gpt4oimage.Client
 	// GrokImagine generates video and images, edits images, extends and
@@ -212,6 +215,7 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		PixVerse:            pixverse.NewClientWithHTTP(httpClient),
 		GptImage:            gptimage.NewClientWithHTTP(httpClient),
 		GptImage2:           gptimage2.NewClientWithHTTP(httpClient),
+		GptImage25:          gptimage25.NewClientWithHTTP(httpClient),
 		Gpt4oImage:          gpt4oimage.NewClientWithHTTP(httpClient),
 		GrokImagine:         grokimagine.NewClientWithHTTP(httpClient),
 		Topaz:               topaz.NewClientWithHTTP(httpClient),

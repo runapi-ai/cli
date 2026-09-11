@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.13.3](https://github.com/runapi-ai/cli/releases/tag/v0.13.3) - 2026-09-11
+
+### Added
+- Add GPT Image 2.5 text-to-image and image editing commands.
+
+
 ## [v0.13.2](https://github.com/runapi-ai/cli/releases/tag/v0.13.2) - 2026-09-09
 
 ### Changed

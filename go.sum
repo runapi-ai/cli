@@ -31,6 +31,8 @@ github.com/runapi-ai/gpt-4o-image-sdk/go v0.2.9 h1:Qa6cdg+dI8kud7otzrrEO0JXuaNHo
 github.com/runapi-ai/gpt-4o-image-sdk/go v0.2.9/go.mod h1:05C5vlU6/jHLihH2+GK1RmKTgtEvTHCU+sN8/I9c2uA=
 github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8 h1:60s9OpopPWowGXLD6YoPj9iAHoaQdteDsC2lBe7eX0M=
 github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8/go.mod h1:AiOZKoRzQcJL7TJW+cuPzxsqVnbuv64DGFWjtCnYu48=
+github.com/runapi-ai/gpt-image-2.5-sdk/go v0.1.1 h1:4G0nP/FeguWYtPDp8nK+0oS88B5oNwLEl7f3TmzOGk4=
+github.com/runapi-ai/gpt-image-2.5-sdk/go v0.1.1/go.mod h1:3MEoLq2cPMWuZz3fONEnC546A8bW/nFAFVp4aZKzWk4=
 github.com/runapi-ai/gpt-image-sdk/go v0.2.8 h1:zXt67IfuvxhAIZP1UI4/ypxce7cDJwf5Kx8sqRM2IKQ=
 github.com/runapi-ai/gpt-image-sdk/go v0.2.8/go.mod h1:FTBS0Rb0ZQ/vYJWBYwR262TsH/gGnf13yaEx9r1/MDw=
 github.com/runapi-ai/grok-imagine-sdk/go v0.2.16 h1:CTRSFn1LWh4O6ltQckJ6JtU6d8uHtMOwVv9g26bwjZk=
@@ -45,8 +47,8 @@ github.com/runapi-ai/imagen-4-sdk/go v0.2.10 h1:f4xNLvyjDVNtdpq3Wn7RSFmNmTSdEaC4
 github.com/runapi-ai/imagen-4-sdk/go v0.2.10/go.mod h1:zjo9bXCYVN7J58MJHzszbwCFKIjd4PHa7nPmox6Xy8Q=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.8 h1:Ly31a1CgzP/68ngLISnpApBCK25LXqUp3UCpW0JFy2g=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.8/go.mod h1:b36S2DQAB+6ucf7cTgCKENlfFAeUtXqgzuHVdwOPv8g=
-github.com/runapi-ai/kling-sdk/go v0.3.3 h1:7st+pBpHWrnep3YsUSYMlLUQdZZ8nyVTM+b0R0rkiJE=
-github.com/runapi-ai/kling-sdk/go v0.3.3/go.mod h1:+Qqgy+9VfgOSW+2f3Ab4ViwIdntUP9xGPfArrlZHKqU=
+github.com/runapi-ai/kling-sdk/go v0.3.4 h1:pyjNtOt9AFszhNdYg4QyZXaCkHS76DXWV+bj7Axm/p8=
+github.com/runapi-ai/kling-sdk/go v0.3.4/go.mod h1:+Qqgy+9VfgOSW+2f3Ab4ViwIdntUP9xGPfArrlZHKqU=
 github.com/runapi-ai/luma-sdk/go v0.2.8 h1:qhiZN1TFm6qyjvt2iU/9ANEh/R36jfvofvPbwhjKYHk=
 github.com/runapi-ai/luma-sdk/go v0.2.8/go.mod h1:GHdgTmZHQ3F4ZYo3BVNLYz/cnne8mG5Ypp55tPjsFFQ=
 github.com/runapi-ai/midjourney-sdk/go v0.4.0 h1:6KOn/UgEMrT+373AD/+PxyPCUMuWu+RObfDRknYFtKA=

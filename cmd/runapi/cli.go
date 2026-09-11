@@ -30,6 +30,7 @@ import (
 	"github.com/runapi-ai/gemini-tts-sdk/go/geminitts"
 	"github.com/runapi-ai/gpt-4o-image-sdk/go/gpt4oimage"
 	"github.com/runapi-ai/gpt-image-2-sdk/go/gptimage2"
+	"github.com/runapi-ai/gpt-image-2.5-sdk/go/gptimage25"
 	"github.com/runapi-ai/gpt-image-sdk/go/gptimage"
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
@@ -230,6 +231,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("happyhorse"))
 	root.AddCommand(c.serviceCommand("gpt-image"))
 	root.AddCommand(c.serviceCommand("gpt-image-2"))
+	root.AddCommand(c.serviceCommand("gpt-image-2.5"))
 	root.AddCommand(c.serviceCommand("gpt-4o-image"))
 	root.AddCommand(c.serviceCommand("grok-imagine"))
 	root.AddCommand(c.serviceCommand("topaz"))
@@ -1763,7 +1765,7 @@ var allSpecs = []actionSpec{
 	newMiniMaxH3TextToVideoSpec(), newMiniMaxH3ImageToVideoSpec(),
 	newVolcengineLipSyncVideoSpec(),
 	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
-	newGptImageTextToImageSpec(), newGptImageEditImageSpec(), newGptImage2TextToImageSpec(), newGptImage2EditImageSpec(), newGpt4oImageTextToImageSpec(),
+	newGptImageTextToImageSpec(), newGptImageEditImageSpec(), newGptImage2TextToImageSpec(), newGptImage2EditImageSpec(), newGptImage25TextToImageSpec(), newGptImage25EditImageSpec(), newGpt4oImageTextToImageSpec(),
 	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineSegmentMapSpec(), newGrokImagineEditImageSpec(),
 	newGrokImagineExtendSpec(), newGrokImagineUpscaleSpec(),
 	newTopazUpscaleImageSpec(), newTopazUpscaleVideoSpec(),
@@ -2709,6 +2711,26 @@ func newGptImage2EditImageSpec() actionSpec {
 		return client.GptImage2.EditImage.Run(ctx, params.(gptimage2.EditImageParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.GptImage2.EditImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newGptImage25TextToImageSpec() actionSpec {
+	return actionSpec{service: "gpt-image-2.5", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[gptimage25.TextToImageParams](), decode: decodeInto[gptimage25.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.GptImage25.TextToImage.Create(ctx, params.(gptimage25.TextToImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.GptImage25.TextToImage.Run(ctx, params.(gptimage25.TextToImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.GptImage25.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newGptImage25EditImageSpec() actionSpec {
+	return actionSpec{service: "gpt-image-2.5", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[gptimage25.EditImageParams](), decode: decodeInto[gptimage25.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.GptImage25.EditImage.Create(ctx, params.(gptimage25.EditImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.GptImage25.EditImage.Run(ctx, params.(gptimage25.EditImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.GptImage25.EditImage.Get(ctx, id, opts...)
 	}}
 }
 

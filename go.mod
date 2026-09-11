@@ -15,6 +15,7 @@ require (
 	github.com/runapi-ai/gemini-tts-sdk/go v0.1.3
 	github.com/runapi-ai/gpt-4o-image-sdk/go v0.2.9
 	github.com/runapi-ai/gpt-image-2-sdk/go v0.2.8
+	github.com/runapi-ai/gpt-image-2.5-sdk/go v0.1.1
 	github.com/runapi-ai/gpt-image-sdk/go v0.2.8
 	github.com/runapi-ai/grok-imagine-sdk/go v0.2.16
 	github.com/runapi-ai/hailuo-sdk/go v0.2.10
@@ -22,7 +23,7 @@ require (
 	github.com/runapi-ai/ideogram-v3-sdk/go v0.2.9
 	github.com/runapi-ai/imagen-4-sdk/go v0.2.10
 	github.com/runapi-ai/infinitetalk-sdk/go v0.2.8
-	github.com/runapi-ai/kling-sdk/go v0.3.3
+	github.com/runapi-ai/kling-sdk/go v0.3.4
 	github.com/runapi-ai/luma-sdk/go v0.2.8
 	github.com/runapi-ai/midjourney-sdk/go v0.4.0
 	github.com/runapi-ai/minimax-h3-sdk/go v0.1.0
