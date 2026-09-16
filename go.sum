@@ -47,8 +47,8 @@ github.com/runapi-ai/imagen-4-sdk/go v0.2.10 h1:f4xNLvyjDVNtdpq3Wn7RSFmNmTSdEaC4
 github.com/runapi-ai/imagen-4-sdk/go v0.2.10/go.mod h1:zjo9bXCYVN7J58MJHzszbwCFKIjd4PHa7nPmox6Xy8Q=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.8 h1:Ly31a1CgzP/68ngLISnpApBCK25LXqUp3UCpW0JFy2g=
 github.com/runapi-ai/infinitetalk-sdk/go v0.2.8/go.mod h1:b36S2DQAB+6ucf7cTgCKENlfFAeUtXqgzuHVdwOPv8g=
-github.com/runapi-ai/kling-sdk/go v0.3.4 h1:pyjNtOt9AFszhNdYg4QyZXaCkHS76DXWV+bj7Axm/p8=
-github.com/runapi-ai/kling-sdk/go v0.3.4/go.mod h1:+Qqgy+9VfgOSW+2f3Ab4ViwIdntUP9xGPfArrlZHKqU=
+github.com/runapi-ai/kling-sdk/go v0.3.5 h1:8uCLqZDSh08dST2dBaHehHZ/rKo0FekDvedKWpHNw4c=
+github.com/runapi-ai/kling-sdk/go v0.3.5/go.mod h1:+Qqgy+9VfgOSW+2f3Ab4ViwIdntUP9xGPfArrlZHKqU=
 github.com/runapi-ai/luma-sdk/go v0.2.8 h1:qhiZN1TFm6qyjvt2iU/9ANEh/R36jfvofvPbwhjKYHk=
 github.com/runapi-ai/luma-sdk/go v0.2.8/go.mod h1:GHdgTmZHQ3F4ZYo3BVNLYz/cnne8mG5Ypp55tPjsFFQ=
 github.com/runapi-ai/midjourney-sdk/go v0.4.0 h1:6KOn/UgEMrT+373AD/+PxyPCUMuWu+RObfDRknYFtKA=
@@ -83,8 +83,8 @@ github.com/runapi-ai/seedance-sdk/go v0.3.1 h1:9Xu6z7DlL5ouPBom1tQg70sdbHbKYpvAx
 github.com/runapi-ai/seedance-sdk/go v0.3.1/go.mod h1:U6Y8kyLpI4kXZa29FbYhnudmRx1n3OeuYZxqVV9/JOw=
 github.com/runapi-ai/seedream-sdk/go v0.3.0 h1:KrsgGXRsr+bDYOTjkIUiNzEhLEfN6XOgoRcqDBv/cO8=
 github.com/runapi-ai/seedream-sdk/go v0.3.0/go.mod h1:Yk5z02CB0i56z3vv5t2dtPthc17TWYV5AWtQI/VNTSg=
-github.com/runapi-ai/suno-sdk/go v0.4.4 h1:sFVJv5wUs5Cdp46v16t4FC0rcExgNE65nwdy13z/4SU=
-github.com/runapi-ai/suno-sdk/go v0.4.4/go.mod h1:BR5Zv8UQPxgH9TprlIMsQjvhkpnoIx5fXGEWDD2Ewr4=
+github.com/runapi-ai/suno-sdk/go v0.4.5 h1:ARP/PMW8A82Rld/M5zK84Y2Vb5Cca6fMW7pPxK0Jc1U=
+github.com/runapi-ai/suno-sdk/go v0.4.5/go.mod h1:BR5Zv8UQPxgH9TprlIMsQjvhkpnoIx5fXGEWDD2Ewr4=
 github.com/runapi-ai/topaz-sdk/go v0.2.11 h1:kV9dDR9wDvsoUZb3BH0DCyh+N6K9yefQ7YaUzQeoFNo=
 github.com/runapi-ai/topaz-sdk/go v0.2.11/go.mod h1:ttes8AA4YvLpTjiD+cT5S7JJP6vbGYIV7Hkef+YMX0w=
 github.com/runapi-ai/veo-3.1-sdk/go v0.2.11 h1:vfK7gGD//wWwd8U+snI8coo/u4G7qNQBpek+PCVUqL4=

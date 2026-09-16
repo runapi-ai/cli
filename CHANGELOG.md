@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.13.4](https://github.com/runapi-ai/cli/releases/tag/v0.13.4) - 2026-09-16
+
+### Added
+- Add Suno V6 model variants to generated CLI contract metadata.
+- Add runapi suno personas, voices, style-expansions, timestamped-lyrics, audio-exports, music-visualizations, and music-from-sample commands.
+- Notify interactive users when a newer RunAPI CLI version is available.
+
+### Changed
+- Refresh generated contract metadata so CLI help and validation include canonical Voice handles.
+
+
 ## [v0.13.3](https://github.com/runapi-ai/cli/releases/tag/v0.13.3) - 2026-09-11
 
 ### Added

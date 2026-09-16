@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -1066,4 +1067,59 @@ func TestSunoCreateMashupHelpDoesNotDuplicateModelField(t *testing.T) {
 	if count := helpFieldCount(output, "model"); count != 1 {
 		t.Fatalf("expected Suno create-mashup help to list model once, got %d:\n%s", count, output)
 	}
+}
+
+func TestSunoCanonicalResourceCommandsAreRegistered(t *testing.T) {
+	cases := []struct {
+		action string
+		fields []string
+	}{
+		{action: "personas", fields: []string{"description", "name", "source_audio_id", "source_task_id"}},
+		{action: "voices", fields: []string{"name", "source_audio_url"}},
+		{action: "style-expansions", fields: []string{"description"}},
+		{action: "timestamped-lyrics", fields: []string{"source_audio_id", "source_task_id"}},
+		{action: "audio-exports", fields: []string{"callback_url", "source_audio_id", "source_task_id"}},
+		{action: "music-visualizations", fields: []string{"author", "callback_url", "domain_name", "source_audio_id", "source_task_id"}},
+		{action: "music-from-sample", fields: []string{"audio_url", "callback_url", "end_seconds", "model", "prompt", "start_seconds"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.action, func(t *testing.T) {
+			c := newCLI()
+			c.stdout = &bytes.Buffer{}
+			c.stderr = &bytes.Buffer{}
+
+			cmd := c.command()
+			cmd.SetArgs([]string{"suno", tc.action, "--help"})
+			if err := cmd.Execute(); err != nil {
+				t.Fatal(err)
+			}
+
+			// The provider-neutral command must publish its own request roster,
+			// not the legacy operation's roster on the shared endpoint.
+			got := sunoHelpInputFields(c.stdout.(*bytes.Buffer).String())
+			sort.Strings(got)
+			if strings.Join(got, ",") != strings.Join(tc.fields, ",") {
+				t.Fatalf("expected %s input fields %v, got %v", tc.action, tc.fields, got)
+			}
+		})
+	}
+}
+
+func sunoHelpInputFields(output string) []string {
+	_, rest, found := strings.Cut(output, "Input fields (JSON):\n")
+	if !found {
+		return nil
+	}
+
+	var fields []string
+	for _, line := range strings.Split(rest, "\n") {
+		if strings.TrimSpace(line) == "" {
+			break
+		}
+		if columns := strings.Fields(line); len(columns) > 1 {
+			fields = append(fields, columns[0])
+		}
+	}
+	return fields
 }

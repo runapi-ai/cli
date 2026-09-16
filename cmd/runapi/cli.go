@@ -86,6 +86,7 @@ type cli struct {
 	newPricingClient func(...option.ClientOption) (*pricing.Client, error)
 
 	archiveBaseURL string
+	updateBaseURL  string
 	httpClient     *http.Client
 
 	projectDir           string
@@ -128,10 +129,12 @@ func (c *cli) run(args []string) int {
 		return exitCode(err)
 	}
 	cmd.SetArgs(args)
-	if err := cmd.Execute(); err != nil {
+	executed, err := cmd.ExecuteC()
+	if err != nil {
 		c.printError(err)
 		return exitCode(err)
 	}
+	c.maybeNotifyUpdate(executed, args)
 	return 0
 }
 
@@ -1736,6 +1739,8 @@ var allSpecs = []actionSpec{
 	newSunoVisualizeMusicSpec(), newSunoGenerateLyricsSpec(), newSunoBlendLyricsSpec(), newSunoGetTimestampedLyricsSpec(), newSunoReplaceSectionSpec(), newSunoCreateMashupSpec(),
 	newSunoTextToSoundSpec(), newSunoVoiceToValidationPhraseSpec(), newSunoRegenerateValidationPhraseSpec(), newSunoGenerateVoiceSpec(), newSunoCheckVoiceSpec(),
 	newSunoGeneratePersonaSpec(), newSunoBoostStyleSpec(),
+	newSunoPersonasSpec(), newSunoVoicesSpec(), newSunoStyleExpansionsSpec(), newSunoTimestampedLyricsSpec(),
+	newSunoAudioExportsSpec(), newSunoMusicVisualizationsSpec(), newSunoMusicFromSampleSpec(),
 	newProducerTextToMusicSpec(),
 	newVeo31TextToVideoSpec(), newVeo31ExtendVideoSpec(), newVeo31UpscaleVideoSpec(),
 	newNanoBananaTextToImageSpec(), newNanoBananaEditImageSpec(), newImagen4TextToImageSpec(), newImagen4RemixImageSpec(),
@@ -2023,6 +2028,60 @@ func newSunoGeneratePersonaSpec() actionSpec {
 func newSunoBoostStyleSpec() actionSpec {
 	return actionSpec{service: "suno", action: "boost-style", isAsync: false, inputFields: inputFieldsFor[suno.BoostStyleParams](), decode: decodeInto[suno.BoostStyleParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.Suno.BoostStyle.Run(ctx, params.(suno.BoostStyleParams), opts...)
+	}}
+}
+
+func newSunoPersonasSpec() actionSpec {
+	return actionSpec{service: "suno", action: "personas", isHybrid: true, inputFields: inputFieldsFor[suno.PersonaParams](), decode: decodeInto[suno.PersonaParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.Personas.Run(ctx, params.(suno.PersonaParams), opts...)
+	}}
+}
+
+func newSunoVoicesSpec() actionSpec {
+	return actionSpec{service: "suno", action: "voices", isAsync: false, inputFields: inputFieldsFor[suno.VoiceParams](), decode: decodeInto[suno.VoiceParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.Voices.Run(ctx, params.(suno.VoiceParams), opts...)
+	}}
+}
+
+func newSunoStyleExpansionsSpec() actionSpec {
+	return actionSpec{service: "suno", action: "style-expansions", isAsync: false, inputFields: inputFieldsFor[suno.StyleExpansionParams](), decode: decodeInto[suno.StyleExpansionParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.StyleExpansions.Run(ctx, params.(suno.StyleExpansionParams), opts...)
+	}}
+}
+
+func newSunoTimestampedLyricsSpec() actionSpec {
+	return actionSpec{service: "suno", action: "timestamped-lyrics", isAsync: false, inputFields: inputFieldsFor[suno.TimestampedLyricsParams](), decode: decodeInto[suno.TimestampedLyricsParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.TimestampedLyrics.Run(ctx, params.(suno.TimestampedLyricsParams), opts...)
+	}}
+}
+
+func newSunoAudioExportsSpec() actionSpec {
+	return actionSpec{service: "suno", action: "audio-exports", isAsync: true, inputFields: inputFieldsFor[suno.AudioExportParams](), decode: decodeInto[suno.AudioExportParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.AudioExports.Create(ctx, params.(suno.AudioExportParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.AudioExports.Run(ctx, params.(suno.AudioExportParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.AudioExports.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoMusicVisualizationsSpec() actionSpec {
+	return actionSpec{service: "suno", action: "music-visualizations", isAsync: true, inputFields: inputFieldsFor[suno.MusicVisualizationParams](), decode: decodeInto[suno.MusicVisualizationParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.MusicVisualizations.Create(ctx, params.(suno.MusicVisualizationParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.MusicVisualizations.Run(ctx, params.(suno.MusicVisualizationParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.MusicVisualizations.Get(ctx, id, opts...)
+	}}
+}
+
+func newSunoMusicFromSampleSpec() actionSpec {
+	return actionSpec{service: "suno", action: "music-from-sample", isAsync: true, inputFields: inputFieldsFor[suno.MusicFromSampleParams](), decode: decodeInto[suno.MusicFromSampleParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Suno.MusicFromSample.Create(ctx, params.(suno.MusicFromSampleParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Suno.MusicFromSample.Run(ctx, params.(suno.MusicFromSampleParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Suno.MusicFromSample.Get(ctx, id, opts...)
 	}}
 }
 
