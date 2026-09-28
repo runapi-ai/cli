@@ -52,6 +52,7 @@ import (
 	"github.com/runapi-ai/seedream-sdk/go/seedream"
 	"github.com/runapi-ai/suno-sdk/go/suno"
 	"github.com/runapi-ai/topaz-sdk/go/topaz"
+	"github.com/runapi-ai/typesafe-sdk/go/typesafe"
 	"github.com/runapi-ai/veo-3.1-sdk/go/veo31"
 	volcenginelipsync "github.com/runapi-ai/volcengine-lip-sync-sdk/go/volcenginelipsync"
 	"github.com/runapi-ai/wan-sdk/go/wan"
@@ -152,6 +153,8 @@ type Client struct {
 	GrokImagine *grokimagine.Client
 	// Topaz upscales images and video to higher resolutions using Topaz models.
 	Topaz *topaz.Client
+	// Typesafe evaluates application state against Choice, Score, and Noul questions.
+	Typesafe *typesafe.Client
 }
 
 // NewClient creates an aggregate client with a shared HTTP transport.
@@ -219,6 +222,7 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		Gpt4oImage:          gpt4oimage.NewClientWithHTTP(httpClient),
 		GrokImagine:         grokimagine.NewClientWithHTTP(httpClient),
 		Topaz:               topaz.NewClientWithHTTP(httpClient),
+		Typesafe:            typesafe.NewClientWithHTTP(httpClient),
 	}
 }
 

@@ -44,6 +44,23 @@ func helpFieldCount(output, field string) int {
 	return count
 }
 
+func TestTypesafeServiceCommandIsRegistered(t *testing.T) {
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+
+	cmd := c.command()
+	cmd.SetArgs([]string{"typesafe", "system-one", "--help"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := c.stdout.(*bytes.Buffer).String()
+	if !helpHasField(output, "model") || !helpHasField(output, "state") || !helpHasField(output, "questions") {
+		t.Fatalf("expected TypeSafe system-one help to include model, state, and questions, got:\n%s", output)
+	}
+}
+
 func TestGeminiOmniServiceCommandIsRegistered(t *testing.T) {
 	c := newCLI()
 	c.stdout = &bytes.Buffer{}

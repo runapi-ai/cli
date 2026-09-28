@@ -58,6 +58,7 @@ import (
 	"github.com/runapi-ai/seedream-sdk/go/seedream"
 	"github.com/runapi-ai/suno-sdk/go/suno"
 	"github.com/runapi-ai/topaz-sdk/go/topaz"
+	"github.com/runapi-ai/typesafe-sdk/go/typesafe"
 	"github.com/runapi-ai/veo-3.1-sdk/go/veo31"
 	volcenginelipsync "github.com/runapi-ai/volcengine-lip-sync-sdk/go/volcenginelipsync"
 	"github.com/runapi-ai/wan-sdk/go/wan"
@@ -239,6 +240,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("grok-imagine"))
 	root.AddCommand(c.serviceCommand("topaz"))
 	root.AddCommand(c.serviceCommand("pixverse"))
+	root.AddCommand(c.serviceCommand("typesafe"))
 	root.AddCommand(c.getCommand())
 	root.AddCommand(c.waitCommand())
 	root.AddCommand(c.listenCommand())
@@ -1757,6 +1759,7 @@ var allSpecs = []actionSpec{
 	newQwen3TextToImageSpec(), newQwen3EditImageSpec(),
 	newQwenImageTextToImageSpec(), newQwenImageRemixImageSpec(), newQwenImageEditSpec(),
 	newRecraftUpscaleSpec(), newRecraftBackgroundRemovalSpec(), newZImageTextToImageSpec(),
+	newTypesafeSystemOneSpec(),
 	newIdeogramV3TextToImageSpec(), newIdeogramV3EditImageSpec(), newIdeogramV3RemixImageSpec(), newIdeogramV3ReframeImageSpec(),
 	newElevenlabsSpeechSpec(), newElevenlabsDialogueSpec(), newElevenlabsSoundEffectSpec(), newElevenlabsTranscriptionSpec(), newElevenlabsAudioIsolationSpec(),
 	newInfiniteTalkAudioToVideoSpec(),
@@ -2318,6 +2321,12 @@ func newFluxRemixImageSpec() actionSpec {
 func newGeminiOmniCreateAudioSpec() actionSpec {
 	return actionSpec{service: "gemini-omni", action: "create-audio", isAsync: false, inputFields: inputFieldsFor[geminiomni.CreateAudioParams](), decode: decodeInto[geminiomni.CreateAudioParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.GeminiOmni.CreateAudio.Run(ctx, params.(geminiomni.CreateAudioParams), opts...)
+	}}
+}
+
+func newTypesafeSystemOneSpec() actionSpec {
+	return actionSpec{service: "typesafe", action: "system-one", isAsync: false, inputFields: inputFieldsFor[typesafe.SystemOneParams](), decode: decodeInto[typesafe.SystemOneParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Typesafe.SystemOne.Run(ctx, params.(typesafe.SystemOneParams), opts...)
 	}}
 }
 

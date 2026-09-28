@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.14.0](https://github.com/runapi-ai/cli/releases/tag/v0.14.0) - 2026-09-28
+
+### Added
+- Add `runapi typesafe system-one` for synchronous TypeSafe Jev structured decisions.
+
+### Changed
+- Document remaster_audio's optional variation_category and source constraints, and the Live Responses delegation contract shape, in generated CLI contract help.
+
+
 ## [v0.13.4](https://github.com/runapi-ai/cli/releases/tag/v0.13.4) - 2026-09-16
 
 ### Added
