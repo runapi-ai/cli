@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.14.1](https://github.com/runapi-ai/cli/releases/tag/v0.14.1) - 2026-09-29
+
+### Changed
+- Mark output_resolution required for Wan 2.5 and Kling 3.0 motion control, audio for Wan 2.6 Flash edit, and duration_seconds for sound effects, add the Kling 2.6 sound-mode and Hailuo 2.3 1080p duration rules, and show server defaults for optional media fields, in generated CLI contract help.
+- Generated CLI contract help lists duration_seconds 5 and 10 as the only accepted values for wan-2.5-image-to-video and wan-2.5-text-to-video.
+
+
 ## [v0.14.0](https://github.com/runapi-ai/cli/releases/tag/v0.14.0) - 2026-09-28
 
 ### Added
