@@ -122,22 +122,6 @@ func TestFilesCreateFromPathCanPrintURLOnly(t *testing.T) {
 	}
 }
 
-func TestFilesCreateRejectsMultipleSources(t *testing.T) {
-	isolateConfig(t)
-	t.Setenv("RUNAPI_API_KEY", "test-key")
-	c := newCLI()
-	c.stdout = &bytes.Buffer{}
-	c.stderr = &bytes.Buffer{}
-
-	code := c.run([]string{"files", "create", "image.png", "--url", "https://cdn.runapi.ai/public/samples/mask.png"})
-	if code == 0 {
-		t.Fatal("expected non-zero exit code")
-	}
-	if !strings.Contains(c.stdout.(*bytes.Buffer).String(), "exactly one source") {
-		t.Fatalf("expected validation error, got %s", c.stdout.(*bytes.Buffer).String())
-	}
-}
-
 func TestFilesCreateDoesNotExposeContentTypeOverride(t *testing.T) {
 	isolateConfig(t)
 	t.Setenv("RUNAPI_API_KEY", "test-key")

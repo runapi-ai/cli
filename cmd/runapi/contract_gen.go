@@ -78,7 +78,6 @@ var generatedContract = map[string]generatedContractAction{
 				"voice":            generatedContractField{"type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"required": []any{"voice"}, "when": map[string]any{"model": "text-to-speech-multilingual-v2"}}},
 	},
 	"fish-audio/create-voice": {
 		Models: []string{},
@@ -137,7 +136,6 @@ var generatedContract = map[string]generatedContractAction{
 				"voice_id":       generatedContractField{"type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"bitrate_kbps"}, "when": map[string]any{"output_format": "wav"}}, map[string]any{"enum": map[string]any{"sample_rate_hz": []any{32000, 44100}}, "when": map[string]any{"output_format": "mp3"}}, map[string]any{"enum": map[string]any{"sample_rate_hz": []any{32000, 44100}}, "when": map[string]any{"output_format": map[string]any{"present": false}}}},
 	},
 	"flux-2/remix-image": {
 		Models: []string{"flux-2-flex-remix-image", "flux-2-max-remix-image", "flux-2-pro-remix-image"},
@@ -170,7 +168,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_urls":     generatedContractField{"description": "Public source image URLs.", "max_items": 8, "min_items": 1, "required": true, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"output_count"}, "when": map[string]any{"model": "flux-2-flex-remix-image"}}, map[string]any{"forbidden": []any{"enable_safety_checker"}, "when": map[string]any{"model": "flux-2-max-remix-image"}}, map[string]any{"forbidden": []any{"output_count"}, "when": map[string]any{"model": "flux-2-pro-remix-image"}}},
 	},
 	"flux-2/text-to-image": {
 		Models: []string{"flux-2-flex-text-to-image", "flux-2-max-text-to-image", "flux-2-pro-text-to-image"},
@@ -200,7 +197,6 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":                generatedContractField{"description": "Image description.", "length": true, "max": 5000, "min": 3, "required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"output_count"}, "when": map[string]any{"model": "flux-2-flex-text-to-image"}}, map[string]any{"forbidden": []any{"enable_safety_checker"}, "when": map[string]any{"model": "flux-2-max-text-to-image"}}, map[string]any{"forbidden": []any{"output_count"}, "when": map[string]any{"model": "flux-2-pro-text-to-image"}}},
 	},
 	"flux-kontext/text-to-image": {
 		Models: []string{"flux-kontext-max", "flux-kontext-pro"},
@@ -350,7 +346,6 @@ var generatedContract = map[string]generatedContractAction{
 				"video_list":            generatedContractField{"description": "Source video clips; each clip consumes two reference units.", "items": map[string]any{"properties": map[string]any{"ends": map[string]any{"description": "Clip end time in seconds; must be greater than start and no more than 10 seconds after start.", "min": 0, "required": true, "type": "number"}, "start": map[string]any{"description": "Clip start time in seconds.", "min": 0, "required": true, "type": "number"}, "url": map[string]any{"description": "Public source video URL.", "required": true, "type": "string"}}, "type": "object"}, "max_items": 1, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"reference_image_urls", "audio_ids", "video_list", "character_ids"}, "when": map[string]any{"first_frame_image_url": map[string]any{"present": true}, "model": "gemini-omni-flash-1-1"}}, map[string]any{"required": []any{"first_frame_image_url"}, "when": map[string]any{"last_frame_image_url": map[string]any{"present": true}, "model": "gemini-omni-flash-1-1"}}, map[string]any{"forbidden": []any{"reference_image_urls", "audio_ids", "video_list", "character_ids", "first_frame_image_url", "last_frame_image_url", "duration_seconds", "seed"}, "when": map[string]any{"model": "gemini-omni-flash-preview"}}, map[string]any{"forbidden": []any{"first_frame_image_url", "last_frame_image_url"}, "when": map[string]any{"model": "gemini-omni-text-to-video"}}},
 	},
 	"gemini-tts/text-to-speech": {
 		Models: []string{"gemini-2.5-pro-tts", "gemini-3.1-flash-tts"},
@@ -410,7 +405,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_urls": generatedContractField{"max_items": 16, "required": true, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"aspect_ratio"}, "when": map[string]any{"aspect_ratio": "1:1", "output_resolution": "4k"}}, map[string]any{"forbidden": []any{"aspect_ratio"}, "when": map[string]any{"aspect_ratio": "auto", "output_resolution": "4k"}}, map[string]any{"forbidden": []any{"output_resolution"}, "when": map[string]any{"aspect_ratio": map[string]any{"present": false}, "output_resolution": "4k"}}, map[string]any{"forbidden": []any{"aspect_ratio"}, "when": map[string]any{"aspect_ratio": "auto", "output_resolution": "2k"}}, map[string]any{"forbidden": []any{"output_resolution"}, "when": map[string]any{"aspect_ratio": map[string]any{"present": false}, "output_resolution": "2k"}}},
 	},
 	"gpt-image-2.5/text-to-image": {
 		Models: []string{"gpt-image-2.5-flare", "gpt-image-2.5-sunburst"},
@@ -430,7 +424,6 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":            generatedContractField{"required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"aspect_ratio"}, "when": map[string]any{"aspect_ratio": "1:1", "output_resolution": "4k"}}, map[string]any{"forbidden": []any{"aspect_ratio"}, "when": map[string]any{"aspect_ratio": "auto", "output_resolution": "4k"}}, map[string]any{"forbidden": []any{"output_resolution"}, "when": map[string]any{"aspect_ratio": map[string]any{"present": false}, "output_resolution": "4k"}}, map[string]any{"forbidden": []any{"aspect_ratio"}, "when": map[string]any{"aspect_ratio": "auto", "output_resolution": "2k"}}, map[string]any{"forbidden": []any{"output_resolution"}, "when": map[string]any{"aspect_ratio": map[string]any{"present": false}, "output_resolution": "2k"}}},
 	},
 	"gpt-image-2/edit-image": {
 		Models: []string{"gpt-image-2"},
@@ -508,7 +501,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_task_id":        generatedContractField{"description": "Not accepted by this model."},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"source_task_id", "mask_indices", "source_image_urls", "aspect_ratio"}, "when": map[string]any{"model": "grok-imagine-edit-image"}}, map[string]any{"forbidden": []any{"source_image_url", "source_task_id", "mask_indices", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-image-2-0"}}},
 	},
 	"grok-imagine/extend": {
 		Models: []string{},
@@ -568,7 +560,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_task_id":        generatedContractField{"description": "Not accepted by this model.", "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"reference_image_urls"}, "when": map[string]any{"model": "grok-imagine-image-to-video"}}, map[string]any{"forbidden": []any{"source_task_id", "index", "motion_style", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-video-1.5-fast"}}, map[string]any{"forbidden": []any{"source_task_id", "index", "motion_style", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-video-1.5-preview"}}},
 	},
 	"grok-imagine/segment-map": {
 		Models: []string{"grok-imagine-image-2-0"},
@@ -580,7 +571,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_task_id": generatedContractField{"description": "Completed Image 2.0 text-to-image Task ID owned by the same account. Compatibility input; use image_url instead.", "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"required_any": []any{"image_url", "source_task_id"}}, map[string]any{"forbidden": []any{"source_task_id"}, "when": map[string]any{"image_url": map[string]any{"present": true}}}, map[string]any{"forbidden": []any{"image_url"}, "when": map[string]any{"source_task_id": map[string]any{"present": true}}}},
 	},
 	"grok-imagine/text-to-image": {
 		Models: []string{"grok-imagine-image-2-0", "grok-imagine-text-to-image"},
@@ -602,7 +592,6 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":                generatedContractField{"description": "Image generation prompt.", "length": true, "max": 5000, "required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"enable_safety_checker", "enable_pro"}, "when": map[string]any{"model": "grok-imagine-image-2-0"}}},
 	},
 	"grok-imagine/text-to-video": {
 		Models: []string{"grok-imagine-text-to-video", "grok-imagine-video-1.5-fast", "grok-imagine-video-1.5-preview"},
@@ -641,7 +630,6 @@ var generatedContract = map[string]generatedContractAction{
 				"reference_image_urls":  generatedContractField{"description": "Public reference image URLs; 1080p accepts at most one image.", "max_items": 7, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"reference_image_urls"}, "when": map[string]any{"model": "grok-imagine-text-to-video"}}, map[string]any{"forbidden": []any{"motion_style", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-video-1.5-fast"}}, map[string]any{"forbidden": []any{"motion_style", "enable_safety_checker"}, "when": map[string]any{"model": "grok-imagine-video-1.5-preview"}}},
 	},
 	"grok-imagine/upscale-image": {
 		Models: []string{},
@@ -700,7 +688,6 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt_optimizer":      generatedContractField{"type": "boolean"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"enum": map[string]any{"output_resolution": []any{"768p"}}, "when": map[string]any{"duration_seconds": 10, "model": "hailuo-2.3-image-to-video-pro"}}, map[string]any{"enum": map[string]any{"output_resolution": []any{"768p"}}, "when": map[string]any{"duration_seconds": 10, "model": "hailuo-2.3-image-to-video-standard"}}},
 	},
 	"hailuo/text-to-video": {
 		Models: []string{"hailuo-02-text-to-video-pro", "hailuo-02-text-to-video-standard"},
@@ -727,7 +714,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"happyhorse-edit-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"happyhorse-edit-video": {
-				"audio_setting":        generatedContractField{"enum": []any{"auto", "original"}, "type": "string"},
+				"audio_setting":        generatedContractField{"default": "auto", "enum": []any{"auto", "original"}, "type": "string"},
 				"callback_url":         generatedContractField{"type": "string"},
 				"model":                generatedContractField{"type": "string"},
 				"output_resolution":    generatedContractField{"default": "1080p", "enum": []any{"720p", "1080p"}, "type": "string"},
@@ -1040,7 +1027,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_video_url":     generatedContractField{"description": "Public source video URL; cannot be combined with source_task_id.", "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-edit", "source_video_url": map[string]any{"present": true}}}, map[string]any{"forbidden": []any{"source_video_url"}, "when": map[string]any{"model": "kling-v3-omni-edit", "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": false}, "source_video_url": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": false}, "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": true}, "source_video_url": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-edit", "reference_image_urls": map[string]any{"present": true}, "source_task_id": map[string]any{"present": true}}}, map[string]any{"required_any": []any{"source_video_url", "source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-edit", "source_task_id": map[string]any{"present": false}, "source_video_url": map[string]any{"present": false}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": true}, "source_task_id": map[string]any{"present": true}}}, map[string]any{"required_any": []any{"source_video_url", "source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-reference", "source_task_id": map[string]any{"present": false}, "source_video_url": map[string]any{"present": false}}}, map[string]any{"forbidden": []any{"source_task_id"}, "when": map[string]any{"model": "kling-v3-omni-reference", "source_video_url": map[string]any{"present": true}}}, map[string]any{"forbidden": []any{"source_video_url"}, "when": map[string]any{"model": "kling-v3-omni-reference", "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": false}, "source_video_url": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}, "duration_seconds": []any{5}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": false}, "source_task_id": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"16:9", "9:16", "1:1"}, "enable_sound": []any{false}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"model": "kling-v3-omni-reference", "reference_image_urls": map[string]any{"present": true}, "source_video_url": map[string]any{"present": true}}}},
 	},
 	"kling/extend-video": {
 		Models: []string{"kling-v2.5-turbo-image-to-video-pro", "kling-v2.5-turbo-text-to-video-pro"},
@@ -1152,7 +1138,6 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":                generatedContractField{"description": "Video description.", "length": true, "max": 2500, "min": 1, "required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"output_resolution", "negative_prompt", "cfg_scale"}, "when": map[string]any{"model": "kling-o1"}}, map[string]any{"forbidden": []any{"output_resolution", "enable_sound", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.1-master-image-to-video"}}, map[string]any{"forbidden": []any{"output_resolution", "enable_sound", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.1-pro"}}, map[string]any{"forbidden": []any{"output_resolution", "enable_sound", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.1-standard"}}, map[string]any{"forbidden": []any{"output_resolution", "enable_sound", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.5-turbo-image-to-video-pro"}}, map[string]any{"enum": map[string]any{"enable_sound": []any{false}}, "when": map[string]any{"mode": "std", "model": "kling-v2.6"}}, map[string]any{"forbidden": []any{"output_resolution", "negative_prompt", "cfg_scale", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.6"}}, map[string]any{"enum": map[string]any{"enable_sound": []any{false}}, "when": map[string]any{"mode": map[string]any{"present": false}, "model": "kling-v2.6"}}, map[string]any{"forbidden": []any{"negative_prompt", "cfg_scale", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v3-omni"}}, map[string]any{"forbidden": []any{"enable_sound", "aspect_ratio", "negative_prompt", "cfg_scale", "last_frame_image_url", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v3-turbo-image-to-video"}}},
 	},
 	"kling/motion-control": {
 		Models: []string{"kling-3.0", "kling-v2.6"},
@@ -1177,7 +1162,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_url":      generatedContractField{"description": "Subject image URL.", "required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"background_source"}, "when": map[string]any{"model": "kling-v2.6"}}},
 	},
 	"kling/text-to-video": {
 		Models: []string{"kling-3.0", "kling-o1", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-omni-reference", "kling-v3-turbo-text-to-video"},
@@ -1268,7 +1252,6 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":            generatedContractField{"description": "Video description.", "length": true, "max": 2500, "min": 1, "required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-3.0"}}, map[string]any{"forbidden": []any{"output_resolution", "negative_prompt", "cfg_scale", "multi_shots", "multi_prompt", "first_frame_image_url", "last_frame_image_url", "kling_elements"}, "when": map[string]any{"model": "kling-o1"}}, map[string]any{"forbidden": []any{"mode", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.1-master-text-to-video"}}, map[string]any{"forbidden": []any{"mode", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.5-turbo-text-to-video-pro"}}, map[string]any{"forbidden": []any{"output_resolution", "negative_prompt", "cfg_scale", "multi_shots", "multi_prompt", "first_frame_image_url", "last_frame_image_url", "kling_elements", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v2.6"}}, map[string]any{"enum": map[string]any{"enable_sound": []any{false}}, "when": map[string]any{"mode": "std", "model": "kling-v2.6"}}, map[string]any{"enum": map[string]any{"enable_sound": []any{false}}, "when": map[string]any{"mode": map[string]any{"present": false}, "model": "kling-v2.6"}}, map[string]any{"forbidden": []any{"negative_prompt", "cfg_scale", "multi_shots", "multi_prompt", "first_frame_image_url", "last_frame_image_url", "kling_elements", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v3-omni"}}, map[string]any{"forbidden": []any{"enable_sound", "negative_prompt", "cfg_scale", "multi_shots", "multi_prompt", "first_frame_image_url", "last_frame_image_url", "kling_elements", "reference_image_urls", "reference_video_url", "reference_video_type", "preserve_reference_video_audio"}, "when": map[string]any{"model": "kling-v3-turbo-text-to-video"}}},
 	},
 	"luma/modify-video": {
 		Models: []string{"luma-modify-video"},
@@ -1368,7 +1351,6 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":                generatedContractField{"description": "Video generation prompt.", "length": true, "max": 7000, "min": 1, "required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"required_any": []any{"first_frame_image_url", "last_frame_image_url"}}},
 	},
 	"minimax-h3/text-to-video": {
 		Models: []string{"minimax-h3"},
@@ -1385,7 +1367,6 @@ var generatedContract = map[string]generatedContractAction{
 				"reference_video_urls": generatedContractField{"description": "Public HTTP(S) MP4 or MOV reference video URLs; each clip must be 2-15 seconds and combined video duration must not exceed 15 seconds.", "items": map[string]any{"pattern": "^https?://", "type": "string"}, "max_items": 3, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"required_any": []any{"reference_image_urls", "reference_video_urls"}, "when": map[string]any{"reference_audio_urls": map[string]any{"present": true}}}, map[string]any{"enum": map[string]any{"aspect_ratio": []any{"21:9", "16:9", "4:3", "1:1", "3:4", "9:16"}}, "required": []any{"aspect_ratio"}, "when": map[string]any{"reference_image_urls": map[string]any{"present": false}, "reference_video_urls": map[string]any{"present": false}}}},
 	},
 	"nano-banana/edit-image": {
 		Models: []string{"nano-banana-2-lite", "nano-banana-edit"},
@@ -1406,7 +1387,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_urls": generatedContractField{"required": true, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"output_format"}, "when": map[string]any{"model": "nano-banana-2-lite"}}},
 	},
 	"nano-banana/text-to-image": {
 		Models: []string{"nano-banana", "nano-banana-2", "nano-banana-2-lite", "nano-banana-pro"},
@@ -1446,7 +1426,6 @@ var generatedContract = map[string]generatedContractAction{
 				"reference_image_urls": generatedContractField{"max_items": 8, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"output_resolution", "output_format"}, "when": map[string]any{"model": "nano-banana-2-lite"}}},
 	},
 	"omnihuman/audio-to-video": {
 		Models: []string{"omnihuman-1.5"},
@@ -1670,7 +1649,6 @@ var generatedContract = map[string]generatedContractAction{
 				"vocal_mode":   generatedContractField{"description": "Vocal generation mode.", "enum": []any{"exact_lyrics", "instrumental"}, "required": true, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"required": []any{"lyrics"}, "when": map[string]any{"vocal_mode": "exact_lyrics"}}, map[string]any{"forbidden": []any{"lyrics"}, "when": map[string]any{"vocal_mode": "instrumental"}}},
 	},
 	"qwen-2/edit-image": {
 		Models: []string{"qwen-2-edit-image"},
@@ -1864,7 +1842,6 @@ var generatedContract = map[string]generatedContractAction{
 				"watermark":             generatedContractField{"type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"required": []any{"aspect_ratio"}, "when": map[string]any{"first_frame_image_url": map[string]any{"present": false}}}, map[string]any{"forbidden": []any{"aspect_ratio"}, "when": map[string]any{"first_frame_image_url": map[string]any{"present": true}}}},
 	},
 	"seedance/text-to-video": {
 		Models: []string{"seedance-1.5-pro", "seedance-2-mini", "seedance-2.0", "seedance-2.0-fast", "seedance-2.5", "seedance-v1-pro", "seedance-v1-pro-fast"},
@@ -1970,7 +1947,6 @@ var generatedContract = map[string]generatedContractAction{
 				"seed":                  generatedContractField{"max": 2147483647, "min": -1, "type": "integer"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"enum": map[string]any{"aspect_ratio": []any{"auto"}}, "forbidden": []any{"reference_image_urls", "reference_video_urls", "reference_audio_urls"}, "when": map[string]any{"first_frame_image_url": map[string]any{"present": true}, "model": "seedance-2.5"}}, map[string]any{"forbidden": []any{"reference_image_urls", "reference_video_urls", "reference_audio_urls"}, "required": []any{"first_frame_image_url"}, "when": map[string]any{"last_frame_image_url": map[string]any{"present": true}, "model": "seedance-2.5"}}, map[string]any{"forbidden": []any{"first_frame_image_url", "last_frame_image_url", "reference_image_urls", "reference_video_urls", "reference_audio_urls", "web_search", "return_last_frame", "output_format"}, "when": map[string]any{"model": "seedance-1.5-pro"}}, map[string]any{"forbidden": []any{"source_image_urls", "lock_camera", "seed", "enable_safety_checker", "return_last_frame", "output_format"}, "when": map[string]any{"model": "seedance-2-mini"}}, map[string]any{"forbidden": []any{"source_image_urls", "lock_camera", "seed", "return_last_frame", "output_format"}, "when": map[string]any{"model": "seedance-2.0"}}, map[string]any{"forbidden": []any{"source_image_urls", "lock_camera", "seed", "return_last_frame", "output_format"}, "when": map[string]any{"model": "seedance-2.0-fast"}}, map[string]any{"forbidden": []any{"source_image_urls", "lock_camera", "seed"}, "when": map[string]any{"model": "seedance-2.5"}}, map[string]any{"forbidden": []any{"source_image_urls", "last_frame_image_url", "reference_image_urls", "reference_video_urls", "reference_audio_urls", "web_search", "generate_audio", "return_last_frame", "output_format"}, "when": map[string]any{"model": "seedance-v1-pro"}}, map[string]any{"forbidden": []any{"aspect_ratio", "source_image_urls", "lock_camera", "last_frame_image_url", "reference_image_urls", "reference_video_urls", "reference_audio_urls", "web_search", "generate_audio", "return_last_frame", "output_format"}, "when": map[string]any{"model": "seedance-v1-pro-fast"}}},
 	},
 	"seedream/decompose-layers": {
 		Models: []string{"seedream-5-pro-layer-decomposition"},
@@ -2038,7 +2014,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_urls":     generatedContractField{"max_items": 10, "min_items": 1, "required": true, "type": "array"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"output_format"}, "when": map[string]any{"model": "seedream-4.5-edit"}}, map[string]any{"forbidden": []any{"output_resolution", "output_count", "seed"}, "when": map[string]any{"model": "seedream-5-pro-edit"}}, map[string]any{"forbidden": []any{"output_format"}, "when": map[string]any{"model": "seedream-v4-edit"}}},
 	},
 	"seedream/text-to-image": {
 		Models: []string{"seedream-4.5-text-to-image", "seedream-5-lite-text-to-image", "seedream-5-pro-text-to-image", "seedream-v4-text-to-image"},
@@ -2089,7 +2064,6 @@ var generatedContract = map[string]generatedContractAction{
 				"seed":                  generatedContractField{"type": "integer"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"output_format"}, "when": map[string]any{"model": "seedream-4.5-text-to-image"}}, map[string]any{"forbidden": []any{"output_resolution", "output_count", "seed"}, "when": map[string]any{"model": "seedream-5-pro-text-to-image"}}, map[string]any{"forbidden": []any{"output_format"}, "when": map[string]any{"model": "seedream-v4-text-to-image"}}},
 	},
 	"suno/add-instrumental": {
 		Models: []string{"suno-v4.5-plus", "suno-v5", "suno-v5.5"},
@@ -2411,7 +2385,6 @@ var generatedContract = map[string]generatedContractAction{
 				"weirdness_constraint": generatedContractField{"description": "Weirdness constraint (0-1).", "max": 1, "min": 0, "type": "number"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"lyrics", "style", "title"}, "required": []any{"prompt"}, "when": map[string]any{"vocal_mode": "auto_lyrics"}}, map[string]any{"forbidden": []any{"prompt"}, "required": []any{"lyrics", "style", "title"}, "when": map[string]any{"vocal_mode": "exact_lyrics"}}, map[string]any{"forbidden": []any{"prompt", "lyrics"}, "required": []any{"style", "title"}, "when": map[string]any{"vocal_mode": "instrumental"}}},
 	},
 	"suno/create-mashup": {
 		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-all", "suno-v4.5-plus", "suno-v5", "suno-v5.5", "suno-v6", "suno-v6-mini", "suno-v6-wild"},
@@ -2561,7 +2534,6 @@ var generatedContract = map[string]generatedContractAction{
 				"weirdness_constraint": generatedContractField{"description": "Weirdness constraint (0-1).", "max": 1, "min": 0, "type": "number"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"lyrics", "style", "title"}, "required": []any{"prompt"}, "when": map[string]any{"vocal_mode": "auto_lyrics"}}, map[string]any{"forbidden": []any{"prompt"}, "required": []any{"lyrics", "style", "title"}, "when": map[string]any{"vocal_mode": "exact_lyrics"}}, map[string]any{"forbidden": []any{"prompt", "lyrics"}, "required": []any{"style", "title"}, "when": map[string]any{"vocal_mode": "instrumental"}}},
 	},
 	"suno/extend-music": {
 		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-all", "suno-v4.5-plus", "suno-v5", "suno-v5.5", "suno-v6", "suno-v6-mini", "suno-v6-wild"},
@@ -3004,7 +2976,6 @@ var generatedContract = map[string]generatedContractAction{
 				"type":         generatedContractField{"default": "separate_vocal", "description": "Stem separation mode.", "enum": []any{"separate_vocal", "split_stem", "split_stem_advanced"}, "type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"required": []any{"stem_name"}, "when": map[string]any{"type": "split_stem_advanced"}}},
 	},
 	"suno/stitch-audio": {
 		Models: []string{"suno-v4", "suno-v4.5", "suno-v4.5-plus", "suno-v5", "suno-v5.5"},
@@ -3224,7 +3195,6 @@ var generatedContract = map[string]generatedContractAction{
 				"weirdness_constraint": generatedContractField{"description": "Weirdness constraint (0-1).", "max": 1, "min": 0, "type": "number"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"lyrics", "style", "title", "negative_tags", "vocal_gender", "duration_seconds"}, "required": []any{"prompt"}, "when": map[string]any{"vocal_mode": "auto_lyrics"}}, map[string]any{"forbidden": []any{"prompt"}, "required": []any{"lyrics", "style", "title"}, "when": map[string]any{"vocal_mode": "exact_lyrics"}}, map[string]any{"forbidden": []any{"prompt", "lyrics", "vocal_gender"}, "required": []any{"style", "title"}, "when": map[string]any{"vocal_mode": "instrumental"}}, map[string]any{"forbidden": []any{"duration_seconds"}, "when": map[string]any{"model": "suno-v4"}}, map[string]any{"forbidden": []any{"duration_seconds"}, "when": map[string]any{"model": "suno-v4.5"}}, map[string]any{"forbidden": []any{"duration_seconds"}, "when": map[string]any{"model": "suno-v4.5-all"}}, map[string]any{"forbidden": []any{"duration_seconds"}, "when": map[string]any{"model": "suno-v4.5-plus"}}, map[string]any{"forbidden": []any{"duration_seconds"}, "when": map[string]any{"model": "suno-v5"}}, map[string]any{"forbidden": []any{"persona_id", "persona_type"}, "when": map[string]any{"voice_id": map[string]any{"present": true}}}},
 	},
 	"suno/text-to-sound": {
 		Models: []string{"suno-v5", "suno-v5.5"},
@@ -3381,7 +3351,6 @@ var generatedContract = map[string]generatedContractAction{
 				"watermark":             generatedContractField{"type": "string"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"seeds", "output_resolution"}, "when": map[string]any{"model": "veo-3.1-lite"}}, map[string]any{"forbidden": []any{"duration_seconds"}, "when": map[string]any{"duration_seconds": 4, "input_mode": "reference", "model": "veo-3.1-lite"}}, map[string]any{"forbidden": []any{"duration_seconds"}, "when": map[string]any{"duration_seconds": 6, "input_mode": "reference", "model": "veo-3.1-lite"}}},
 	},
 	"veo-3-1/upscale-video": {
 		Models: []string{},
@@ -3410,7 +3379,6 @@ var generatedContract = map[string]generatedContractAction{
 				"template_start_seconds":  generatedContractField{"min": 0, "type": "number"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"enable_scene_detection"}, "when": map[string]any{"mode": "lite"}}, map[string]any{"forbidden": []any{"align_audio", "align_audio_reverse", "template_start_seconds"}, "when": map[string]any{"mode": "basic"}}, map[string]any{"required": []any{"align_audio"}, "when": map[string]any{"align_audio_reverse": true}}},
 	},
 	"wan/animate": {
 		Models: []string{"wan-2.2-animate-move", "wan-2.2-animate-replace"},
@@ -3494,7 +3462,6 @@ var generatedContract = map[string]generatedContractAction{
 				"watermark":               generatedContractField{"type": "boolean"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.7-edit-video"}}},
 	},
 	"wan/image-to-video": {
 		Models: []string{"wan-2.2-a14b-image-to-video-turbo", "wan-2.5-image-to-video", "wan-2.6-flash-image-to-video", "wan-2.6-image-to-video", "wan-2.7-image-to-video"},
@@ -3608,7 +3575,6 @@ var generatedContract = map[string]generatedContractAction{
 				"watermark":               generatedContractField{"type": "boolean"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.2-a14b-image-to-video-turbo"}}, map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.5-image-to-video"}}, map[string]any{"forbidden": []any{"seed"}, "when": map[string]any{"model": "wan-2.6-flash-image-to-video"}}, map[string]any{"forbidden": []any{"seed"}, "when": map[string]any{"model": "wan-2.6-image-to-video"}}, map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.7-image-to-video"}}},
 	},
 	"wan/speech-to-video": {
 		Models: []string{"wan-2.2-a14b-speech-to-video-turbo"},
@@ -3776,7 +3742,6 @@ var generatedContract = map[string]generatedContractAction{
 				"watermark":               generatedContractField{"type": "boolean"},
 			},
 		},
-		Rules: []map[string]any{map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.2-a14b-text-to-video-turbo"}}, map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.5-text-to-video"}}, map[string]any{"forbidden": []any{"seed"}, "when": map[string]any{"model": "wan-2.6-text-to-video"}}, map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.7-r2v"}}, map[string]any{"forbidden": []any{"multi_shots"}, "when": map[string]any{"model": "wan-2.7-text-to-video"}}},
 	},
 	"z-image/text-to-image": {
 		Models: []string{"z-image"},

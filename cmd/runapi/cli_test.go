@@ -78,6 +78,60 @@ func TestMidjourneyShortenPromptResumesAcceptedTask(t *testing.T) {
 	}
 }
 
+func TestGeminiCharacterPollDoesNotReplayCreationParams(t *testing.T) {
+	isolateConfig(t)
+	description := strings.Repeat("a", 15000)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/gemini_omni/create_character":
+			var body map[string]any
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				t.Error(err)
+			}
+			if body["descriptions"] != description || body["future_parameter"] != true {
+				t.Error("creation input changed")
+			}
+			w.Header().Set("Location", "/api/v1/tasks/character_1")
+			w.Header().Set("Retry-After", "0")
+			w.WriteHeader(http.StatusAccepted)
+			_, _ = w.Write([]byte(`{"id":"character_1","status":"processing"}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/tasks/character_1":
+			if r.URL.RawQuery != "" {
+				w.WriteHeader(http.StatusRequestURITooLong)
+				_, _ = w.Write([]byte(`{"error":{"message":"creation parameters leaked into poll URL"}}`))
+				return
+			}
+			_, _ = w.Write([]byte(`{"id":"character_1","status":"completed","response":{"status":200,"content_type":"application/json","headers":{},"body":{"id":"character_1","character":{"id":"person_1","name":"Ada"}}}}`))
+		default:
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+	input, err := json.Marshal(map[string]any{"descriptions": description, "future_parameter": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := newCLI()
+	c.stdout = &bytes.Buffer{}
+	c.stderr = &bytes.Buffer{}
+	if code := c.run([]string{"--api-key", "test-key", "--base-url", server.URL, "--poll-interval", "1ms", "gemini-omni", "create-character", "--input", string(input)}); code != 0 {
+		t.Fatalf("expected terminal character, got %d: %s", code, c.stderr.(*bytes.Buffer).String())
+	}
+	var result struct {
+		Character struct {
+			ID string `json:"id"`
+		} `json:"character"`
+	}
+	if err := json.Unmarshal(c.stdout.(*bytes.Buffer).Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Character.ID != "person_1" {
+		t.Fatalf("unexpected character: %s", c.stdout.(*bytes.Buffer).String())
+	}
+}
+
 func TestHybridActionSpecsUseRunLifecycle(t *testing.T) {
 	actions := [][2]string{
 		{"fish-audio", "create-voice"},

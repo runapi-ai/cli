@@ -307,35 +307,3 @@ func TestServiceCommandStopsWhenMediaUploadFails(t *testing.T) {
 		t.Fatalf("expected upload error, got stdout=%s stderr=%s", stdout.String(), stderr.String())
 	}
 }
-
-func TestServiceCommandDoesNotUploadWhenInputDecodeFails(t *testing.T) {
-	isolateConfig(t)
-	t.Setenv("RUNAPI_API_KEY", "test-key")
-	dir := t.TempDir()
-	localImage := filepath.Join(dir, "input.png")
-	if err := os.WriteFile(localImage, []byte("png"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Fatalf("did not expect request before input decode succeeds: %s %s", r.Method, r.URL.Path)
-	}))
-	defer server.Close()
-
-	input := `{"model":"gpt-image-1.5","prompt":"edit","source_image_urls":["` + localImage + `"],"aspect_ratio":["1:1"],"quality":"medium"}`
-	c := newCLI()
-	var stdout, stderr bytes.Buffer
-	c.stdout = &stdout
-	c.stderr = &stderr
-
-	code := c.run([]string{"--base-url", server.URL, "gpt-image", "edit-image", "--async", "--input", input})
-	if code == 0 {
-		t.Fatal("expected non-zero exit code")
-	}
-	if !strings.Contains(stdout.String(), "input must be valid JSON for the selected action") {
-		t.Fatalf("expected input decode error, got stdout=%s stderr=%s", stdout.String(), stderr.String())
-	}
-	if strings.Contains(stderr.String(), "uploaded ") {
-		t.Fatalf("did not expect upload log, got %q", stderr.String())
-	}
-}

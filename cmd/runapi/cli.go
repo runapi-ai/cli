@@ -113,7 +113,7 @@ func newCLI() *cli {
 		stdout:           os.Stdout,
 		stderr:           os.Stderr,
 		stdin:            os.Stdin,
-		newClient:        runapi.NewClient,
+		newClient:        newActionClient,
 		newPricingClient: pricing.NewClient,
 	}
 	c.stdinTTY = func() bool { return isReaderTTY(c.stdin) }
@@ -315,8 +315,8 @@ func (c *cli) filesCommand() *cobra.Command {
 			if strings.TrimSpace(base64Data) != "" {
 				sourceCount++
 			}
-			if sourceCount != 1 {
-				return core.NewError(core.ErrValidation, "exactly one source is required: path, --url, or --base64", 422, "", nil, nil)
+			if sourceCount > 1 {
+				return core.NewError(core.ErrValidation, "path, --url, and --base64 are mutually exclusive", 422, "", nil, nil)
 			}
 			if len(args) > 1 {
 				return core.NewError(core.ErrValidation, "only one file path is supported", 422, "", nil, nil)
@@ -336,7 +336,7 @@ func (c *cli) filesCommand() *cobra.Command {
 				params.File = args[0]
 			case strings.TrimSpace(sourceURL) != "":
 				params.Source = files.Source{Type: "url", URL: sourceURL}
-			default:
+			case strings.TrimSpace(base64Data) != "":
 				params.Source = files.Source{Type: "base64", Data: base64Data}
 			}
 
@@ -496,9 +496,6 @@ func (c *cli) uploadsCommand() *cobra.Command {
 			return err
 		}
 		defer cancel()
-		if len(partIDs) == 0 {
-			return core.NewError(core.ErrValidation, "at least one --part-id is required", 422, "", nil, nil)
-		}
 		response, err := client.Uploads.Complete(ctx, args[0], partIDs, callOpts...)
 		if err != nil {
 			return err
@@ -576,9 +573,6 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if _, err := spec.decode(payload); err != nil {
-				return err
-			}
 			var client *runapi.Client
 			var callOpts []option.RequestOption
 			var ctx context.Context
@@ -620,6 +614,7 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 			if err := ensureClient(); err != nil {
 				return err
 			}
+			ctx = context.WithValue(ctx, actionInputKey{}, actionInput{payload: payload, query: !spec.isAsync && !spec.isHybrid})
 
 			if !spec.isAsync {
 				response, err := spec.run(ctx, client, params, callOpts)
@@ -630,14 +625,14 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 			}
 
 			if c.async {
-				response, err := c.createTask(ctx, spec, client, params, payload, mediaFields, callOpts)
+				response, err := spec.create(ctx, client, params, callOpts)
 				if err != nil {
 					return err
 				}
 				return c.writeJSON(response)
 			}
 
-			created, err := c.createTask(ctx, spec, client, params, payload, mediaFields, callOpts)
+			created, err := spec.create(ctx, client, params, callOpts)
 			if err != nil {
 				return err
 			}
@@ -655,36 +650,87 @@ func (c *cli) serviceCommand(service string) *cobra.Command {
 	return serviceCmd
 }
 
-func (c *cli) createTask(ctx context.Context, spec actionSpec, client *runapi.Client, params any, payload []byte, mediaFields []string, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
-	if !mediaFieldsContainJSONNull(mediaFields, payload) {
-		return spec.create(ctx, client, params, opts)
-	}
+type actionInputKey struct{}
 
-	path, err := validateCreateParamsAndPath(ctx, spec, params, opts)
+type actionInput struct {
+	payload []byte
+	query   bool
+}
+
+// actionInputHTTPClient preserves input beyond the installed SDK's static types
+// before JSON or multipart encoding, without changing uploads or task polling.
+type actionInputHTTPClient struct {
+	core.ResponseHTTPClient
+}
+
+func newActionClient(opts ...option.ClientOption) (*runapi.Client, error) {
+	resolved, err := option.ResolveClientOptions(opts...)
 	if err != nil {
 		return nil, err
 	}
-	body := core.CompactParams(params)
-	overlayRawMediaFieldsWithNull(body, mediaFields, payload)
-	return client.CreateTaskRaw(ctx, path, body, opts...)
-}
-
-type createValidationHTTPClient struct {
-	path string
-}
-
-func (c *createValidationHTTPClient) Request(_ context.Context, _ string, path string, _ *core.HTTPRequestOptions) (json.RawMessage, error) {
-	c.path = path
-	return json.RawMessage(`{"id":"validation","status":"processing"}`), nil
-}
-
-func validateCreateParamsAndPath(ctx context.Context, spec actionSpec, params any, opts []option.RequestOption) (string, error) {
-	stub := &createValidationHTTPClient{}
-	_, err := spec.create(ctx, runapi.NewClientWithHTTP(stub), params, opts)
+	httpClient, err := core.NewHTTPClient(resolved)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return stub.path, nil
+	return runapi.NewClientWithHTTP(&actionInputHTTPClient{httpClient.(core.ResponseHTTPClient)}), nil
+}
+
+func (c *actionInputHTTPClient) Request(ctx context.Context, method, path string, opts *core.HTTPRequestOptions) (json.RawMessage, error) {
+	response, err := c.RequestWithResponse(ctx, method, path, opts)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+func (c *actionInputHTTPClient) RequestWithResponse(ctx context.Context, method, path string, opts *core.HTTPRequestOptions) (*core.HTTPResponse, error) {
+	if input, ok := ctx.Value(actionInputKey{}).(actionInput); ok && opts != nil && (method == http.MethodPost || (method == http.MethodGet && input.query)) {
+		next := *opts
+		if method == http.MethodPost {
+			if body, multipart := opts.Body.(core.MultipartBody); multipart {
+				var params map[string]json.RawMessage
+				if err := json.Unmarshal(input.payload, &params); err != nil {
+					return nil, err
+				}
+				for name, raw := range params {
+					if _, file := body.Files[name]; file {
+						continue
+					}
+					if _, repeated := body.RepeatedFields[name+"[]"]; repeated {
+						continue
+					}
+					body.Fields[name] = actionInputFieldValue(raw)
+				}
+				next.Body = body
+			} else {
+				next.Body = json.RawMessage(input.payload)
+			}
+		} else if method == http.MethodGet && input.query {
+			var params map[string]json.RawMessage
+			if err := json.Unmarshal(input.payload, &params); err != nil {
+				return nil, err
+			}
+			next.Query = make(map[string]string, len(params)+len(opts.Query))
+			for name, value := range opts.Query {
+				next.Query[name] = value
+			}
+			for name, raw := range params {
+				next.Query[name] = actionInputFieldValue(raw)
+			}
+		}
+		opts = &next
+	}
+	return c.ResponseHTTPClient.RequestWithResponse(ctx, method, path, opts)
+}
+
+// actionInputFieldValue renders one JSON input value as a form or query field:
+// strings without quotes, every other value as its original JSON text.
+func actionInputFieldValue(raw json.RawMessage) string {
+	var text string
+	if json.Unmarshal(raw, &text) == nil {
+		return text
+	}
+	return string(raw)
 }
 
 func (c *cli) getCommand() *cobra.Command {
@@ -846,51 +892,6 @@ func (c *cli) autoUploadMediaInputs(mediaFields []string, payload []byte, upload
 		return nil, core.NewError(core.ErrValidation, "failed to encode uploaded input", 422, "", nil, err)
 	}
 	return next, nil
-}
-
-func mediaFieldsContainJSONNull(mediaFields []string, payload []byte) bool {
-	object, ok := decodeRawJSONObject(payload)
-	if !ok {
-		return false
-	}
-	for _, field := range mediaFields {
-		raw, ok := object[field]
-		if ok && rawContainsJSONNull(raw) {
-			return true
-		}
-	}
-	return false
-}
-
-func overlayRawMediaFieldsWithNull(body map[string]any, mediaFields []string, payload []byte) {
-	object, ok := decodeRawJSONObject(payload)
-	if !ok {
-		return
-	}
-	for _, field := range mediaFields {
-		raw, ok := object[field]
-		if ok && rawContainsJSONNull(raw) {
-			body[field] = raw
-		}
-	}
-}
-
-func rawContainsJSONNull(raw json.RawMessage) bool {
-	trimmed := bytes.TrimSpace(raw)
-	if bytes.Equal(trimmed, []byte("null")) {
-		return true
-	}
-
-	var values []json.RawMessage
-	if err := json.Unmarshal(raw, &values); err != nil {
-		return false
-	}
-	for _, value := range values {
-		if bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
-			return true
-		}
-	}
-	return false
 }
 
 func (c *cli) autoUploadMediaValue(field string, raw json.RawMessage, upload func(value string) (string, error)) (json.RawMessage, bool, error) {
@@ -1210,9 +1211,16 @@ func findActionSpec(service, action string) (actionSpec, error) {
 }
 
 func decodeInto[T any](data []byte) (any, error) {
+	data = bytes.TrimSpace(data)
+	if len(data) == 0 || data[0] != '{' {
+		return nil, core.NewError(core.ErrValidation, "input must be a valid JSON object", 422, "", nil, nil)
+	}
 	var value T
+	// Typed fields supply SDK transport inputs; the original JSON remains authoritative.
 	if err := json.Unmarshal(data, &value); err != nil {
-		return nil, core.NewError(core.ErrValidation, "input must be valid JSON for the selected action", 422, "", nil, err)
+		if _, businessTypeError := errors.AsType[*json.UnmarshalTypeError](err); !businessTypeError {
+			return nil, core.NewError(core.ErrValidation, "input must be valid JSON for the selected action", 422, "", nil, err)
+		}
 	}
 	return value, nil
 }
@@ -1245,7 +1253,6 @@ type generatedContractField map[string]any
 type generatedContractAction struct {
 	Models        []string
 	FieldsByModel map[string]map[string]generatedContractField
-	Rules         []map[string]any
 }
 
 func appendGeneratedContractHelp(inputFields, service, action string) string {
@@ -1272,9 +1279,6 @@ func appendGeneratedContractHelp(inputFields, service, action string) string {
 	sections := []string{strings.Join(lines, "\n")}
 	if nested := generatedContractNestedHelp(contract); nested != "" {
 		sections = append(sections, nested)
-	}
-	if rules := generatedContractRulesHelp(contract); rules != "" {
-		sections = append(sections, rules)
 	}
 	return strings.Join(sections, "\n\n")
 }
@@ -1464,65 +1468,6 @@ func generatedContractFieldHelp(field generatedContractField) string {
 	return strings.Join(parts, " ")
 }
 
-func generatedContractRulesHelp(contract generatedContractAction) string {
-	if len(contract.Rules) == 0 {
-		return ""
-	}
-	lines := []string{"Input rules:"}
-	for _, rule := range contract.Rules {
-		conditions := generatedContractMap(rule, "when")
-		conditionNames := make([]string, 0, len(conditions))
-		for name := range conditions {
-			conditionNames = append(conditionNames, name)
-		}
-		sort.Strings(conditionNames)
-		formattedConditions := make([]string, 0, len(conditionNames))
-		for _, name := range conditionNames {
-			formattedConditions = append(formattedConditions, formatGeneratedContractCondition(name, conditions[name]))
-		}
-
-		actions := []string{}
-		if fields := generatedContractStrings(rule, "required"); len(fields) > 0 {
-			actions = append(actions, "require "+strings.Join(fields, ", "))
-		}
-		if fields := generatedContractStrings(rule, "required_any"); len(fields) > 0 {
-			actions = append(actions, "require one of "+strings.Join(fields, ", "))
-		}
-		if fields := generatedContractStrings(rule, "forbidden"); len(fields) > 0 {
-			actions = append(actions, "forbid "+strings.Join(fields, ", "))
-		}
-		if narrowed := generatedContractMap(rule, "enum"); len(narrowed) > 0 {
-			names := make([]string, 0, len(narrowed))
-			for name := range narrowed {
-				names = append(names, name)
-			}
-			sort.Strings(names)
-			for _, name := range names {
-				values, _ := narrowed[name].([]any)
-				actions = append(actions, fmt.Sprintf("limit %s to %s", name, strings.Join(generatedContractEnumStrings(values), ", ")))
-			}
-		}
-		prefix := "Always"
-		if len(formattedConditions) > 0 {
-			prefix = "When " + strings.Join(formattedConditions, " and ")
-		}
-		lines = append(lines, fmt.Sprintf("  %s: %s.", prefix, strings.Join(actions, "; ")))
-	}
-	return strings.Join(lines, "\n")
-}
-
-func formatGeneratedContractCondition(name string, value any) string {
-	if condition, ok := value.(map[string]any); ok {
-		if present, exists := condition["present"].(bool); exists {
-			if present {
-				return name + " is present"
-			}
-			return name + " is absent"
-		}
-	}
-	return fmt.Sprintf("%s=%v", name, value)
-}
-
 func generatedContractString(values map[string]any, key string) string {
 	value, _ := values[key].(string)
 	return value
@@ -1547,15 +1492,6 @@ func generatedContractInt(values map[string]any, key string) int {
 func generatedContractArray(values map[string]any, key string) []any {
 	value, _ := values[key].([]any)
 	return value
-}
-
-func generatedContractStrings(values map[string]any, key string) []string {
-	items := generatedContractArray(values, key)
-	result := make([]string, 0, len(items))
-	for _, item := range items {
-		result = append(result, fmt.Sprint(item))
-	}
-	return result
 }
 
 func generatedContractMap(values map[string]any, key string) map[string]any {
@@ -2367,7 +2303,7 @@ func newFishAudioGetVoiceSpec() actionSpec {
 }
 
 func newGeminiOmniCreateCharacterSpec() actionSpec {
-	return actionSpec{service: "gemini-omni", action: "create-character", isAsync: false, inputFields: inputFieldsFor[geminiomni.CreateCharacterParams](), decode: decodeInto[geminiomni.CreateCharacterParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+	return actionSpec{service: "gemini-omni", action: "create-character", isHybrid: true, inputFields: inputFieldsFor[geminiomni.CreateCharacterParams](), decode: decodeInto[geminiomni.CreateCharacterParams], run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
 		return client.GeminiOmni.CreateCharacter.Run(ctx, params.(geminiomni.CreateCharacterParams), opts...)
 	}}
 }

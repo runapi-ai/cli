@@ -10,8 +10,6 @@
 package runapi
 
 import (
-	"context"
-
 	"github.com/runapi-ai/core-sdk/go/base"
 	"github.com/runapi-ai/core-sdk/go/core"
 	"github.com/runapi-ai/core-sdk/go/option"
@@ -63,8 +61,6 @@ import (
 // All sub-clients share a single HTTP transport, so [option.ClientOption] values
 // (API key, base URL, timeouts) only need to be set once via [NewClient].
 type Client struct {
-	http core.HTTPClient
-
 	// Base provides the Universal Resources (Files, Account) on every client.
 	base.Base
 	// Suno creates and manipulates music: text-to-music, extend, cover, remix,
@@ -179,7 +175,6 @@ func NewClient(opts ...option.ClientOption) (*Client, error) {
 // NewClientWithHTTP creates an aggregate client with a pre-configured HTTP transport.
 func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 	return &Client{
-		http:                httpClient,
 		Base:                base.New(httpClient),
 		Suno:                suno.NewClientWithHTTP(httpClient),
 		Producer:            producer.NewClientWithHTTP(httpClient),
@@ -224,9 +219,4 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		Topaz:               topaz.NewClientWithHTTP(httpClient),
 		Typesafe:            typesafe.NewClientWithHTTP(httpClient),
 	}
-}
-
-func (c *Client) CreateTaskRaw(ctx context.Context, path string, body any, opts ...option.RequestOption) (*core.TaskCreateResponse, error) {
-	requestOptions, _ := option.ResolveRequestOptions(opts...)
-	return core.PostJSON[core.TaskCreateResponse](ctx, c.http, path, body, requestOptions)
 }

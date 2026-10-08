@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.15.0](https://github.com/runapi-ai/cli/releases/tag/v0.15.0) - 2026-10-08
+
+### Changed
+- Send request parameters to the service without local validation. Model ids and parameter values the service supports work without a CLI upgrade; `--help` still lists fields, known models, and documented constraints.
+  Migration: Invalid parameters now fail with the service's API error, including its status and message, instead of a local validation error before the request.
+- Show the auto server default for audio_setting on happyhorse edit-video in generated CLI contract help.
+
+### Fixed
+- Keep Gemini Omni character creation inputs out of accepted-task polling URLs.
+  Migration: Long descriptions remain in the creation body; the CLI follows the returned Location to the terminal character response.
+
+
 ## [v0.14.1](https://github.com/runapi-ai/cli/releases/tag/v0.14.1) - 2026-09-29
 
 ### Changed

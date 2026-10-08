@@ -3,9 +3,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/runapi-ai/core-sdk/go/core"
 )
 
 func TestSynchronousRawTextIsWrittenWithoutJSONEncoding(t *testing.T) {
@@ -18,6 +23,73 @@ func TestSynchronousRawTextIsWrittenWithoutJSONEncoding(t *testing.T) {
 
 	if got := c.stdout.(*bytes.Buffer).String(); got != "WEBVTT\n\n00:00.000 --> 00:01.000\nHello\n" {
 		t.Fatalf("expected exact raw response, got %q", got)
+	}
+}
+
+func TestServiceCommandPreservesFutureInputAndServerErrors(t *testing.T) {
+	isolateConfig(t)
+	for _, reject := range []bool{false, true} {
+		t.Run(map[bool]string{false: "accepted", true: "server rejected"}[reject], func(t *testing.T) {
+			expectedModel := any("kling-future")
+			input := `{"model":"kling-future","output_resolution":"8k","future_setting":"enabled","reference_image_urls":null}`
+			if reject {
+				expectedModel = float64(173)
+				input = `{"model":173,"output_resolution":"8k","future_setting":"enabled","reference_image_urls":null}`
+			}
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var body map[string]any
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				if body["model"] != expectedModel || body["output_resolution"] != "8k" || body["future_setting"] != "enabled" {
+					t.Errorf("future input lost: %#v", body)
+				}
+				if value, exists := body["reference_image_urls"]; !exists || value != nil {
+					t.Errorf("explicit null lost: %#v", body)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				if reject {
+					w.WriteHeader(http.StatusBadRequest)
+					_, _ = w.Write([]byte(`{"error":"new server constraint"}`))
+					return
+				}
+				_, _ = w.Write([]byte(`{"id":"future-task","status":"processing"}`))
+			}))
+			defer server.Close()
+			c := newCLI()
+			c.stdout, c.stderr = &bytes.Buffer{}, &bytes.Buffer{}
+			cmd := c.command()
+			cmd.SetArgs([]string{"kling", "text-to-video", "--api-key", "test-key", "--base-url", server.URL, "--async", "--input", input})
+			err := cmd.Execute()
+			if reject {
+				var apiErr *core.Error
+				if !errors.As(err, &apiErr) || apiErr.Status != 400 || apiErr.Message != "new server constraint" {
+					t.Fatalf("server rejection lost: %v", err)
+				}
+			} else if err != nil || !strings.Contains(c.stdout.(*bytes.Buffer).String(), "future-task") {
+				t.Fatalf("server acceptance lost: %v, %s", err, c.stdout.(*bytes.Buffer).String())
+			}
+		})
+	}
+}
+
+func TestSynchronousGetQueryKeepsInputNumbersAndArrays(t *testing.T) {
+	isolateConfig(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		if r.Method != http.MethodGet || query.Get("page_size") != "1000000" || query.Get("future_tags") != `["a","b"]` {
+			t.Errorf("query input changed: %s %s", r.Method, r.URL.RawQuery)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"items":[]}`))
+	}))
+	defer server.Close()
+	c := newCLI()
+	c.stdout, c.stderr = &bytes.Buffer{}, &bytes.Buffer{}
+	cmd := c.command()
+	cmd.SetArgs([]string{"fish-audio", "list-voices", "--api-key", "test-key", "--base-url", server.URL, "--input", `{"page_size":1000000,"future_tags":["a","b"]}`})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -443,75 +515,6 @@ func TestGeneratedContractHelpIncludesArrayItemCounts(t *testing.T) {
 	}
 	if got := generatedContractHelpSentenceFor(divergent, "reference_image_urls"); got != "Item count by model: m-a: 1-2; m-b: 1-3." {
 		t.Fatalf("got %q", got)
-	}
-}
-
-func TestGeneratedContractHelpIncludesConditionalRules(t *testing.T) {
-	cases := []struct {
-		args []string
-		want []string
-	}{
-		{
-			args: []string{"runway", "text-to-video", "--help"},
-			want: []string{
-				"When first_frame_image_url is absent: require aspect_ratio.",
-				"When first_frame_image_url is present: forbid aspect_ratio.",
-			},
-		},
-		{
-			args: []string{"suno", "text-to-music", "--help"},
-			want: []string{
-				"When vocal_mode=auto_lyrics: require prompt; forbid lyrics, style, title, negative_tags, vocal_gender, duration_seconds.",
-				"When model=suno-v5: forbid duration_seconds.",
-			},
-		},
-		{
-			args: []string{"kling", "text-to-video", "--help"},
-			want: []string{
-				"When model=kling-v3-turbo-text-to-video: forbid enable_sound",
-			},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(strings.Join(tc.args[:2], "/"), func(t *testing.T) {
-			c := newCLI()
-			c.stdout = &bytes.Buffer{}
-			c.stderr = &bytes.Buffer{}
-
-			cmd := c.command()
-			cmd.SetArgs(tc.args)
-			if err := cmd.Execute(); err != nil {
-				t.Fatal(err)
-			}
-
-			output := c.stdout.(*bytes.Buffer).String()
-			for _, want := range tc.want {
-				if !strings.Contains(output, want) {
-					t.Fatalf("expected help to contain %q, got:\n%s", want, output)
-				}
-			}
-		})
-	}
-}
-
-func TestGeneratedContractHelpIncludesUnconditionalRules(t *testing.T) {
-	c := newCLI()
-	c.stdout = &bytes.Buffer{}
-	c.stderr = &bytes.Buffer{}
-
-	cmd := c.command()
-	cmd.SetArgs([]string{"minimax-h3", "image-to-video", "--help"})
-	if err := cmd.Execute(); err != nil {
-		t.Fatal(err)
-	}
-
-	output := c.stdout.(*bytes.Buffer).String()
-	if !strings.Contains(output, "Always: require one of first_frame_image_url, last_frame_image_url.") {
-		t.Fatalf("expected unconditional rule help, got:\n%s", output)
-	}
-	if strings.Contains(output, "When :") {
-		t.Fatalf("expected no empty conditional clause, got:\n%s", output)
 	}
 }
 
