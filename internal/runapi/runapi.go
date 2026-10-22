@@ -27,6 +27,7 @@ import (
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
+	"github.com/runapi-ai/heygen-video-sdk/go/heygenvideo"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
@@ -41,6 +42,7 @@ import (
 	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
+	"github.com/runapi-ai/qwen-2.1-sdk/go/qwen21"
 	"github.com/runapi-ai/qwen-3-sdk/go/qwen3"
 	"github.com/runapi-ai/qwen-image-sdk/go/qwenimage"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
@@ -52,6 +54,7 @@ import (
 	"github.com/runapi-ai/topaz-sdk/go/topaz"
 	"github.com/runapi-ai/typesafe-sdk/go/typesafe"
 	"github.com/runapi-ai/veo-3.1-sdk/go/veo31"
+	"github.com/runapi-ai/vidu-sdk/go/vidu"
 	volcenginelipsync "github.com/runapi-ai/volcengine-lip-sync-sdk/go/volcenginelipsync"
 	"github.com/runapi-ai/wan-sdk/go/wan"
 	"github.com/runapi-ai/z-image-sdk/go/zimage"
@@ -103,7 +106,9 @@ type Client struct {
 	GeminiTTS *geminitts.Client
 	// Qwen2 generates, remixes, and edits images with Qwen 2 models.
 	Qwen2 *qwen2.Client
-	Qwen3 *qwen3.Client
+	// Qwen21 generates and edits images with Qwen 2.1 models.
+	Qwen21 *qwen21.Client
+	Qwen3  *qwen3.Client
 	// QwenImage generates, remixes, and edits images with Qwen Image models.
 	QwenImage *qwenimage.Client
 	// Recraft upscales images and removes backgrounds using Recraft models.
@@ -130,11 +135,15 @@ type Client struct {
 	Hailuo *hailuo.Client
 	// MiniMaxH3 generates video from text, reference media, or first and last frames.
 	MiniMaxH3 *minimaxh3.Client
+	// HeyGenVideo generates video from text, reference media, or a first frame.
+	HeyGenVideo *heygenvideo.Client
 	// VolcengineLipSync drives source video lip movement from audio.
 	VolcengineLipSync *volcenginelipsync.Client
 	// HappyHorse generates video from text, images, or character prompts, and
 	// edits existing video with HappyHorse models.
 	HappyHorse *happyhorse.Client
+	// Vidu generates video from images and references.
+	Vidu       *vidu.Client
 	PixVerse   *pixverse.Client
 	// GptImage generates and edits images with GPT Image 1.5 models.
 	GptImage *gptimage.Client
@@ -195,6 +204,7 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		FishAudio:           fishaudio.NewClientWithHTTP(httpClient),
 		GeminiTTS:           geminitts.NewClientWithHTTP(httpClient),
 		Qwen2:               qwen2.NewClientWithHTTP(httpClient),
+		Qwen21:              qwen21.NewClientWithHTTP(httpClient),
 		Qwen3:               qwen3.NewClientWithHTTP(httpClient),
 		QwenImage:           qwenimage.NewClientWithHTTP(httpClient),
 		Recraft:             recraft.NewClientWithHTTP(httpClient),
@@ -208,8 +218,10 @@ func NewClientWithHTTP(httpClient core.HTTPClient) *Client {
 		Midjourney:          midjourney.NewClientWithHTTP(httpClient),
 		Hailuo:              hailuo.NewClientWithHTTP(httpClient),
 		MiniMaxH3:           minimaxh3.NewClientWithHTTP(httpClient),
+		HeyGenVideo:         heygenvideo.NewClientWithHTTP(httpClient),
 		VolcengineLipSync:   volcenginelipsync.NewClientWithHTTP(httpClient),
 		HappyHorse:          happyhorse.NewClientWithHTTP(httpClient),
+		Vidu:                vidu.NewClientWithHTTP(httpClient),
 		PixVerse:            pixverse.NewClientWithHTTP(httpClient),
 		GptImage:            gptimage.NewClientWithHTTP(httpClient),
 		GptImage2:           gptimage2.NewClientWithHTTP(httpClient),

@@ -1,27 +1,6 @@
 package main
 
 var generatedContract = map[string]generatedContractAction{
-	"elevenlabs/isolate-audio": {
-		Models: []string{"audio-isolation"},
-		FieldsByModel: map[string]map[string]generatedContractField{
-			"audio-isolation": {
-				"callback_url":     generatedContractField{"type": "string"},
-				"source_audio_url": generatedContractField{"required": true, "type": "string"},
-			},
-		},
-	},
-	"elevenlabs/speech-to-text": {
-		Models: []string{"speech-to-text"},
-		FieldsByModel: map[string]map[string]generatedContractField{
-			"speech-to-text": {
-				"callback_url":     generatedContractField{"type": "string"},
-				"diarize":          generatedContractField{"type": "boolean"},
-				"language_code":    generatedContractField{"type": "string"},
-				"source_audio_url": generatedContractField{"required": true, "type": "string"},
-				"tag_audio_events": generatedContractField{"type": "boolean"},
-			},
-		},
-	},
 	"elevenlabs/text-to-dialogue": {
 		Models: []string{"text-to-dialogue-v3"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -30,19 +9,6 @@ var generatedContract = map[string]generatedContractAction{
 				"dialogue":      generatedContractField{"required": true, "type": "array"},
 				"language_code": generatedContractField{"type": "string"},
 				"stability":     generatedContractField{"enum": []any{0.0, 0.5, 1.0}, "type": "number"},
-			},
-		},
-	},
-	"elevenlabs/text-to-sound": {
-		Models: []string{"sound-effect-v2"},
-		FieldsByModel: map[string]map[string]generatedContractField{
-			"sound-effect-v2": {
-				"callback_url":     generatedContractField{"type": "string"},
-				"duration_seconds": generatedContractField{"required": true, "type": "number"},
-				"loop":             generatedContractField{"type": "boolean"},
-				"output_format":    generatedContractField{"enum": []any{"mp3_22050_32", "mp3_44100_32", "mp3_44100_64", "mp3_44100_96", "mp3_44100_128", "mp3_44100_192", "pcm_8000", "pcm_16000", "pcm_22050", "pcm_24000", "pcm_44100", "pcm_48000", "ulaw_8000", "alaw_8000", "opus_48000_32", "opus_48000_64", "opus_48000_96", "opus_48000_128", "opus_48000_192"}, "type": "string"},
-				"prompt_influence": generatedContractField{"type": "number"},
-				"text":             generatedContractField{"required": true, "type": "string"},
 			},
 		},
 	},
@@ -112,7 +78,7 @@ var generatedContract = map[string]generatedContractAction{
 				"bitrate_kbps":   generatedContractField{"default": 128, "description": "MP3 bitrate. Not accepted for WAV output.", "enum": []any{64, 128, 192}, "type": "integer"},
 				"model":          generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"output_format":  generatedContractField{"default": "mp3", "description": "Output audio format.", "enum": []any{"mp3", "wav"}, "type": "string"},
-				"references":     generatedContractField{"description": "Inline reference audio samples for this request.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Base64-encoded raw audio bytes.", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript of the reference audio.", "required": true, "type": "string"}}, "type": "object"}, "type": "array"},
+				"references":     generatedContractField{"description": "One temporary voice-cloning sample. Cannot be combined with voice_id. Omit, use null, or [] for no sample.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Publicly accessible HTTPS audio URL. Must remain valid while queued and read by the provider.", "pattern": "^https://", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript that matches the reference audio word for word.", "required": true, "type": "string"}}, "type": "object"}, "max_items": 1, "type": "array"},
 				"sample_rate_hz": generatedContractField{"default": 44100, "description": "Output sample rate. MP3 supports 32000 and 44100 Hz; WAV supports every listed value.", "enum": []any{8000, 16000, 24000, 32000, 44100}, "type": "integer"},
 				"text":           generatedContractField{"required": true, "type": "string"},
 				"voice_id":       generatedContractField{"type": "string"},
@@ -121,7 +87,7 @@ var generatedContract = map[string]generatedContractAction{
 				"bitrate_kbps":   generatedContractField{"default": 128, "description": "MP3 bitrate. Not accepted for WAV output.", "enum": []any{64, 128, 192}, "type": "integer"},
 				"model":          generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"output_format":  generatedContractField{"default": "mp3", "description": "Output audio format.", "enum": []any{"mp3", "wav"}, "type": "string"},
-				"references":     generatedContractField{"description": "Inline reference audio samples for this request.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Base64-encoded raw audio bytes.", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript of the reference audio.", "required": true, "type": "string"}}, "type": "object"}, "type": "array"},
+				"references":     generatedContractField{"description": "One temporary voice-cloning sample. Cannot be combined with voice_id. Omit, use null, or [] for no sample.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Publicly accessible HTTPS audio URL. Must remain valid while queued and read by the provider.", "pattern": "^https://", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript that matches the reference audio word for word.", "required": true, "type": "string"}}, "type": "object"}, "max_items": 1, "type": "array"},
 				"sample_rate_hz": generatedContractField{"default": 44100, "description": "Output sample rate. MP3 supports 32000 and 44100 Hz; WAV supports every listed value.", "enum": []any{8000, 16000, 24000, 32000, 44100}, "type": "integer"},
 				"text":           generatedContractField{"required": true, "type": "string"},
 				"voice_id":       generatedContractField{"type": "string"},
@@ -130,7 +96,7 @@ var generatedContract = map[string]generatedContractAction{
 				"bitrate_kbps":   generatedContractField{"default": 128, "description": "MP3 bitrate. Not accepted for WAV output.", "enum": []any{64, 128, 192}, "type": "integer"},
 				"model":          generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"output_format":  generatedContractField{"default": "mp3", "description": "Output audio format.", "enum": []any{"mp3", "wav"}, "type": "string"},
-				"references":     generatedContractField{"description": "Inline reference audio samples for this request.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Base64-encoded raw audio bytes.", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript of the reference audio.", "required": true, "type": "string"}}, "type": "object"}, "type": "array"},
+				"references":     generatedContractField{"description": "One temporary voice-cloning sample. Cannot be combined with voice_id. Omit, use null, or [] for no sample.", "items": map[string]any{"properties": map[string]any{"audio": map[string]any{"description": "Publicly accessible HTTPS audio URL. Must remain valid while queued and read by the provider.", "pattern": "^https://", "required": true, "type": "string"}, "text": map[string]any{"description": "Exact transcript that matches the reference audio word for word.", "required": true, "type": "string"}}, "type": "object"}, "max_items": 1, "type": "array"},
 				"sample_rate_hz": generatedContractField{"default": 44100, "description": "Output sample rate. MP3 supports 32000 and 44100 Hz; WAV supports every listed value.", "enum": []any{8000, 16000, 24000, 32000, 44100}, "type": "integer"},
 				"text":           generatedContractField{"required": true, "type": "string"},
 				"voice_id":       generatedContractField{"type": "string"},
@@ -141,7 +107,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"flux-2-flex-remix-image", "flux-2-max-remix-image", "flux-2-pro-remix-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"flux-2-flex-remix-image": {
-				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "1:1", "description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"enable_safety_checker": generatedContractField{"description": "Enable the safety checker.", "type": "boolean"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
@@ -159,7 +125,7 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_urls": generatedContractField{"description": "Exactly one public HTTP(S) source image URL.", "max_items": 1, "min_items": 1, "required": true, "type": "array"},
 			},
 			"flux-2-pro-remix-image": {
-				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "1:1", "description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "auto"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"enable_safety_checker": generatedContractField{"description": "Enable the safety checker.", "type": "boolean"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
@@ -173,7 +139,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"flux-2-flex-text-to-image", "flux-2-max-text-to-image", "flux-2-pro-text-to-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"flux-2-flex-text-to-image": {
-				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "1:1", "description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"enable_safety_checker": generatedContractField{"description": "Enable the safety checker.", "type": "boolean"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
@@ -189,7 +155,7 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":            generatedContractField{"description": "Image description.", "length": true, "max": 5000, "min": 3, "required": true, "type": "string"},
 			},
 			"flux-2-pro-text-to-image": {
-				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "1:1", "description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"enable_safety_checker": generatedContractField{"description": "Enable the safety checker.", "type": "boolean"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
@@ -390,6 +356,7 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"gpt-image-2.5-flare": {
 				"aspect_ratio":      generatedContractField{"enum": []any{"auto", "1:1", "3:2", "2:3", "4:3", "3:4", "5:4", "4:5", "16:9", "9:16", "2:1", "1:2", "3:1", "1:3", "21:9", "9:21"}, "type": "string"},
+				"background":        generatedContractField{"enum": []any{"transparent", "opaque", "auto"}, "type": "string"},
 				"callback_url":      generatedContractField{"type": "string"},
 				"model":             generatedContractField{"type": "string"},
 				"output_resolution": generatedContractField{"default": "1k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
@@ -398,6 +365,7 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"gpt-image-2.5-sunburst": {
 				"aspect_ratio":      generatedContractField{"enum": []any{"auto", "1:1", "3:2", "2:3", "4:3", "3:4", "5:4", "4:5", "16:9", "9:16", "2:1", "1:2", "3:1", "1:3", "21:9", "9:21"}, "type": "string"},
+				"background":        generatedContractField{"enum": []any{"transparent", "opaque", "auto"}, "type": "string"},
 				"callback_url":      generatedContractField{"type": "string"},
 				"model":             generatedContractField{"type": "string"},
 				"output_resolution": generatedContractField{"default": "1k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
@@ -411,6 +379,7 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"gpt-image-2.5-flare": {
 				"aspect_ratio":      generatedContractField{"enum": []any{"auto", "1:1", "3:2", "2:3", "4:3", "3:4", "5:4", "4:5", "16:9", "9:16", "2:1", "1:2", "3:1", "1:3", "21:9", "9:21"}, "type": "string"},
+				"background":        generatedContractField{"enum": []any{"transparent", "opaque", "auto"}, "type": "string"},
 				"callback_url":      generatedContractField{"type": "string"},
 				"model":             generatedContractField{"type": "string"},
 				"output_resolution": generatedContractField{"default": "1k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
@@ -418,6 +387,7 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"gpt-image-2.5-sunburst": {
 				"aspect_ratio":      generatedContractField{"enum": []any{"auto", "1:1", "3:2", "2:3", "4:3", "3:4", "5:4", "4:5", "16:9", "9:16", "2:1", "1:2", "3:1", "1:3", "21:9", "9:21"}, "type": "string"},
+				"background":        generatedContractField{"enum": []any{"transparent", "opaque", "auto"}, "type": "string"},
 				"callback_url":      generatedContractField{"type": "string"},
 				"model":             generatedContractField{"type": "string"},
 				"output_resolution": generatedContractField{"default": "1k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
@@ -430,6 +400,7 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"gpt-image-2": {
 				"aspect_ratio":      generatedContractField{"enum": []any{"auto", "1:1", "3:2", "2:3", "4:3", "3:4", "5:4", "4:5", "16:9", "9:16", "2:1", "1:2", "3:1", "1:3", "21:9", "9:21"}, "type": "string"},
+				"background":        generatedContractField{"enum": []any{"transparent", "opaque", "auto"}, "type": "string"},
 				"callback_url":      generatedContractField{"type": "string"},
 				"model":             generatedContractField{"type": "string"},
 				"output_resolution": generatedContractField{"default": "1k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
@@ -443,6 +414,7 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"gpt-image-2": {
 				"aspect_ratio":      generatedContractField{"enum": []any{"auto", "1:1", "3:2", "2:3", "4:3", "3:4", "5:4", "4:5", "16:9", "9:16", "2:1", "1:2", "3:1", "1:3", "21:9", "9:21"}, "type": "string"},
+				"background":        generatedContractField{"enum": []any{"transparent", "opaque", "auto"}, "type": "string"},
 				"callback_url":      generatedContractField{"type": "string"},
 				"model":             generatedContractField{"type": "string"},
 				"output_resolution": generatedContractField{"default": "1k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
@@ -522,7 +494,7 @@ var generatedContract = map[string]generatedContractAction{
 				"callback_url":          generatedContractField{"description": "Webhook URL for terminal Task delivery.", "type": "string"},
 				"duration_seconds":      generatedContractField{"description": "Output duration in seconds.", "max": 30, "min": 6, "type": "integer"},
 				"enable_safety_checker": generatedContractField{"description": "Enable content safety checks.", "type": "boolean"},
-				"index":                 generatedContractField{"description": "Zero-based source image index; used only with source_task_id.", "max": 5, "min": 0, "type": "integer"},
+				"index":                 generatedContractField{"description": "Zero-based source image index; used only with source_task_id.", "max": 1, "min": 0, "type": "integer"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"motion_style":          generatedContractField{"description": "Video motion style; spicy requires source_task_id.", "enum": []any{"fun", "normal", "spicy"}, "type": "string"},
 				"output_resolution":     generatedContractField{"default": "480p", "description": "Output resolution.", "enum": []any{"480p", "720p"}, "type": "string"},
@@ -584,7 +556,7 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":                generatedContractField{"description": "Image generation prompt.", "required": true, "type": "string"},
 			},
 			"grok-imagine-text-to-image": {
-				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"2:3", "3:2", "1:1", "16:9", "9:16"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "1:1", "description": "Output aspect ratio.", "enum": []any{"2:3", "3:2", "1:1", "16:9", "9:16"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for terminal Task delivery.", "type": "string"},
 				"enable_pro":            generatedContractField{"default": false, "description": "Enable Pro image generation mode.", "type": "boolean"},
 				"enable_safety_checker": generatedContractField{"description": "Enable content safety checks.", "type": "boolean"},
@@ -752,7 +724,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"happyhorse-1.0-r2v", "happyhorse-1.0-t2v", "happyhorse-character", "happyhorse-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"happyhorse-1.0-r2v": {
-				"aspect_ratio":         generatedContractField{"enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
+				"aspect_ratio":         generatedContractField{"default": "16:9", "enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
 				"callback_url":         generatedContractField{"type": "string"},
 				"duration_seconds":     generatedContractField{"default": 5, "type": "integer"},
 				"model":                generatedContractField{"type": "string"},
@@ -762,7 +734,7 @@ var generatedContract = map[string]generatedContractAction{
 				"seed":                 generatedContractField{"type": "integer"},
 			},
 			"happyhorse-1.0-t2v": {
-				"aspect_ratio":         generatedContractField{"enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
+				"aspect_ratio":         generatedContractField{"default": "16:9", "enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
 				"callback_url":         generatedContractField{"type": "string"},
 				"duration_seconds":     generatedContractField{"default": 5, "type": "integer"},
 				"model":                generatedContractField{"type": "string"},
@@ -772,7 +744,7 @@ var generatedContract = map[string]generatedContractAction{
 				"seed":                 generatedContractField{"type": "integer"},
 			},
 			"happyhorse-character": {
-				"aspect_ratio":         generatedContractField{"enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
+				"aspect_ratio":         generatedContractField{"default": "16:9", "enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
 				"callback_url":         generatedContractField{"type": "string"},
 				"duration_seconds":     generatedContractField{"default": 5, "type": "integer"},
 				"model":                generatedContractField{"type": "string"},
@@ -782,7 +754,7 @@ var generatedContract = map[string]generatedContractAction{
 				"seed":                 generatedContractField{"type": "integer"},
 			},
 			"happyhorse-text-to-video": {
-				"aspect_ratio":         generatedContractField{"enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
+				"aspect_ratio":         generatedContractField{"default": "16:9", "enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
 				"callback_url":         generatedContractField{"type": "string"},
 				"duration_seconds":     generatedContractField{"default": 5, "type": "integer"},
 				"model":                generatedContractField{"type": "string"},
@@ -790,6 +762,37 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":               generatedContractField{"type": "string"},
 				"reference_image_urls": generatedContractField{"type": "array"},
 				"seed":                 generatedContractField{"type": "integer"},
+			},
+		},
+	},
+	"heygen-video/image-to-video": {
+		Models: []string{"heygen-video-1"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"heygen-video-1": {
+				"callback_url":          generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
+				"duration_seconds":      generatedContractField{"default": 5, "description": "Generated video duration in seconds.", "enum": []any{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
+				"first_frame_image_url": generatedContractField{"description": "Public HTTPS first-frame image URL, up to 16 MB; the video follows the image's aspect ratio.", "pattern": "^https://", "required": true, "type": "string"},
+				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"output_resolution":     generatedContractField{"default": "768p", "description": "Generated video resolution.", "enum": []any{"480p", "768p", "1080p", "2k"}, "type": "string"},
+				"prompt":                generatedContractField{"description": "Video generation prompt describing the scene, dialogue, and sound.", "length": true, "max": 16000, "min": 1, "required": true, "type": "string"},
+				"seed":                  generatedContractField{"description": "Random seed for reproducible generation.", "max": 4294967295, "min": 0, "type": "integer"},
+			},
+		},
+	},
+	"heygen-video/text-to-video": {
+		Models: []string{"heygen-video-1"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"heygen-video-1": {
+				"aspect_ratio":         generatedContractField{"description": "Generated video aspect ratio; adaptive follows the first reference image or video and is available only with reference media at 480p or 768p.", "enum": []any{"adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"}, "type": "string"},
+				"callback_url":         generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
+				"duration_seconds":     generatedContractField{"default": 5, "description": "Generated video duration in seconds.", "enum": []any{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
+				"model":                generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
+				"output_resolution":    generatedContractField{"default": "768p", "description": "Generated video resolution; 1080p and 2k support only 16:9 and 9:16.", "enum": []any{"480p", "768p", "1080p", "2k"}, "type": "string"},
+				"prompt":               generatedContractField{"description": "Video generation prompt describing the scene, dialogue, and sound.", "length": true, "max": 16000, "min": 1, "required": true, "type": "string"},
+				"reference_audio_urls": generatedContractField{"description": "Public HTTPS reference audio URLs, up to 32 MB each; requires reference images or videos.", "items": map[string]any{"pattern": "^https://", "type": "string"}, "max_items": 3, "type": "array"},
+				"reference_image_urls": generatedContractField{"description": "Public HTTPS reference image URLs, up to 16 MB each; up to 12 reference files in total across images, videos, and audio.", "items": map[string]any{"pattern": "^https://", "type": "string"}, "max_items": 9, "type": "array"},
+				"reference_video_urls": generatedContractField{"description": "Public HTTPS reference video URLs with aspect ratio between 1:4 and 4:1, up to 32 MB each; only the first 5 seconds of each video are used.", "items": map[string]any{"pattern": "^https://", "type": "string"}, "max_items": 3, "type": "array"},
+				"seed":                 generatedContractField{"description": "Random seed for reproducible generation.", "max": 4294967295, "min": 0, "type": "integer"},
 			},
 		},
 	},
@@ -801,7 +804,7 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_prompt_expansion": generatedContractField{"type": "boolean"},
 				"mask_url":                generatedContractField{"required": true, "type": "string"},
 				"model":                   generatedContractField{"type": "string"},
-				"output_count":            generatedContractField{"enum": []any{1, 2, 3, 4}, "type": "integer"},
+				"output_count":            generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4}, "type": "integer"},
 				"prompt":                  generatedContractField{"type": "string"},
 				"reference_image_urls":    generatedContractField{"required": true, "type": "array"},
 				"rendering_speed":         generatedContractField{"default": "balanced", "enum": []any{"turbo", "balanced", "quality"}, "type": "string"},
@@ -814,28 +817,13 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_prompt_expansion": generatedContractField{"type": "boolean"},
 				"mask_url":                generatedContractField{"required": true, "type": "string"},
 				"model":                   generatedContractField{"type": "string"},
-				"output_count":            generatedContractField{"enum": []any{1, 2, 3, 4}, "type": "integer"},
+				"output_count":            generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4}, "type": "integer"},
 				"prompt":                  generatedContractField{"type": "string"},
 				"reference_image_urls":    generatedContractField{"type": "array"},
 				"rendering_speed":         generatedContractField{"default": "balanced", "enum": []any{"turbo", "balanced", "quality"}, "type": "string"},
 				"seed":                    generatedContractField{"type": "integer"},
 				"source_image_url":        generatedContractField{"required": true, "type": "string"},
 				"style":                   generatedContractField{"type": "string"},
-			},
-		},
-	},
-	"ideogram-v3/reframe-image": {
-		Models: []string{"ideogram-v3-reframe"},
-		FieldsByModel: map[string]map[string]generatedContractField{
-			"ideogram-v3-reframe": {
-				"aspect_ratio":     generatedContractField{"enum": []any{"1:1", "3:4", "9:16", "4:3", "16:9"}, "type": "string"},
-				"callback_url":     generatedContractField{"type": "string"},
-				"model":            generatedContractField{"type": "string"},
-				"output_count":     generatedContractField{"enum": []any{1, 2, 3, 4}, "type": "integer"},
-				"rendering_speed":  generatedContractField{"default": "balanced", "enum": []any{"turbo", "balanced", "quality"}, "type": "string"},
-				"seed":             generatedContractField{"type": "integer"},
-				"source_image_url": generatedContractField{"required": true, "type": "string"},
-				"style":            generatedContractField{"enum": []any{"auto", "general", "realistic", "design"}, "type": "string"},
 			},
 		},
 	},
@@ -848,7 +836,7 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_prompt_expansion":    generatedContractField{"type": "boolean"},
 				"model":                      generatedContractField{"type": "string"},
 				"negative_prompt":            generatedContractField{"type": "string"},
-				"output_count":               generatedContractField{"enum": []any{1, 2, 3, 4}, "type": "integer"},
+				"output_count":               generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4}, "type": "integer"},
 				"prompt":                     generatedContractField{"type": "string"},
 				"reference_image_urls":       generatedContractField{"required": true, "type": "array"},
 				"reference_mask_urls":        generatedContractField{"type": "array"},
@@ -865,7 +853,7 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_prompt_expansion":    generatedContractField{"type": "boolean"},
 				"model":                      generatedContractField{"type": "string"},
 				"negative_prompt":            generatedContractField{"type": "string"},
-				"output_count":               generatedContractField{"enum": []any{1, 2, 3, 4}, "type": "integer"},
+				"output_count":               generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4}, "type": "integer"},
 				"prompt":                     generatedContractField{"type": "string"},
 				"reference_image_urls":       generatedContractField{"type": "array"},
 				"reference_mask_urls":        generatedContractField{"type": "array"},
@@ -887,7 +875,7 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_prompt_expansion": generatedContractField{"type": "boolean"},
 				"model":                   generatedContractField{"type": "string"},
 				"negative_prompt":         generatedContractField{"type": "string"},
-				"output_count":            generatedContractField{"enum": []any{1, 2, 3, 4}, "type": "integer"},
+				"output_count":            generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4}, "type": "integer"},
 				"prompt":                  generatedContractField{"type": "string"},
 				"reference_image_urls":    generatedContractField{"required": true, "type": "array"},
 				"rendering_speed":         generatedContractField{"default": "balanced", "enum": []any{"turbo", "balanced", "quality"}, "type": "string"},
@@ -900,7 +888,7 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_prompt_expansion": generatedContractField{"type": "boolean"},
 				"model":                   generatedContractField{"type": "string"},
 				"negative_prompt":         generatedContractField{"type": "string"},
-				"output_count":            generatedContractField{"enum": []any{1, 2, 3, 4}, "type": "integer"},
+				"output_count":            generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4}, "type": "integer"},
 				"prompt":                  generatedContractField{"type": "string"},
 				"reference_image_urls":    generatedContractField{"type": "array"},
 				"rendering_speed":         generatedContractField{"default": "balanced", "enum": []any{"turbo", "balanced", "quality"}, "type": "string"},
@@ -967,7 +955,7 @@ var generatedContract = map[string]generatedContractAction{
 		},
 	},
 	"kling/avatar": {
-		Models: []string{"kling-ai-avatar-pro", "kling-ai-avatar-standard", "kling-ai-avatar-v1-pro", "kling-v1-avatar-standard"},
+		Models: []string{"kling-ai-avatar-pro", "kling-ai-avatar-standard"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-ai-avatar-pro": {
 				"callback_url":     generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
@@ -977,20 +965,6 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_url": generatedContractField{"description": "Face image URL.", "required": true, "type": "string"},
 			},
 			"kling-ai-avatar-standard": {
-				"callback_url":     generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
-				"model":            generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
-				"prompt":           generatedContractField{"description": "Description of the avatar.", "required": true, "type": "string"},
-				"source_audio_url": generatedContractField{"description": "Audio URL for lip sync.", "required": true, "type": "string"},
-				"source_image_url": generatedContractField{"description": "Face image URL.", "required": true, "type": "string"},
-			},
-			"kling-ai-avatar-v1-pro": {
-				"callback_url":     generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
-				"model":            generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
-				"prompt":           generatedContractField{"description": "Description of the avatar.", "required": true, "type": "string"},
-				"source_audio_url": generatedContractField{"description": "Audio URL for lip sync.", "required": true, "type": "string"},
-				"source_image_url": generatedContractField{"description": "Face image URL.", "required": true, "type": "string"},
-			},
-			"kling-v1-avatar-standard": {
 				"callback_url":     generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"model":            generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"prompt":           generatedContractField{"description": "Description of the avatar.", "required": true, "type": "string"},
@@ -1143,7 +1117,6 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"kling-3.0", "kling-v2.6"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
-				"background_source":     generatedContractField{"description": "Background source.", "enum": []any{"video", "image"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"character_orientation": generatedContractField{"description": "Character orientation.", "enum": []any{"video", "image"}, "type": "string"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
@@ -1167,7 +1140,7 @@ var generatedContract = map[string]generatedContractAction{
 		Models: []string{"kling-3.0", "kling-o1", "kling-v2.1-master-text-to-video", "kling-v2.5-turbo-text-to-video-pro", "kling-v2.6", "kling-v3-omni", "kling-v3-omni-reference", "kling-v3-turbo-text-to-video"},
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"kling-3.0": {
-				"aspect_ratio":          generatedContractField{"description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "16:9", "description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
 				"callback_url":          generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"cfg_scale":             generatedContractField{"description": "Guidance scale (0-1).", "type": "number"},
 				"duration_seconds":      generatedContractField{"default": 5, "description": "Duration in seconds.", "enum": []any{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
@@ -1176,11 +1149,12 @@ var generatedContract = map[string]generatedContractAction{
 				"kling_elements":        generatedContractField{"description": "Element references with image, video, or audio materials.", "type": "array"},
 				"last_frame_image_url":  generatedContractField{"description": "Last frame image URL for single-shot mode.", "type": "string"},
 				"model":                 generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
-				"multi_prompt":          generatedContractField{"description": "Prompt segments for multi-shot mode.", "type": "array"},
+				"multi_prompt":          generatedContractField{"description": "Required for custom multi-shot mode: 1–6 shots with nonempty prompts up to 500 characters (each @element reference counts as 37), each duration_seconds 1–12, summing to duration_seconds.", "type": "array"},
 				"multi_shots":           generatedContractField{"description": "Enable multi-shot generation.", "type": "boolean"},
 				"negative_prompt":       generatedContractField{"description": "Negative prompt.", "type": "string"},
 				"output_resolution":     generatedContractField{"default": "1080p", "description": "Output resolution.", "enum": []any{"720p", "1080p", "4k"}, "type": "string"},
-				"prompt":                generatedContractField{"description": "Video description. Required unless multi_shots is enabled.", "type": "string"},
+				"prompt":                generatedContractField{"description": "Video description. Required for single-shot and automatic storyboarding.", "type": "string"},
+				"shot_type":             generatedContractField{"description": "Multi-shot storyboard method: custom or automatic; defaults to custom only when multi_shots is true.", "enum": []any{"custom", "automatic"}, "type": "string"},
 			},
 			"kling-o1": {
 				"aspect_ratio":                   generatedContractField{"default": "16:9", "description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
@@ -1196,7 +1170,7 @@ var generatedContract = map[string]generatedContractAction{
 				"reference_video_url":            generatedContractField{"description": "Public HTTP(S) MP4 or MOV reference video URL.", "type": "string"},
 			},
 			"kling-v2.1-master-text-to-video": {
-				"aspect_ratio":     generatedContractField{"description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
+				"aspect_ratio":     generatedContractField{"default": "16:9", "description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
 				"callback_url":     generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"cfg_scale":        generatedContractField{"description": "Guidance scale (0-1).", "type": "number"},
 				"duration_seconds": generatedContractField{"default": 5, "description": "Duration in seconds.", "enum": []any{5, 10}, "type": "integer"},
@@ -1206,7 +1180,7 @@ var generatedContract = map[string]generatedContractAction{
 				"prompt":           generatedContractField{"description": "Video description.", "type": "string"},
 			},
 			"kling-v2.5-turbo-text-to-video-pro": {
-				"aspect_ratio":     generatedContractField{"description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
+				"aspect_ratio":     generatedContractField{"default": "16:9", "description": "Output aspect ratio.", "enum": []any{"16:9", "9:16", "1:1"}, "type": "string"},
 				"callback_url":     generatedContractField{"description": "Webhook URL for async notifications.", "type": "string"},
 				"cfg_scale":        generatedContractField{"description": "Guidance scale (0-1).", "type": "number"},
 				"duration_seconds": generatedContractField{"default": 5, "description": "Duration in seconds.", "enum": []any{5, 10}, "type": "integer"},
@@ -1250,18 +1224,6 @@ var generatedContract = map[string]generatedContractAction{
 				"model":             generatedContractField{"description": "Model slug.", "required": true, "type": "string"},
 				"output_resolution": generatedContractField{"default": "720p", "description": "Output resolution.", "enum": []any{"720p", "1080p"}, "type": "string"},
 				"prompt":            generatedContractField{"description": "Video description.", "length": true, "max": 2500, "min": 1, "required": true, "type": "string"},
-			},
-		},
-	},
-	"luma/modify-video": {
-		Models: []string{"luma-modify-video"},
-		FieldsByModel: map[string]map[string]generatedContractField{
-			"luma-modify-video": {
-				"callback_url":     generatedContractField{"type": "string"},
-				"model":            generatedContractField{"type": "string"},
-				"prompt":           generatedContractField{"required": true, "type": "string"},
-				"source_video_url": generatedContractField{"required": true, "type": "string"},
-				"watermark":        generatedContractField{"type": "string"},
 			},
 		},
 	},
@@ -1435,7 +1397,7 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_fast_mode":  generatedContractField{"type": "boolean"},
 				"mask_urls":         generatedContractField{"max_items": 5, "type": "array"},
 				"model":             generatedContractField{"type": "string"},
-				"output_resolution": generatedContractField{"enum": []any{"720p", "1080p"}, "type": "string"},
+				"output_resolution": generatedContractField{"default": "1080p", "enum": []any{"720p", "1080p"}, "type": "string"},
 				"prompt":            generatedContractField{"length": true, "max": 300, "type": "string"},
 				"seed":              generatedContractField{"type": "integer"},
 				"source_audio_url":  generatedContractField{"required": true, "type": "string"},
@@ -1650,6 +1612,41 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
+	"qwen-2-1/edit-image": {
+		Models: []string{"qwen-2.1-edit-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"qwen-2.1-edit-image": {
+				"aspect_ratio":            generatedContractField{"default": "auto", "description": "Output aspect ratio. auto follows the first source image. Ignored when mask_url is set.", "enum": []any{"auto", "1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9", "9:21"}, "type": "string"},
+				"background":              generatedContractField{"default": "opaque", "description": "Background type. A transparent background requires output_format png or webp and cannot be combined with mask_url; describe only the subject in the prompt.", "enum": []any{"opaque", "transparent"}, "type": "string"},
+				"callback_url":            generatedContractField{"description": "Webhook URL for asynchronous task updates.", "type": "string"},
+				"enable_prompt_expansion": generatedContractField{"default": true, "description": "Whether RunAPI expands the prompt before generation. Ignored when mask_url is set.", "type": "boolean"},
+				"mask_url":                generatedContractField{"description": "Public mask image URL for local editing: white marks the area to change, black is kept. Requires exactly one source image and cannot be combined with a transparent background; aspect_ratio and enable_prompt_expansion are ignored.", "type": "string"},
+				"model":                   generatedContractField{"description": "RunAPI model identifier.", "required": true, "type": "string"},
+				"output_format":           generatedContractField{"default": "png", "description": "Output image format. jpeg cannot be combined with a transparent background.", "enum": []any{"png", "webp", "jpeg"}, "type": "string"},
+				"output_resolution":       generatedContractField{"default": "1k", "description": "Output image resolution.", "enum": []any{"1k", "2k"}, "type": "string"},
+				"prompt":                  generatedContractField{"description": "Image editing prompt. With mask_url, describes what to generate inside the white area of the mask.", "length": true, "max": 5000, "min": 1, "required": true, "type": "string"},
+				"seed":                    generatedContractField{"description": "Integer seed for reproducible results; omit for a random seed.", "type": "integer"},
+				"source_image_urls":       generatedContractField{"description": "Public source image URLs; one to ten images, in the order the prompt refers to them.", "items": map[string]any{"type": "string"}, "max_items": 10, "min_items": 1, "required": true, "type": "array"},
+			},
+		},
+	},
+	"qwen-2-1/text-to-image": {
+		Models: []string{"qwen-2.1-text-to-image"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"qwen-2.1-text-to-image": {
+				"aspect_ratio":            generatedContractField{"default": "1:1", "description": "Output aspect ratio.", "enum": []any{"1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9", "9:21"}, "type": "string"},
+				"background":              generatedContractField{"default": "opaque", "description": "Background type. A transparent background requires output_format png or webp; describe only the subject in the prompt.", "enum": []any{"opaque", "transparent"}, "type": "string"},
+				"callback_url":            generatedContractField{"description": "Webhook URL for asynchronous task updates.", "type": "string"},
+				"enable_prompt_expansion": generatedContractField{"default": true, "description": "Whether RunAPI expands the prompt before generation.", "type": "boolean"},
+				"enable_safety_checker":   generatedContractField{"default": false, "description": "Whether RunAPI checks generated content for safety.", "type": "boolean"},
+				"model":                   generatedContractField{"description": "RunAPI model identifier.", "required": true, "type": "string"},
+				"output_format":           generatedContractField{"default": "png", "description": "Output image format. jpeg cannot be combined with a transparent background.", "enum": []any{"png", "webp", "jpeg"}, "type": "string"},
+				"output_resolution":       generatedContractField{"default": "1k", "description": "Output image resolution.", "enum": []any{"1k", "2k"}, "type": "string"},
+				"prompt":                  generatedContractField{"description": "Image generation prompt.", "length": true, "max": 5000, "min": 1, "required": true, "type": "string"},
+				"seed":                    generatedContractField{"description": "Integer seed for reproducible results; omit for a random seed.", "type": "integer"},
+			},
+		},
+	},
 	"qwen-2/edit-image": {
 		Models: []string{"qwen-2-edit-image"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -1800,21 +1797,6 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
-	"runway-aleph/edit-video": {
-		Models: []string{"runway-aleph"},
-		FieldsByModel: map[string]map[string]generatedContractField{
-			"runway-aleph": {
-				"aspect_ratio":        generatedContractField{"enum": []any{"16:9", "9:16", "4:3", "3:4", "1:1", "21:9"}, "type": "string"},
-				"callback_url":        generatedContractField{"type": "string"},
-				"model":               generatedContractField{"type": "string"},
-				"prompt":              generatedContractField{"required": true, "type": "string"},
-				"reference_image_url": generatedContractField{"type": "string"},
-				"seed":                generatedContractField{"type": "integer"},
-				"source_video_url":    generatedContractField{"required": true, "type": "string"},
-				"watermark":           generatedContractField{"type": "string"},
-			},
-		},
-	},
 	"runway/extend-video": {
 		Models: []string{"runway"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -1860,9 +1842,9 @@ var generatedContract = map[string]generatedContractAction{
 				"source_image_urls":     generatedContractField{"max_items": 2, "type": "array"},
 			},
 			"seedance-2-mini": {
-				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "16:9", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}, "type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
-				"duration_seconds":      generatedContractField{"default": 5, "max": 15, "min": 4, "type": "integer"},
+				"duration_seconds":      generatedContractField{"default": 5, "description": "Video duration in seconds; -1 selects duration automatically.", "enum": []any{-1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
 				"first_frame_image_url": generatedContractField{"type": "string"},
 				"generate_audio":        generatedContractField{"default": true, "type": "boolean"},
 				"last_frame_image_url":  generatedContractField{"type": "string"},
@@ -1875,12 +1857,12 @@ var generatedContract = map[string]generatedContractAction{
 				"web_search":            generatedContractField{"type": "boolean"},
 			},
 			"seedance-2.0": {
-				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "16:9", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}, "type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
-				"duration_seconds":      generatedContractField{"default": 5, "max": 15, "min": 4, "type": "integer"},
+				"duration_seconds":      generatedContractField{"default": 5, "description": "Video duration in seconds; -1 selects duration automatically.", "enum": []any{-1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
 				"enable_safety_checker": generatedContractField{"type": "boolean"},
 				"first_frame_image_url": generatedContractField{"type": "string"},
-				"generate_audio":        generatedContractField{"type": "boolean"},
+				"generate_audio":        generatedContractField{"default": true, "type": "boolean"},
 				"last_frame_image_url":  generatedContractField{"type": "string"},
 				"model":                 generatedContractField{"type": "string"},
 				"output_resolution":     generatedContractField{"default": "720p", "enum": []any{"480p", "720p", "1080p", "4k"}, "type": "string"},
@@ -1891,12 +1873,12 @@ var generatedContract = map[string]generatedContractAction{
 				"web_search":            generatedContractField{"type": "boolean"},
 			},
 			"seedance-2.0-fast": {
-				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "16:9", "enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "21:9", "auto"}, "type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
-				"duration_seconds":      generatedContractField{"default": 5, "max": 15, "min": 4, "type": "integer"},
+				"duration_seconds":      generatedContractField{"default": 5, "description": "Video duration in seconds; -1 selects duration automatically.", "enum": []any{-1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, "type": "integer"},
 				"enable_safety_checker": generatedContractField{"type": "boolean"},
 				"first_frame_image_url": generatedContractField{"type": "string"},
-				"generate_audio":        generatedContractField{"type": "boolean"},
+				"generate_audio":        generatedContractField{"default": true, "type": "boolean"},
 				"last_frame_image_url":  generatedContractField{"type": "string"},
 				"model":                 generatedContractField{"type": "string"},
 				"output_resolution":     generatedContractField{"default": "720p", "enum": []any{"480p", "720p"}, "type": "string"},
@@ -1917,7 +1899,7 @@ var generatedContract = map[string]generatedContractAction{
 				"model":                 generatedContractField{"description": "RunAPI model identifier.", "required": true, "type": "string"},
 				"output_format":         generatedContractField{"default": "mp4", "description": "Output video container format.", "enum": []any{"mp4", "mov"}, "type": "string"},
 				"output_resolution":     generatedContractField{"default": "720p", "description": "Output video resolution.", "enum": []any{"480p", "720p", "1080p"}, "type": "string"},
-				"prompt":                generatedContractField{"description": "Video generation prompt.", "length": true, "max": 30000, "min": 3, "required": true, "type": "string"},
+				"prompt":                generatedContractField{"description": "Video generation prompt.", "length": true, "max": 20480, "min": 3, "required": true, "type": "string"},
 				"reference_audio_urls":  generatedContractField{"description": "Public reference audio URLs; up to 10 audio files.", "items": map[string]any{"type": "string"}, "max_items": 10, "type": "array"},
 				"reference_image_urls":  generatedContractField{"description": "Public reference image URLs; up to 30 images.", "items": map[string]any{"type": "string"}, "max_items": 30, "type": "array"},
 				"reference_video_urls":  generatedContractField{"description": "Public reference video URLs; up to 10 videos.", "items": map[string]any{"type": "string"}, "max_items": 10, "type": "array"},
@@ -1966,6 +1948,7 @@ var generatedContract = map[string]generatedContractAction{
 		FieldsByModel: map[string]map[string]generatedContractField{
 			"seedream-4.5-edit": {
 				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}, "required": true, "type": "string"},
+				"background":            generatedContractField{"type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
 				"enable_safety_checker": generatedContractField{"type": "boolean"},
 				"model":                 generatedContractField{"type": "string"},
@@ -1979,6 +1962,7 @@ var generatedContract = map[string]generatedContractAction{
 			},
 			"seedream-5-lite-edit": {
 				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}, "required": true, "type": "string"},
+				"background":            generatedContractField{"type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
 				"enable_safety_checker": generatedContractField{"type": "boolean"},
 				"model":                 generatedContractField{"type": "string"},
@@ -1986,31 +1970,33 @@ var generatedContract = map[string]generatedContractAction{
 				"output_format":         generatedContractField{"default": "png", "enum": []any{"png", "jpeg"}, "type": "string"},
 				"output_quality":        generatedContractField{"enum": []any{"basic", "high", "ultra"}, "required": true, "type": "string"},
 				"output_resolution":     generatedContractField{"type": "string"},
-				"prompt":                generatedContractField{"type": "string"},
+				"prompt":                generatedContractField{"length": true, "max": 2995, "min": 4, "required": true, "type": "string"},
 				"seed":                  generatedContractField{"type": "integer"},
 				"source_image_urls":     generatedContractField{"max_items": 14, "min_items": 1, "required": true, "type": "array"},
 			},
 			"seedream-5-pro-edit": {
 				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "16:9", "9:16", "2:3", "3:2", "21:9"}, "required": true, "type": "string"},
+				"background":            generatedContractField{"description": "Keep the transparent background of the source image. Requires exactly one PNG source image with an alpha channel and output_format png.", "enum": []any{"transparent"}, "type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
 				"enable_safety_checker": generatedContractField{"type": "boolean"},
 				"model":                 generatedContractField{"type": "string"},
 				"output_format":         generatedContractField{"default": "png", "enum": []any{"png", "jpeg"}, "type": "string"},
 				"output_quality":        generatedContractField{"enum": []any{"basic", "high"}, "required": true, "type": "string"},
-				"prompt":                generatedContractField{"length": true, "max": 5000, "min": 3, "required": true, "type": "string"},
+				"prompt":                generatedContractField{"length": true, "max": 5000, "min": 4, "required": true, "type": "string"},
 				"source_image_urls":     generatedContractField{"max_items": 10, "min_items": 1, "required": true, "type": "array"},
 			},
 			"seedream-v4-edit": {
-				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "1:1", "enum": []any{"1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"}, "type": "string"},
+				"background":            generatedContractField{"type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
 				"enable_safety_checker": generatedContractField{"type": "boolean"},
 				"model":                 generatedContractField{"type": "string"},
 				"output_count":          generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4, 5, 6}, "type": "integer"},
 				"output_format":         generatedContractField{"type": "string"},
 				"output_quality":        generatedContractField{"type": "string"},
-				"output_resolution":     generatedContractField{"enum": []any{"1k", "2k", "4k"}, "type": "string"},
+				"output_resolution":     generatedContractField{"default": "2k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
 				"prompt":                generatedContractField{"type": "string"},
-				"seed":                  generatedContractField{"type": "integer"},
+				"seed":                  generatedContractField{"max": 1000000, "type": "integer"},
 				"source_image_urls":     generatedContractField{"max_items": 10, "min_items": 1, "required": true, "type": "array"},
 			},
 		},
@@ -2039,7 +2025,7 @@ var generatedContract = map[string]generatedContractAction{
 				"output_format":         generatedContractField{"default": "png", "enum": []any{"png", "jpeg"}, "type": "string"},
 				"output_quality":        generatedContractField{"enum": []any{"basic", "high", "ultra"}, "required": true, "type": "string"},
 				"output_resolution":     generatedContractField{"type": "string"},
-				"prompt":                generatedContractField{"type": "string"},
+				"prompt":                generatedContractField{"length": true, "max": 2995, "min": 4, "required": true, "type": "string"},
 				"seed":                  generatedContractField{"type": "integer"},
 			},
 			"seedream-5-pro-text-to-image": {
@@ -2049,19 +2035,19 @@ var generatedContract = map[string]generatedContractAction{
 				"model":                 generatedContractField{"type": "string"},
 				"output_format":         generatedContractField{"default": "png", "enum": []any{"png", "jpeg"}, "type": "string"},
 				"output_quality":        generatedContractField{"enum": []any{"basic", "high"}, "required": true, "type": "string"},
-				"prompt":                generatedContractField{"length": true, "max": 5000, "min": 3, "required": true, "type": "string"},
+				"prompt":                generatedContractField{"length": true, "max": 5000, "min": 4, "required": true, "type": "string"},
 			},
 			"seedream-v4-text-to-image": {
-				"aspect_ratio":          generatedContractField{"enum": []any{"1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"}, "type": "string"},
+				"aspect_ratio":          generatedContractField{"default": "1:1", "enum": []any{"1:1", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"}, "type": "string"},
 				"callback_url":          generatedContractField{"type": "string"},
 				"enable_safety_checker": generatedContractField{"type": "boolean"},
 				"model":                 generatedContractField{"type": "string"},
 				"output_count":          generatedContractField{"default": 1, "enum": []any{1, 2, 3, 4, 5, 6}, "type": "integer"},
 				"output_format":         generatedContractField{"type": "string"},
 				"output_quality":        generatedContractField{"type": "string"},
-				"output_resolution":     generatedContractField{"enum": []any{"1k", "2k", "4k"}, "type": "string"},
+				"output_resolution":     generatedContractField{"default": "2k", "enum": []any{"1k", "2k", "4k"}, "type": "string"},
 				"prompt":                generatedContractField{"type": "string"},
-				"seed":                  generatedContractField{"type": "integer"},
+				"seed":                  generatedContractField{"max": 1000000, "type": "integer"},
 			},
 		},
 	},
@@ -3363,6 +3349,36 @@ var generatedContract = map[string]generatedContractAction{
 			},
 		},
 	},
+	"vidu/image-to-video": {
+		Models: []string{"vidu-q4-image-to-video"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"vidu-q4-image-to-video": {
+				"audio":                 generatedContractField{"default": true, "description": "Generate synchronized audio. False produces a silent video.", "type": "boolean"},
+				"callback_url":          generatedContractField{"description": "RunAPI customer callback URL for the terminal task result.", "type": "string"},
+				"duration_seconds":      generatedContractField{"default": 5, "description": "Video duration in seconds.", "max": 16, "min": 3, "type": "integer"},
+				"first_frame_image_url": generatedContractField{"description": "HTTP(S) URL of a JPG, JPEG, PNG or WEBP first frame, up to 50 MB. The provider validates the remote file.", "required": true, "type": "string"},
+				"model":                 generatedContractField{"description": "Vidu Q4 image-to-video model.", "required": true, "type": "string"},
+				"output_resolution":     generatedContractField{"default": "720p", "description": "Output video resolution.", "enum": []any{"540p", "720p", "1080p", "2k", "4k"}, "type": "string"},
+				"prompt":                generatedContractField{"description": "Optional video description, up to 20,000 characters.", "length": true, "max": 20000, "type": "string"},
+			},
+		},
+	},
+	"vidu/reference-to-video": {
+		Models: []string{"vidu-q4-reference-to-video"},
+		FieldsByModel: map[string]map[string]generatedContractField{
+			"vidu-q4-reference-to-video": {
+				"aspect_ratio":         generatedContractField{"default": "16:9", "description": "Output video aspect ratio.", "enum": []any{"16:9", "9:16", "1:1", "4:3", "3:4"}, "type": "string"},
+				"audio":                generatedContractField{"default": true, "description": "Generate synchronized audio. False produces a silent video.", "type": "boolean"},
+				"callback_url":         generatedContractField{"description": "RunAPI customer callback URL for the terminal task result.", "type": "string"},
+				"duration_seconds":     generatedContractField{"default": 5, "description": "Video duration in seconds.", "max": 16, "min": 3, "type": "integer"},
+				"model":                generatedContractField{"description": "Vidu Q4 reference-to-video model.", "required": true, "type": "string"},
+				"output_resolution":    generatedContractField{"default": "720p", "description": "Output video resolution.", "enum": []any{"540p", "720p", "1080p", "2k", "4k"}, "type": "string"},
+				"prompt":               generatedContractField{"description": "Video description, up to 20,000 characters.", "length": true, "max": 20000, "min": 1, "required": true, "type": "string"},
+				"reference_audio_urls": generatedContractField{"description": "Up to 3 HTTP(S) URLs of MP3 references, each 3 to 12 seconds and up to 50 MB. The provider validates the remote files.", "items": map[string]any{"type": "string"}, "max_items": 3, "type": "array"},
+				"reference_image_urls": generatedContractField{"description": "Ordered HTTP(S) URLs of 1 to 15 JPG, JPEG, PNG or WEBP reference images. The provider validates the remote files.", "items": map[string]any{"type": "string"}, "max_items": 15, "min_items": 1, "required": true, "type": "array"},
+			},
+		},
+	},
 	"volcengine-lip-sync/lip-sync-video": {
 		Models: []string{"volcengine-lip-sync"},
 		FieldsByModel: map[string]map[string]generatedContractField{
@@ -3609,7 +3625,7 @@ var generatedContract = map[string]generatedContractAction{
 				"enable_sequential":     generatedContractField{"type": "boolean"},
 				"model":                 generatedContractField{"type": "string"},
 				"output_count":          generatedContractField{"type": "integer"},
-				"output_resolution":     generatedContractField{"enum": []any{"1k", "2k", "4k"}, "type": "string"},
+				"output_resolution":     generatedContractField{"enum": []any{"1k", "2k"}, "type": "string"},
 				"prompt":                generatedContractField{"type": "string"},
 				"seed":                  generatedContractField{"type": "integer"},
 				"source_image_urls":     generatedContractField{"type": "array"},

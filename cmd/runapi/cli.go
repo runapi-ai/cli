@@ -35,6 +35,7 @@ import (
 	"github.com/runapi-ai/grok-imagine-sdk/go/grokimagine"
 	"github.com/runapi-ai/hailuo-sdk/go/hailuo"
 	"github.com/runapi-ai/happyhorse-sdk/go/happyhorse"
+	"github.com/runapi-ai/heygen-video-sdk/go/heygenvideo"
 	"github.com/runapi-ai/ideogram-v3-sdk/go/ideogramv3"
 	"github.com/runapi-ai/imagen-4-sdk/go/imagen4"
 	"github.com/runapi-ai/infinitetalk-sdk/go/infinitetalk"
@@ -49,6 +50,7 @@ import (
 	"github.com/runapi-ai/pixverse-sdk/go/pixverse"
 	"github.com/runapi-ai/producer-sdk/go/producer"
 	"github.com/runapi-ai/qwen-2-sdk/go/qwen2"
+	"github.com/runapi-ai/qwen-2.1-sdk/go/qwen21"
 	"github.com/runapi-ai/qwen-3-sdk/go/qwen3"
 	"github.com/runapi-ai/qwen-image-sdk/go/qwenimage"
 	"github.com/runapi-ai/recraft-sdk/go/recraft"
@@ -60,6 +62,7 @@ import (
 	"github.com/runapi-ai/topaz-sdk/go/topaz"
 	"github.com/runapi-ai/typesafe-sdk/go/typesafe"
 	"github.com/runapi-ai/veo-3.1-sdk/go/veo31"
+	"github.com/runapi-ai/vidu-sdk/go/vidu"
 	volcenginelipsync "github.com/runapi-ai/volcengine-lip-sync-sdk/go/volcenginelipsync"
 	"github.com/runapi-ai/wan-sdk/go/wan"
 	"github.com/runapi-ai/z-image-sdk/go/zimage"
@@ -218,6 +221,7 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("fish-audio"))
 	root.AddCommand(c.serviceCommand("gemini-tts"))
 	root.AddCommand(c.serviceCommand("qwen-2"))
+	root.AddCommand(c.serviceCommand("qwen-2-1"))
 	root.AddCommand(c.serviceCommand("qwen-3"))
 	root.AddCommand(c.serviceCommand("qwen-image"))
 	root.AddCommand(c.serviceCommand("recraft"))
@@ -231,8 +235,10 @@ func (c *cli) command() *cobra.Command {
 	root.AddCommand(c.serviceCommand("midjourney"))
 	root.AddCommand(c.serviceCommand("hailuo"))
 	root.AddCommand(c.serviceCommand("minimax-h3"))
+	root.AddCommand(c.serviceCommand("heygen-video"))
 	root.AddCommand(c.serviceCommand("volcengine-lip-sync"))
 	root.AddCommand(c.serviceCommand("happyhorse"))
+	root.AddCommand(c.serviceCommand("vidu"))
 	root.AddCommand(c.serviceCommand("gpt-image"))
 	root.AddCommand(c.serviceCommand("gpt-image-2"))
 	root.AddCommand(c.serviceCommand("gpt-image-2.5"))
@@ -1692,6 +1698,7 @@ var allSpecs = []actionSpec{
 	newFishAudioCreateVoiceSpec(), newFishAudioListVoicesSpec(), newFishAudioGetVoiceSpec(),
 	newGeminiTTSTextToSpeechSpec(),
 	newQwen2TextToImageSpec(), newQwen2EditSpec(),
+	newQwen21TextToImageSpec(), newQwen21EditImageSpec(),
 	newQwen3TextToImageSpec(), newQwen3EditImageSpec(),
 	newQwenImageTextToImageSpec(), newQwenImageRemixImageSpec(), newQwenImageEditSpec(),
 	newRecraftUpscaleSpec(), newRecraftBackgroundRemovalSpec(), newZImageTextToImageSpec(),
@@ -1707,8 +1714,10 @@ var allSpecs = []actionSpec{
 	newMidjourneyImageToPromptSpec(), newMidjourneyShortenPromptSpec(), newMidjourneyGetSeedSpec(),
 	newHailuoTextToVideoSpec(), newHailuoImageToVideoSpec(),
 	newMiniMaxH3TextToVideoSpec(), newMiniMaxH3ImageToVideoSpec(),
+	newHeyGenVideoTextToVideoSpec(), newHeyGenVideoImageToVideoSpec(),
 	newVolcengineLipSyncVideoSpec(),
 	newHappyHorseTextToVideoSpec(), newHappyHorseImageToVideoSpec(), newHappyHorseEditVideoSpec(),
+	newViduImageToVideoSpec(), newViduReferenceToVideoSpec(),
 	newGptImageTextToImageSpec(), newGptImageEditImageSpec(), newGptImage2TextToImageSpec(), newGptImage2EditImageSpec(), newGptImage25TextToImageSpec(), newGptImage25EditImageSpec(), newGpt4oImageTextToImageSpec(),
 	newGrokImagineTextToVideoSpec(), newGrokImagineImageToVideoSpec(), newGrokImagineTextToImageSpec(), newGrokImagineSegmentMapSpec(), newGrokImagineEditImageSpec(),
 	newGrokImagineExtendSpec(), newGrokImagineUpscaleSpec(),
@@ -2337,6 +2346,26 @@ func newQwen2EditSpec() actionSpec {
 	}}
 }
 
+func newQwen21TextToImageSpec() actionSpec {
+	return actionSpec{service: "qwen-2-1", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[qwen21.TextToImageParams](), decode: decodeInto[qwen21.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Qwen21.TextToImage.Create(ctx, params.(qwen21.TextToImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Qwen21.TextToImage.Run(ctx, params.(qwen21.TextToImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Qwen21.TextToImage.Get(ctx, id, opts...)
+	}}
+}
+
+func newQwen21EditImageSpec() actionSpec {
+	return actionSpec{service: "qwen-2-1", action: "edit-image", isAsync: true, inputFields: inputFieldsFor[qwen21.EditImageParams](), decode: decodeInto[qwen21.EditImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Qwen21.EditImage.Create(ctx, params.(qwen21.EditImageParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Qwen21.EditImage.Run(ctx, params.(qwen21.EditImageParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Qwen21.EditImage.Get(ctx, id, opts...)
+	}}
+}
+
 func newQwen3TextToImageSpec() actionSpec {
 	return actionSpec{service: "qwen-3", action: "text-to-image", isAsync: true, inputFields: inputFieldsFor[qwen3.TextToImageParams](), decode: decodeInto[qwen3.TextToImageParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.Qwen3.TextToImage.Create(ctx, params.(qwen3.TextToImageParams), opts...)
@@ -2788,6 +2817,26 @@ func newMiniMaxH3ImageToVideoSpec() actionSpec {
 	}}
 }
 
+func newHeyGenVideoTextToVideoSpec() actionSpec {
+	return actionSpec{service: "heygen-video", action: "text-to-video", isAsync: true, inputFields: inputFieldsFor[heygenvideo.TextToVideoParams](), decode: decodeInto[heygenvideo.TextToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.HeyGenVideo.TextToVideo.Create(ctx, params.(heygenvideo.TextToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.HeyGenVideo.TextToVideo.Run(ctx, params.(heygenvideo.TextToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.HeyGenVideo.TextToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newHeyGenVideoImageToVideoSpec() actionSpec {
+	return actionSpec{service: "heygen-video", action: "image-to-video", isAsync: true, inputFields: inputFieldsFor[heygenvideo.ImageToVideoParams](), decode: decodeInto[heygenvideo.ImageToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.HeyGenVideo.ImageToVideo.Create(ctx, params.(heygenvideo.ImageToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.HeyGenVideo.ImageToVideo.Run(ctx, params.(heygenvideo.ImageToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.HeyGenVideo.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
 func newVolcengineLipSyncVideoSpec() actionSpec {
 	return actionSpec{service: "volcengine-lip-sync", action: "lip-sync-video", isAsync: true, inputFields: inputFieldsFor[volcenginelipsync.LipSyncVideoParams](), decode: decodeInto[volcenginelipsync.LipSyncVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
 		return client.VolcengineLipSync.LipSyncVideo.Create(ctx, params.(volcenginelipsync.LipSyncVideoParams), opts...)
@@ -2965,5 +3014,25 @@ func newTopazUpscaleVideoSpec() actionSpec {
 		return client.Topaz.UpscaleVideo.Run(ctx, params.(topaz.UpscaleVideoParams), opts...)
 	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
 		return client.Topaz.UpscaleVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newViduImageToVideoSpec() actionSpec {
+	return actionSpec{service: "vidu", action: "image-to-video", isAsync: true, inputFields: inputFieldsFor[vidu.ImageToVideoParams](), decode: decodeInto[vidu.ImageToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Vidu.ImageToVideo.Create(ctx, params.(vidu.ImageToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Vidu.ImageToVideo.Run(ctx, params.(vidu.ImageToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Vidu.ImageToVideo.Get(ctx, id, opts...)
+	}}
+}
+
+func newViduReferenceToVideoSpec() actionSpec {
+	return actionSpec{service: "vidu", action: "reference-to-video", isAsync: true, inputFields: inputFieldsFor[vidu.ReferenceToVideoParams](), decode: decodeInto[vidu.ReferenceToVideoParams], create: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (*core.TaskCreateResponse, error) {
+		return client.Vidu.ReferenceToVideo.Create(ctx, params.(vidu.ReferenceToVideoParams), opts...)
+	}, run: func(ctx context.Context, client *runapi.Client, params any, opts []option.RequestOption) (any, error) {
+		return client.Vidu.ReferenceToVideo.Run(ctx, params.(vidu.ReferenceToVideoParams), opts...)
+	}, get: func(ctx context.Context, client *runapi.Client, id string, opts []option.RequestOption) (core.TaskResponse, error) {
+		return client.Vidu.ReferenceToVideo.Get(ctx, id, opts...)
 	}}
 }

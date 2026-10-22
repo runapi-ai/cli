@@ -1,5 +1,31 @@
 # Changelog
 
+## [v0.16.0](https://github.com/runapi-ai/cli/releases/tag/v0.16.0) - 2026-10-22
+
+### Breaking
+- Fish s1, s2-pro and s2.1-pro temporary cloning accepts at most one HTTPS audio URL with its exact transcript and cannot be combined with voice_id.
+  Migration: Upload local or Base64 audio through POST /api/v1/files, pass the returned URL in references[0].audio with exact text, keep one sample and remove voice_id. Ensure the URL remains valid while queued and read. Choose voice_id alone for an existing voice.
+
+### Added
+- Add text-to-image and edit-image commands for Qwen 2.1; the content safety toggle is available on text-to-image only.
+- Add text-to-video and image-to-video commands for HeyGen Video.
+- Add custom and automatic shot_type storyboarding with optional sound and custom shot duration constraints.
+- Add Vidu Q4 image-to-video and reference-to-video creation and task retrieval.
+
+### Changed
+- Apply gofmt to the Qwen 3 client field without changing CLI behavior.
+- Generated CLI contract help lists background transparent for seedream-5-pro-edit, which requires output_format png.
+- Generated CLI contract help lists background (transparent, opaque, or auto) for GPT Image 2 and GPT Image 2.5 text-to-image and edit-image.
+- The seedance text-to-video command accepts duration_seconds -1 (automatic) in addition to 4-15 for seedance-2.0, seedance-2.0-fast, and seedance-2-mini.
+- Show the server defaults for aspect_ratio on Kling 3.0, Kling v2.5 Turbo and Kling v2.1 Master text-to-video (16:9), Seedance 2.0, 2.0 Fast and 2 Mini (16:9), Flux 2 Flex and Pro (1:1) and HappyHorse text-to-video (16:9), generate_audio on Seedance 2.0 and 2.0 Fast (true), output_resolution on OmniHuman 1.5 (1080p), and aspect_ratio (1:1) and output_resolution (2k) on Seedream v4 text-to-image and edit.
+- Update help for Grok Imagine, Kling motion control, Seedance 2.5, Seedream, and Wan 2.7 Image parameter limits.
+- Declare output_count default 1 for every Ideogram V3 model, matching the image count the service generates when the field is omitted.
+
+### Removed
+- Remove retired model choices from creation metadata and document historical task lookup.
+  Migration: Retired models return HTTP 410 for new requests. Query existing task IDs with the original task endpoint; no automatic replacement is applied.
+
+
 ## [v0.15.0](https://github.com/runapi-ai/cli/releases/tag/v0.15.0) - 2026-10-08
 
 ### Changed
